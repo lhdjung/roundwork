@@ -46,7 +46,7 @@ set to \code{"up_or_down"}, \code{"up_from_or_down_from"}, or\code{"ceiling_or_f
 }
 \examples{
 # Define example vector:
-vec <- seq_distance(0.01, string_output = FALSE)
+vec <- seq(from = 0.01, to = 0.1, by = 0.01)
 vec
 
 # The default rounds `x` up from 5:

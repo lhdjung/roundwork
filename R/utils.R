@@ -1,3 +1,51 @@
+#' Mark a string as wrong
+#'
+#' @param x Object that should have been a string (it isn't; that's why the
+#'   function is called.)
+#'
+#' @return String.
+#'
+#' @noRd
+wrong_spec_string <- function(x) {
+  if (is.character(x)) {
+    paste0("\"", x, "\"")
+  } else {
+    paste0("`", x, "` (not a string)")
+  }
+}
+
+
+
+#' Check whether numbers are whole
+#'
+#' @description For each element of a numeric vector `x`, `is_whole_number()`
+#'   checks whether that element is a whole number.
+#'
+#'   This is not the same as the integer data type, so doubles and integers are
+#'   tested the same way. See the note in `?integer`. To test if R itself
+#'   considers a vector integer-like, use `rlang::is_integerish()` instead.
+#'
+#' @param x Numeric.
+#' @param tolerance Numeric. Any difference between `x` and a truncated version
+#'   of `x` less than `tolerance` (in the absolute value) will be ignored. The
+#'   default is close to `1 / (10 ^ 8)`. This avoids errors due to spurious
+#'   precision in floating-point arithmetic.
+#'
+#' @return Logical vector of the same length as `x`.
+#'
+#' @details This function was adapted (with naming modifications) from the
+#'   examples of `?integer`, where a very similar function is called
+#'   `is.wholenumber()`.
+#'
+#' @author R Core Team, Lukas Jung
+#'
+#' @noRd
+is_whole_number <- function(x, tolerance = .Machine$double.eps^0.5) {
+  abs(x - round(x)) < tolerance
+}
+
+
+
 #' Check whether lengths are congruent
 #'
 #' `check_lengths_congruent()` is called within a function `f()` and takes a
@@ -104,6 +152,42 @@ check_lengths_congruent <- function(var_list, error = TRUE, warn = TRUE) {
         variables have length 1."
       ))
     }
+  }
+}
+
+
+
+#' Check that `rounding` values for two procedures are not mixed
+#'
+#' @description In `reround()` and the many functions that call it internally,
+#'   valid specifications of the `rounding` argument include the following:
+#'
+#' - `"up_or_down"` (the default)
+#' - `"up_from_or_down_from"`
+#' - `"ceiling_or_floor"`
+#'
+#'   If `rounding` includes any of these, it must not include any other values.
+#'   `check_rounding_singular()` is called within `reround()` if `rounding` has
+#'   length > 1 and throws an error if any of these strings are part of it.
+#'
+#' @param rounding String (length > 1).
+#' @param bad String (length 1). Any of `"up_or_down"` etc.
+#' @param good1,good2 String (length 1). Two singlular rounding procedures that
+#'   are combined in `bad`, and that can instead be specified individually;
+#'   like, e.g., `rounding = c("up", "down")`.
+#'
+#' @return No return value; might throw an error.
+#'
+#' @noRd
+check_rounding_singular <- function(rounding, bad, good1, good2) {
+  if (any(bad == rounding)) {
+    cli::cli_abort(c(
+      "!" = "If `rounding` has length > 1, only single rounding procedures \\
+      are supported, such as \"{good1}\" and \"{good2}\".",
+      "x" = "`rounding` was given as \"{bad}\" plus others.",
+      "i" = "You can still concatenate multiple of them; just leave out \\
+      those with \"_or_\"."
+    ))
   }
 }
 

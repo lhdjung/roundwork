@@ -18,13 +18,16 @@ VignetteBuilder: knitr
 Imports: 
     cli,
     dplyr,
+    magrittr,
     tibble
 Collate: 
+    'utils.R'
     'reround-to-fraction.R'
     'round-ceil-floor.R'
     'round.R'
     'reround.R'
     'rounding-bias.R'
     'unround.R'
+    'utils-pipe.R'
 URL: https://github.com/lhdjung/roundwork
 BugReports: https://github.com/lhdjung/roundwork/issues

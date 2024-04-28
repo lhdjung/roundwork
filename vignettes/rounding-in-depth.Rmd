@@ -219,7 +219,7 @@ By default, decimal places are counted internally so that the function always op
 unround(x = "3.50", rounding = "up")
 ```
 
-Alternatively, a function that uses `unround()` as a helper might count decimal places by itself (i.e., by internally calling `decimal_places()`). It should then pass these numbers to `unround()` via the `decimals` argument instead of letting it redundantly count decimal places a second time.
+Alternatively, a function that uses `unround()` as a helper might count decimal places by itself (i.e., by internally calling `scrutiny::decimal_places()`). It should then pass these numbers to `unround()` via the `decimals` argument instead of letting it redundantly count decimal places a second time.
 
 In this case, `x` can be numeric because trailing zeros are no longer needed. (That, in turn, is because the responsibility to count decimal places in number-strings rather than numeric values shifts from `unround()` to the higher-level function.)
 
@@ -232,10 +232,7 @@ unround(x = 3.5, digits = 2, rounding = "up")
 Since `x` is vectorized, you might test several reported numbers at once:
 
 ```{r}
-vec2 <- c(2, 3.1, 3.5) %>% 
-  restore_zeros()
-
-vec2   # `restore_zeros()` returns "2.0" for 2
+vec2 <- c("2.0", "3.1", "3.5")
 
 vec2 %>% 
   unround(rounding = "even")

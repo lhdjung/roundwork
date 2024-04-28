@@ -21,7 +21,7 @@
 #'   returned. Set `mean` to `FALSE` to get a vector of individual biases the
 #'   length of `x`.
 #'
-#' @include reround.R seq-decimal.R
+#' @include reround.R
 #'
 #' @return Numeric. By default of `mean`, the length is 1; otherwise, it is the
 #'   same length as `x`.
@@ -30,7 +30,7 @@
 #'
 #' @examples
 #' # Define example vector:
-#' vec <- seq_distance(0.01, string_output = FALSE)
+#' vec <- seq(from = 0.01, to = 0.1, by = 0.01)
 #' vec
 #'
 #' # The default rounds `x` up from 5:
