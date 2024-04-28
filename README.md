@@ -1,9 +1,12 @@
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
 
-# roundwork
+# roundwork: Choose rounding options
 
 <!-- badges: start -->
+
+[![R-CMD-check](https://github.com/lhdjung/roundwork/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/lhdjung/roundwork/actions/workflows/R-CMD-check.yaml)
+
 <!-- badges: end -->
 
 The goal of roundwork is to allow for flexible rounding beyond

@@ -18,6 +18,8 @@ knitr::opts_chunk$set(
 
 <!-- badges: start -->
 
+[![R-CMD-check](https://github.com/lhdjung/roundwork/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/lhdjung/roundwork/actions/workflows/R-CMD-check.yaml)
+
 <!-- badges: end -->
 
 The goal of roundwork is to allow for flexible rounding beyond `base::round()`. Its main API is `reround()`, from which all implemented rounding procedures can be used.
