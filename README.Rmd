@@ -1,5 +1,6 @@
 ---
 output: github_document
+link-citations: TRUE
 ---
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
@@ -13,7 +14,7 @@ knitr::opts_chunk$set(
 )
 ```
 
-# roundwork
+# roundwork: Choose rounding options
 
 <!-- badges: start -->
 
@@ -27,6 +28,6 @@ All roundwork functions used to be part of [scrutiny](https://lhdjung.github.io/
 
 You can install the development version of roundwork like so:
 
-```{r, warning=FALSE, message=FALSE, eval=FALSE}
+``` r
 remotes::install_github("lhdjung/roundwork")
 ```
