@@ -26,3 +26,5 @@ Collate:
     'reround.R'
     'rounding-bias.R'
     'unround.R'
+URL: https://github.com/lhdjung/roundwork
+BugReports: https://github.com/lhdjung/roundwork/issues
