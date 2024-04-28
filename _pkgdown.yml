@@ -1,0 +1,40 @@
+url: ~
+lang: en
+home:
+  title: Error detection in science
+  description: |
+    Flexible rounding procedures for error detection.
+template:
+  bootstrap: 5
+  bootswatch: flatly
+  bslib:
+    link-color: '#ca225e'
+    code-color: '#ca225e'
+pkgdown:
+  as_is: yes
+articles:
+- title: Quick guide
+  navbar: Quick guide
+  contents:
+  - rounding-options
+- title: Deep dive
+  navbar: Deep dive
+  contents:
+  - rounding-in-depth
+reference:
+  - title: Main API
+  - contents:
+    - reround
+  - title: Individual rounding procedures
+  - contents:
+    - round_up
+    - round_down
+    - round_up_from
+    - round_down_from
+    - round_ceiling
+    - round_floor
+  - title: Other
+  - contents:
+    - unround
+    - reround_to_fraction
+    - rounding_bias
