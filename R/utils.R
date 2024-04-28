@@ -193,6 +193,36 @@ check_rounding_singular <- function(rounding, bad, good1, good2) {
 
 
 
+#' Check whether a rounding threshold was specified
+#'
+#' @description `check_threshold_specified()` is called within curly braces
+#'   inside of the switch statement in `reconstruct_rounded_numbers_scalar()` if
+#'   `rounding` includes `"_from"` and therefore requires specification of a
+#'   threshold.
+#'
+#'   It should always be followed by the respective rounding function.
+#'
+#' @param rounding_threshold
+#'
+#' @return No return value; might throw an error.
+#'
+#' @noRd
+check_threshold_specified <- function(threshold) {
+  if (threshold == 5) {
+    cli::cli_abort(c(
+      "You need to specify `threshold`.",
+      "x" = "If `rounding` is \"up_from\", \"down_from\", or \\
+      \"up_from_or_down_from\", set `threshold` to a number \\
+      other than 5. The `x` argument will then be rounded up or down from \\
+      that number.",
+      "i" = "To round up or down from 5, just set `rounding` to \\
+      \"up\", \"down\", or \"up_or_down\" instead."
+    ))
+  }
+}
+
+
+
 # Just used as a helper here. Copied from scrutiny now, but it might move to
 # another package in the future.
 decimal_places <- function(x, sep = "\\.") {

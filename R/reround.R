@@ -67,9 +67,10 @@ reconstruct_rounded_numbers <- Vectorize(reconstruct_rounded_numbers_scalar,
 #'   values.
 #'
 #'   This function provides an interface to all of scrutiny's rounding functions
-#'   as well as [`base::round()`]. It is used as a helper within [`grim()`],
-#'   [`grimmer()`], and [`debit()`]; and it might find use in other places for
-#'   consistency testing or reconstruction of statistical analyses.
+#'   as well as [`base::round()`]. It is used as a helper within
+#'   [`scrutiny::grim()`], [`scrutiny::grimmer()`], and [`scrutiny::debit()`];
+#'   and it might find use in other places for consistency testing or
+#'   reconstruction of statistical analyses.
 #'
 
 #' @details `reround()` internally calls the appropriate rounding function(s)
@@ -81,8 +82,8 @@ reconstruct_rounded_numbers <- Vectorize(reconstruct_rounded_numbers_scalar,
 #'
 #' @param x Numeric. Vector of possibly original values.
 #' @param digits Integer. Number of decimal places in the reported key values
-#'   (i.e., mean or percentage within [`grim()`], or standard deviation within
-#'   [`grimmer()`]).
+#'   (i.e., mean or percentage within [`scrutiny::grim()`], or standard deviation within
+#'   [`scrutiny::grimmer()`]).
 #' @param rounding String. The rounding method that is supposed to have been
 #'   used originally. See `vignette("rounding-options")`. Default is
 #'   `"up_or_down"`, which returns two values: `x` rounded up *and* down.
