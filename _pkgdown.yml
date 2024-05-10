@@ -38,3 +38,4 @@ reference:
     - unround
     - reround_to_fraction
     - rounding_bias
+    - round_ties_to_even

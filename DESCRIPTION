@@ -24,10 +24,11 @@ Imports:
     stringr,
     tibble
 Collate: 
+    'round.R'
+    'ieee-754.R'
     'utils.R'
     'reround-to-fraction.R'
     'round-ceil-floor.R'
-    'round.R'
     'reround.R'
     'rounding-bias.R'
     'unround.R'
