@@ -33,26 +33,53 @@ Numeric. \code{x} rounded to \code{digits}.
 These functions implement the industry standard IEEE 754:
 \itemize{
 \item \code{round_ties_to_even()} rounds to the nearest value. If both are at equal
-distance, rounds to the even number (but see details in \code{\link[base:Round]{base::round()}}).
+distance, it tends to round to the even number (see \code{\link[base:Round]{base::round()}} for
+details).
 \item \code{round_ties_to_away()} rounds to the nearest value. If both are at equal
-distance, rounds to the number with the greater absolute value, i.e., the
-number that is further away from zero.
+distance, it rounds to the number with the greater absolute value, i.e.,
+the number that is further away from zero.
 \item \code{round_toward_positive()} always rounds to the greater of the two nearest
-values. This is like ceiling for the given number of decimal places.
+values. This is like ceiling at a given number of decimal places.
 \item \code{round_toward_negative()} always rounds to the lesser of the two nearest
-values. This is like flooring for the given number of decimal places.
+values. This is like flooring at a given number of decimal places.
 \item \code{round_toward_zero()} always rounds to the number with the lower absolute
-value, i.e., the number that is closer to zero.
+value, i.e., the number that is closer to zero. This is like truncation at
+a given number of decimal places.
 }
 }
 \details{
-The function names follow the official standard (IEEE 2019, pp.
-27f.; but the \href{https://en.m.wikipedia.org/wiki/IEEE_754#Rounding_rules}{Wikipedia page} is more
-accessible). Internally, these functions are just wrappers around other
-roundwork functions and \code{\link[base:Round]{base::round()}}. They are presented here for easy
+The function names follow the official standard except for case
+conventions (IEEE 2019, pp. 27f.; the \href{https://en.m.wikipedia.org/wiki/IEEE_754#Rounding_rules}{Wikipedia page} is more
+accessible but uses slightly different names).
+
+Internally, these functions are just wrappers around other roundwork
+functions as well as \code{\link[base:Round]{base::round()}}. They are presented here for easy
 compliance with the IEEE 754 standard in R.
+}
+\examples{
+# Round to the nearest value. In case of a tie,
+# the result is hard to predict but tends to be even:
+round_ties_to_even(1.25, digits = 1)
+round_ties_to_even(-1.25, digits = 1)
+
+# Round to the nearest value. In case of a tie,
+# round away from zero:
+round_ties_to_away(1.25, digits = 1)
+round_ties_to_away(-1.25, digits = 1)
+
+# Always round to the greater value:
+round_toward_positive(0.721, digits = 2)
+round_toward_positive(-0.721, digits = 2)
+
+# Always round to the lesser value:
+round_toward_negative(3.249, digits = 2)
+round_toward_negative(-3.249, digits = 2)
+
+# Always round toward zero:
+round_toward_zero(6.38, digits = 1)
+round_toward_zero(-6.38, digits = 1)
 }
 \references{
 IEEE (2019). \emph{IEEE Standard for Floating-Point Arithmetic.}
-\link{https://doi.org/10.1109/IEEESTD.2019.8766229}
+\url{https://doi.org/10.1109/IEEESTD.2019.8766229}
 }
