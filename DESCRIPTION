@@ -13,7 +13,8 @@ RoxygenNote: 7.3.1
 Suggests: 
     ggplot2,
     knitr,
-    rmarkdown
+    rmarkdown,
+    testthat (>= 3.0.0)
 VignetteBuilder: knitr
 Imports: 
     cli,
@@ -35,3 +36,4 @@ Collate:
     'utils-pipe.R'
 URL: https://github.com/lhdjung/roundwork
 BugReports: https://github.com/lhdjung/roundwork/issues
+Config/testthat/edition: 3
