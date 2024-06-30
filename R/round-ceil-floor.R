@@ -120,6 +120,17 @@ round_trunc <- function(x, digits = 0L) {
 
 anti_trunc <- function(x) {
 
+  if (any(x == 0)) {
+    cli::cli_abort(c(
+      "Can't round zero with \"anti_trunc\" rounding.",
+      "x" = "The result is mathematically undefined.",
+      "i" = "\"anti_trunc\" always rounds away from zero \\
+      in the direction given by the sign of the input. \\
+      However, zero has no such direction, so there is no \\
+      reason to round it one way rather than the other."
+    ))
+  }
+
   # For symmetry between positive and negative numbers, use the absolute value:
   core <- trunc(abs(x)) + 1
   # (Note that an equivalent formula would be `ceiling(abs(x))`.
