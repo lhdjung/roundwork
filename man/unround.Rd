@@ -70,7 +70,7 @@ rounded. Set \code{rounding} to the rounding method that hypothetically lead to
    \code{"up_or_down"} (default) \tab \verb{lower <= x <= upper} \cr
    \code{"up"} \tab \verb{lower <= x < upper} \cr
    \code{"down"} \tab \verb{lower < x <= upper} \cr
-   \code{"even"} \tab (no fix range) \cr
+   \code{"even"} \tab (no fix range; \code{NA}) \cr
    \code{"ceiling"} \tab \code{lower < x = upper} \cr
    \code{"floor"} \tab \code{lower = x < upper} \cr
    \code{"trunc"} (positive \code{x}) \tab \code{lower = x < upper} \cr
@@ -78,7 +78,7 @@ rounded. Set \code{rounding} to the rounding method that hypothetically lead to
    \code{"trunc"} (zero \code{x}) \tab \verb{lower < x < upper} \cr
    \code{"anti_trunc"} (positive \code{x}) \tab \code{lower < x = upper} \cr
    \code{"anti_trunc"} (negative \code{x}) \tab \code{lower = x < upper} \cr
-   \code{"anti_trunc"} (zero \code{x}) \tab (undefined; \code{NA}) \cr
+   \code{"anti_trunc"} (zero \code{x}) \tab (undefined; error) \cr
 }
 
 

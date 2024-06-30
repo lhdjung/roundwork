@@ -1,3 +1,41 @@
+
+#' Write "an" or "a", depending on the next word
+#'
+#' @param x String. A string value that ends on a vowel letter returns `"an"`;
+#'   else, it returns `"a"`.
+#'
+#' @return String.
+#'
+#' @noRd
+an_a <- function(x) {
+  dplyr::if_else(stringr::str_detect(x, "^[aeiou]"), "an", "a")
+}
+
+
+
+#' Prefix an object's type with "an" or "a"
+#'
+#' This uses `an_a()` to prepend the type of `x` with "an" or "a". Because the
+#' function meant to be used in messages, it replaces "double" by "double
+#' (numeric value)" and "character" by "string".
+#'
+#' @param x Any object.
+#'
+#' @return String.
+#'
+#' @noRd
+an_a_type <- function(x) {
+  type <- typeof(x)
+  if (type == "double") {
+    type <- "double (numeric value)"
+  } else if (type == "character") {
+    type <- "string"
+  }
+  paste(an_a(typeof(x)), type)
+}
+
+
+
 #' Mark a string as wrong
 #'
 #' @param x Object that should have been a string (it isn't; that's why the
