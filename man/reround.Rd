@@ -59,3 +59,10 @@ for a complete list of values that \code{rounding} can take.
 For the specific rounding functions themselves, see documentation at
 \code{\link[=round_up]{round_up()}}, \code{\link[=round_ceiling]{round_ceiling()}}, and \code{\link[base:Round]{base::round()}}.
 }
+\examples{
+# You can specify the rounding procedure:
+reround(4.1679, digits = 2, rounding = "up")
+
+# Default is roundding both up and down:
+reround(4.1679, digits = 2)
+}

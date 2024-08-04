@@ -104,6 +104,13 @@ reconstruct_rounded_numbers <- Vectorize(reconstruct_rounded_numbers_scalar,
 #' @return Numeric vector of length 1 or 2. (It has length 1 unless `rounding`
 #'   is `"up_or_down"`, `"up_from_or_down_from"`, or`"ceiling_or_floor"`, in
 #'   which case it has length 2.)
+#'
+#' @examples
+#' # You can specify the rounding procedure:
+#' reround(4.1679, digits = 2, rounding = "up")
+#'
+#' # Default is roundding both up and down:
+#' reround(4.1679, digits = 2)
 
 
 reround <- function(x, digits = 0L, rounding = "up_or_down",

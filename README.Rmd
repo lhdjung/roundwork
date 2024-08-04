@@ -12,9 +12,10 @@ knitr::opts_chunk$set(
   fig.path = "man/figures/README-",
   out.width = "100%"
 )
+library(roundwork)
 ```
 
-# roundwork: Choose rounding options
+# roundwork: Rounding as you prefer
 
 <!-- badges: start -->
 
@@ -22,9 +23,11 @@ knitr::opts_chunk$set(
 
 <!-- badges: end -->
 
-The goal of roundwork is to allow for flexible rounding beyond `base::round()`. Its main API is `reround()`, from which all implemented rounding procedures can be used.
+The goal of roundwork is to enable flexible rounding beyond `base::round()`. Its main API is `reround()`, from which all implemented rounding procedures can be used. This is useful to reconstruct how others may have rounded their data.
 
-All roundwork functions used to be part of [scrutiny](https://lhdjung.github.io/scrutiny/). They were outsourced here for better modularity within the errorverse.
+Given a rounded number, call `unround()` to get the lower and upper bounds of the original number. This also takes rounding options into account, just like `reround()` does.
+
+Many roundwork functions used to be part of [scrutiny](https://lhdjung.github.io/scrutiny/). They were outsourced here for better modularity within the errorverse.
 
 ## Installation
 
@@ -32,4 +35,42 @@ You can install the development version of roundwork like so:
 
 ``` r
 remotes::install_github("lhdjung/roundwork")
+```
+
+## Get started
+
+Round in some specific way, e.g., up from 5:
+
+```{r}
+round_up(4.1679, digits = 2)
+```
+
+Use `reround()` to round more flexibly, especially in your own functions. You can specify a rounding procedure:
+
+```{r}
+reround(4.1679, digits = 2, rounding = "up")
+```
+
+Ceil or floor numbers if certain strong assumptions are permitted:
+
+```{r}
+reround(4.1679, digits = 2, rounding = "floor")
+```
+
+The default is to return two numbers — one rounded up, one rounded down. This is best for conservative assumptions, so that your conclusions won't hinge on edge cases where these rounding procedures differ.
+
+```{r}
+reround(1.275, digits = 2)
+```
+
+### Bounds on the unrounded number
+
+`unround()` computes the range of an unknown original number, given its rounded version. The rounding procedure determines whether the bounds are inclusive or not:
+
+```{r}
+unround("3.60")
+
+unround("3.60", rounding = "up")
+
+unround("3.60", rounding = "even")
 ```
