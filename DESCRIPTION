@@ -1,6 +1,6 @@
 Package: roundwork
 Title: Rounding infrastructure
-Version: 0.0.0.9000
+Version: 0.0.1
 Authors@R: c(
     person("Lukas", "Jung", , "jung-lukas@gmx.net", role = c("aut", "cre"))
   )
