@@ -24,7 +24,11 @@ here for better modularity within the errorverse.
 
 ## Installation
 
-You can install the development version of roundwork like so:
+Install the package from CRAN:
+
+    install.packages("roundwork")
+
+Alternatively, install the development version from GitHub:
 
 ``` r
 remotes::install_github("lhdjung/roundwork")
