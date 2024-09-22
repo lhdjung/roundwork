@@ -15,7 +15,7 @@ knitr::opts_chunk$set(
 library(roundwork)
 ```
 
-# roundwork: Rounding as you prefer
+# roundwork
 
 <!-- badges: start -->
 
@@ -23,7 +23,7 @@ library(roundwork)
 
 <!-- badges: end -->
 
-The goal of roundwork is to enable flexible rounding beyond `base::round()`. Its main API is `reround()`, from which all implemented rounding procedures can be used. This is useful to reconstruct how others may have rounded their data.
+The goal of roundwork is to enable flexible rounding beyond `base::round()`. Its main API is `reround()`, from which all implemented rounding procedures can be accessed. This is useful to reconstruct how others may have rounded their data.
 
 Given a rounded number, call `unround()` to get the lower and upper bounds of the original number. This also takes rounding options into account, just like `reround()` does.
 

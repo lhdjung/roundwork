@@ -1,7 +1,7 @@
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
 
-# roundwork: Rounding as you prefer
+# roundwork
 
 <!-- badges: start -->
 
@@ -11,7 +11,7 @@
 
 The goal of roundwork is to enable flexible rounding beyond
 `base::round()`. Its main API is `reround()`, from which all implemented
-rounding procedures can be used. This is useful to reconstruct how
+rounding procedures can be accessed. This is useful to reconstruct how
 others may have rounded their data.
 
 Given a rounded number, call `unround()` to get the lower and upper
@@ -84,7 +84,7 @@ unround("3.60", rounding = "up")
 
 unround("3.60", rounding = "even")
 #> # A tibble: 1 × 7
-#>   range                   rounding lower incl_lower x     incl_upper upper
-#>   <chr>                   <chr>    <dbl> <lgl>      <chr> <lgl>      <dbl>
-#> 1 3.595 < x(3.60) < 3.605 even      3.60 FALSE      3.60  FALSE       3.60
+#>   range                     rounding lower incl_lower x     incl_upper upper
+#>   <chr>                     <chr>    <dbl> <lgl>      <chr> <lgl>      <dbl>
+#> 1 3.595 NA x(3.60) NA 3.605 even      3.60 NA         3.60  NA          3.60
 ```
