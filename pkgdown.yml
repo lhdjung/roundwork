@@ -1,0 +1,11 @@
+pandoc: 3.1.11
+pkgdown: 2.1.1
+pkgdown_sha: ~
+articles:
+  rounding-in-depth: rounding-in-depth.html
+  rounding-options: rounding-options.html
+  scrutiny: scrutiny.html
+last_built: 2024-09-22T21:19Z
+urls:
+  reference: https://lhdjung.github.io/roundwork/reference
+  article: https://lhdjung.github.io/roundwork/articles
