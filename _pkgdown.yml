@@ -1,7 +1,7 @@
-url: ~
+url: https://lhdjung.github.io/roundwork/
 lang: en
 home:
-  title: Error detection in science
+  title: Rounding for error detection
   description: |
     Flexible rounding procedures for error detection.
 template:
@@ -13,10 +13,11 @@ template:
 pkgdown:
   as_is: yes
 articles:
-- title: Quick guide
-  navbar: Quick guide
+- title: Quick guides
+  navbar: Quick guides
   contents:
   - rounding-options
+  - scrutiny
 - title: Deep dive
   navbar: Deep dive
   contents:

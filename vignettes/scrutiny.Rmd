@@ -1,0 +1,32 @@
+---
+title: "Relation to scrutiny"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Relation to scrutiny}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+The roundwork package was outsourced from [scrutiny](https://lhdjung.github.io/scrutiny/), a much larger and less focused package. (See [this Github issue](https://github.com/ianhussey/ERROR/issues/6) for the rationale.) However, all functions that were copied to roundwork are still part of scrutiny as of version 0.5.0.
+
+For now, this can create ambiguities when using both packages together. Here is how to avoid such problems in an interactive script. Package developers should simply use `package::function()` syntax, as usual.
+
+## Resolving conflicts
+
+Make sure that all roundwork functions are used instead of their scrutiny counterparts by the same names. To do so, use the [conflicted](https://conflicted.r-lib.org/index.html) package:
+
+```{r eval=FALSE, include=FALSE}
+library(conflicted)
+library(scrutiny)
+library(roundwork)
+conflict_prefer_matching("round", "roundwork", quiet = TRUE)
+```
+
+You can then run `round_up` without parentheses and check the `namespace` signature at the bottom. If it says `namespace:roundwork`, everything is fine. If not, please [open an issue](https://github.com/lhdjung/roundwork/issues).

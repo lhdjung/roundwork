@@ -11,6 +11,7 @@ Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.2
 Suggests: 
+    conflicted,
     ggplot2,
     knitr,
     rmarkdown,
@@ -34,6 +35,6 @@ Collate:
     'rounding-bias.R'
     'unround.R'
     'utils-pipe.R'
-URL: https://github.com/lhdjung/roundwork
+URL: https://lhdjung.github.io/roundwork/, https://github.com/lhdjung/roundwork/
 BugReports: https://github.com/lhdjung/roundwork/issues
 Config/testthat/edition: 3
