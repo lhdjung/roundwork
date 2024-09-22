@@ -81,5 +81,5 @@ round_toward_zero(-6.38, digits = 1)
 }
 \references{
 IEEE (2019). \emph{IEEE Standard for Floating-Point Arithmetic.}
-\url{https://doi.org/10.1109/IEEESTD.2019.8766229}
+https://doi.org/10.1109/IEEESTD.2019.8766229
 }
