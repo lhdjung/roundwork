@@ -109,8 +109,17 @@ test_that("Wrong `rounding` specifications return the string (list)
           })
 
 
-test_that("Attempting to unround zero with \"anti_trunc\" throws an error", {
-  0 %>% unround(rounding = "anti_trunc") %>% expect_error()
-  seq(0, 0.5, by = 0.1) %>% as.character() %>% unround(rounding = "anti_trunc") %>% expect_error()
+anti_trunc_zero_exp <- tibble::tibble(
+  range = "0 == x(0) == 0",
+  rounding = "anti_trunc",
+  lower = 0,
+  incl_lower = FALSE,
+  x = "0",
+  incl_upper = FALSE,
+  upper = 0,
+)
+
+test_that("Unrounding zero with \"anti_trunc\" means the original number was zero", {
+  "0" %>% unround(rounding = "anti_trunc") %>% expect_equal(anti_trunc_zero_exp)
 })
 

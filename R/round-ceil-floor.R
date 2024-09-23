@@ -5,10 +5,8 @@
 #'   - `round_ceiling()` always rounds up.
 #'   - `round_floor()` always rounds down.
 #'   - `round_trunc()` always rounds toward zero.
-#'   - `round_anti_trunc()` always rounds away from zero. (`0` itself is
-#'   rounded to `1`.)
-#'   - `anti_trunc()` does not round but otherwise works like
-#'   `round_anti_trunc()`.
+#'   - `round_anti_trunc()` always rounds away from zero.
+#'   - `anti_trunc()` returns the integer further away from zero.
 #'
 #'   Despite not being widely used, they are featured here in case they are
 #'   needed for reconstruction.
@@ -25,7 +23,7 @@
 #'   minimizes the absolute value of `x` (as compared to the other rounding
 #'   functions), `anti_trunc()` maximizes it. `anti_trunc(x)` is therefore equal
 #'   to `trunc(x)` ` + 1` if `x` is positive, and to `trunc(x) - 1` if `x` is
-#'   negative.
+#'   negative. It only ever returns 0 if `x` is 0; as 0 does not have a sign.
 #'
 #'   `round_anti_trunc()`, then, generalizes `anti_trunc()` just as
 #'   `round_ceiling()` generalizes [`ceiling()`], etc.
@@ -120,20 +118,8 @@ round_trunc <- function(x, digits = 0L) {
 
 anti_trunc <- function(x) {
 
-  if (any(x == 0)) {
-    cli::cli_abort(c(
-      "Can't round zero with \"anti_trunc\" rounding.",
-      "x" = "The result is mathematically undefined.",
-      "i" = "\"anti_trunc\" always rounds away from zero \\
-      in the direction given by the sign of the input. \\
-      However, zero has no such direction, so there is no \\
-      reason to round it one way rather than the other."
-    ))
-  }
-
   # For symmetry between positive and negative numbers, use the absolute value:
-  core <- trunc(abs(x)) + 1
-  # (Note that an equivalent formula would be `ceiling(abs(x))`.
+  core <- ceiling(abs(x))
 
   # If `x` is negative, its "anti-truncated" version should also be negative.
   # Therefore, in this case, the function returns the negative of the

@@ -34,10 +34,8 @@ Always round up, down, toward zero, or away from it:
 \item \code{round_ceiling()} always rounds up.
 \item \code{round_floor()} always rounds down.
 \item \code{round_trunc()} always rounds toward zero.
-\item \code{round_anti_trunc()} always rounds away from zero. (\code{0} itself is
-rounded to \code{1}.)
-\item \code{anti_trunc()} does not round but otherwise works like
-\code{round_anti_trunc()}.
+\item \code{round_anti_trunc()} always rounds away from zero.
+\item \code{anti_trunc()} returns the integer further away from zero.
 }
 
 Despite not being widely used, they are featured here in case they are
@@ -56,7 +54,7 @@ moves away from 0, rather than towards it. That is, whereas \code{trunc()}
 minimizes the absolute value of \code{x} (as compared to the other rounding
 functions), \code{anti_trunc()} maximizes it. \code{anti_trunc(x)} is therefore equal
 to \code{trunc(x)} \code{ + 1} if \code{x} is positive, and to \code{trunc(x) - 1} if \code{x} is
-negative.
+negative. It only ever returns 0 if \code{x} is 0; as 0 does not have a sign.
 
 \code{round_anti_trunc()}, then, generalizes \code{anti_trunc()} just as
 \code{round_ceiling()} generalizes \code{\link[=ceiling]{ceiling()}}, etc.
