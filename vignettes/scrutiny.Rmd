@@ -22,7 +22,7 @@ For now, this can create ambiguities when using both packages together. Here is 
 
 Make sure that all roundwork functions are used instead of their scrutiny counterparts by the same names. To do so, use the [conflicted](https://conflicted.r-lib.org/index.html) package:
 
-```{r eval=FALSE, include=FALSE}
+```{r eval=FALSE}
 library(conflicted)
 library(scrutiny)
 library(roundwork)
