@@ -20,12 +20,12 @@ rounding_bounds_scalar <- function(rounding, x_num, d_var, d) {
     }
 
     return(switch(rounding,    #     (1)              (2)               (3)    (4)
-        "trunc_x_greater"      = list(x_num,           x_num + (2 * d), "<=",  "<"),
-        "trunc_x_less"         = list(x_num - (2 * d), x_num,           "<",  "<="),
-        "trunc_x_is_0"         = list(x_num - (2 * d), x_num + (2 * d), "<",   "<"),
-        "anti_trunc_x_greater" = list(x_num - (2 * d), x_num,           "<=",  "<"),
-        "anti_trunc_x_less"    = list(x_num,           x_num + (2 * d), "<=",  "<"),
-        "anti_trunc_x_is_0"    = list("error_trigger", "anti_trunc_x_is_0")
+        "trunc_x_greater"      = list(x_num,           x_num + (2 * d), "<=",  "<" ),
+        "trunc_x_less"         = list(x_num - (2 * d), x_num,           "<",  "<=" ),
+        "trunc_x_is_0"         = list(x_num - (2 * d), x_num + (2 * d), "<",   "<" ),
+        "anti_trunc_x_greater" = list(x_num - (2 * d), x_num,           "<=",  "<" ),
+        "anti_trunc_x_less"    = list(x_num,           x_num + (2 * d), "<=",  "<" ),
+        "anti_trunc_x_is_0"    = list(0,               0,               "==",  "==")
     ))
   }
 
@@ -219,18 +219,6 @@ unround <- function(x, rounding = "up_or_down", threshold = 5, digits = NULL) {
     # If an element of `bounds` resulted from an incorrect `rounding`
     # specification, if will contain "error_trigger":
     if (identical(bounds[i][[1L]][[1L]], "error_trigger")) {
-      # Special case even within "error_trigger" cases:
-      if (bounds[i][[1L]][[2L]] == "anti_trunc_x_is_0") {
-        cli::cli_abort(c(
-          "Can't unround zero while presuming \"anti_trunc\" \\
-          rounding, as in `round_anti_trunc()`.",
-          "i" = "\"anti_trunc\" rounding always moves away \\
-          from zero in the direction given by the sign of the \\
-          (positive or negative) input.",
-          ">" = "Therefore, it can never take or return zero, \\
-          and zero can't be unrounded this way."
-        ))
-      }
       cli::cli_abort(c(
         "`rounding` must be one or more of the designated \\
         string values. See documentation for `unround()`, \\

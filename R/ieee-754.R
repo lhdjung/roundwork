@@ -36,7 +36,7 @@
 #' @export
 #'
 #' @references IEEE (2019). *IEEE Standard for Floating-Point Arithmetic.*
-#'   [https://doi.org/10.1109/IEEESTD.2019.8766229](https://doi.org/10.1109/IEEESTD.2019.8766229)
+#'   https://doi.org/10.1109/IEEESTD.2019.8766229
 #'
 #' @examples
 #' # Round to the nearest value. In case of a tie,

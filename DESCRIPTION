@@ -1,11 +1,14 @@
 Package: roundwork
-Title: Rounding infrastructure
+Title: Rounding Infrastructure
 Version: 0.0.1
 Authors@R: c(
-    person("Lukas", "Jung", , "jung-lukas@gmx.net", role = c("aut", "cre"))
+    person(given = "Lukas",
+           family = "Jung",
+           role = c("aut", "cre"),
+           email = "jung-lukas@gmx.net")
   )
 Description: Flexible rounding functions for use in error detection. They were
-    oursourced from the scrutiny package.
+    outsourced from the 'scrutiny' package.
 License: MIT + file LICENSE
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
