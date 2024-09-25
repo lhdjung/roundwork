@@ -85,6 +85,11 @@ syntax, as usual.</p>
 <p>Make sure that all roundwork functions are used instead of their
 scrutiny counterparts by the same names. To do so, use the <a href="https://conflicted.r-lib.org/index.html" class="external-link">conflicted</a>
 package:</p>
+<div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://conflicted.r-lib.org/" class="external-link">conflicted</a></span><span class="op">)</span></span>
+<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://lhdjung.github.io/scrutiny/" class="external-link">scrutiny</a></span><span class="op">)</span></span>
+<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://lhdjung.github.io/roundwork/">roundwork</a></span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://conflicted.r-lib.org/reference/conflict_prefer.html" class="external-link">conflict_prefer_matching</a></span><span class="op">(</span><span class="st">"round"</span>, <span class="st">"roundwork"</span>, quiet <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
 <p>You can then run <code>round_up</code> without parentheses and check
 the <code>namespace</code> signature at the bottom. If it says
 <code>namespace:roundwork</code>, everything is fine. If not, please <a href="https://github.com/lhdjung/roundwork/issues" class="external-link">open an

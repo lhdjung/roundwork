@@ -3,10 +3,8 @@
 round_ceiling() always rounds up.
 round_floor() always rounds down.
 round_trunc() always rounds toward zero.
-round_anti_trunc() always rounds away from zero. (0 itself is
-rounded to 1.)
-anti_trunc() does not round but otherwise works like
-round_anti_trunc().
+round_anti_trunc() always rounds away from zero.
+anti_trunc() returns the integer further away from zero.
 
 
 Despite not being widely used, they are featured here in case they are
@@ -14,10 +12,8 @@ needed for reconstruction."><meta property="og:description" content="Always roun
 round_ceiling() always rounds up.
 round_floor() always rounds down.
 round_trunc() always rounds toward zero.
-round_anti_trunc() always rounds away from zero. (0 itself is
-rounded to 1.)
-anti_trunc() does not round but otherwise works like
-round_anti_trunc().
+round_anti_trunc() always rounds away from zero.
+anti_trunc() returns the integer further away from zero.
 
 
 Despite not being widely used, they are featured here in case they are
@@ -69,10 +65,8 @@ needed for reconstruction."></head><body>
     <p>Always round up, down, toward zero, or away from it:</p><ul><li><p><code>round_ceiling()</code> always rounds up.</p></li>
 <li><p><code>round_floor()</code> always rounds down.</p></li>
 <li><p><code>round_trunc()</code> always rounds toward zero.</p></li>
-<li><p><code>round_anti_trunc()</code> always rounds away from zero. (<code>0</code> itself is
-rounded to <code>1</code>.)</p></li>
-<li><p><code>anti_trunc()</code> does not round but otherwise works like
-<code>round_anti_trunc()</code>.</p></li>
+<li><p><code>round_anti_trunc()</code> always rounds away from zero.</p></li>
+<li><p><code>anti_trunc()</code> returns the integer further away from zero.</p></li>
 </ul><p>Despite not being widely used, they are featured here in case they are
 needed for reconstruction.</p>
     </div>
@@ -120,7 +114,7 @@ moves away from 0, rather than towards it. That is, whereas <code><a href="https
 minimizes the absolute value of <code>x</code> (as compared to the other rounding
 functions), <code>anti_trunc()</code> maximizes it. <code>anti_trunc(x)</code> is therefore equal
 to <code>trunc(x)</code> <code> + 1</code> if <code>x</code> is positive, and to <code>trunc(x) - 1</code> if <code>x</code> is
-negative.</p>
+negative. It only ever returns 0 if <code>x</code> is 0; as 0 does not have a sign.</p>
 <p><code>round_anti_trunc()</code>, then, generalizes <code>anti_trunc()</code> just as
 <code>round_ceiling()</code> generalizes <code><a href="https://rdrr.io/r/base/Round.html" class="external-link">ceiling()</a></code>, etc.</p>
 <p>Moreover, <code>round_trunc()</code> is equivalent to <code>round_floor()</code> for positive

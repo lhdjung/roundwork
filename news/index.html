@@ -43,14 +43,14 @@
     </div>
 
     <div class="section level2">
-<h2 class="pkg-version" data-toc-text="0.0.1" id="roundwork-001">roundwork 0.0.1<a class="anchor" aria-label="anchor" href="#roundwork-001"></a></h2>
+<h2 class="pkg-version" data-toc-text="0.0.1" id="roundwork-001">roundwork 0.0.1<a class="anchor" aria-label="anchor" href="#roundwork-001"></a></h2><p class="text-muted">CRAN release: 2024-09-25</p>
 <ul><li>Initial CRAN submission.</li>
 <li>This new package is a spin-off from <a href="https://lhdjung.github.io/scrutiny/" class="external-link">scrutiny</a>. Much of the code was copied from there; see Github issue <a href="https://github.com/lhdjung/scrutiny/issues/68" class="external-link">lhdjung/scrutiny#68</a>.</li>
 <li>Notable changes compared to scrutiny:
 <ul><li>
 <code><a href="../reference/unround.html">unround()</a></code> no longer guesses whether the bounds are inclusive with <code>rounding = "even"</code>. This is highly variable in the underlying <code><a href="https://rdrr.io/r/base/Round.html" class="external-link">base::round()</a></code> function, and the firm statement in earlier versions of scrutiny that the bounds are never inclusive was unwarranted.</li>
 <li>
-<code><a href="../reference/unround.html">unround()</a></code> and <code><a href="../reference/rounding-uncommon.html">anti_trunc()</a></code> now correctly throw an error in a rare edge case (rounding or unrounding zero while assuming <code>"anti_trunc"</code> rounding).</li>
+<code><a href="../reference/unround.html">unround()</a></code>, <code><a href="../reference/rounding-uncommon.html">anti_trunc()</a></code> , and <code><a href="../reference/rounding-uncommon.html">round_anti_trunc()</a></code> now correctly return zero in a rare edge case (rounding or unrounding zero while assuming <code>"anti_trunc"</code> rounding).</li>
 <li>Five new functions around <code><a href="../reference/ieee-754.html">round_ties_to_even()</a></code> implement the IEEE 754 rounding standard by wrapping existing functions.</li>
 </ul></li>
 </ul></div>

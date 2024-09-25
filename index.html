@@ -72,34 +72,36 @@
 <div class="section level2">
 <h2 id="installation">Installation<a class="anchor" aria-label="anchor" href="#installation"></a>
 </h2>
-<p>You can install the development version of roundwork like so:</p>
-<div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
+<p>Install the package from CRAN:</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode R"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" tabindex="-1"></a><span class="fu">install.packages</span>(<span class="st">"roundwork"</span>)</span></code></pre></div>
+<p>Alternatively, install the development version from GitHub:</p>
+<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">remotes</span><span class="fu">::</span><span class="fu">install_github</span><span class="op">(</span><span class="st">"lhdjung/roundwork"</span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="get-started">Get started<a class="anchor" aria-label="anchor" href="#get-started"></a>
 </h2>
 <p>Round in some specific way, e.g., up from 5:</p>
-<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="reference/rounding-common.html">round_up</a></span><span class="op">(</span><span class="fl">4.1679</span>, digits <span class="op">=</span> <span class="fl">2</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1] 4.17</span></span></code></pre></div>
 <p>Use <code><a href="reference/reround.html">reround()</a></code> to round more flexibly, especially in your own functions. You can specify a rounding procedure:</p>
-<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="reference/reround.html">reround</a></span><span class="op">(</span><span class="fl">4.1679</span>, digits <span class="op">=</span> <span class="fl">2</span>, rounding <span class="op">=</span> <span class="st">"up"</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1] 4.17</span></span></code></pre></div>
 <p>Ceil or floor numbers if certain strong assumptions are permitted:</p>
-<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="reference/reround.html">reround</a></span><span class="op">(</span><span class="fl">4.1679</span>, digits <span class="op">=</span> <span class="fl">2</span>, rounding <span class="op">=</span> <span class="st">"floor"</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1] 4.16</span></span></code></pre></div>
 <p>The default is to return two numbers — one rounded up, one rounded down. This is best for conservative assumptions, so that your conclusions won’t hinge on edge cases where these rounding procedures differ.</p>
-<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="reference/reround.html">reround</a></span><span class="op">(</span><span class="fl">1.275</span>, digits <span class="op">=</span> <span class="fl">2</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1] 1.28 1.27</span></span></code></pre></div>
 <div class="section level3">
 <h3 id="bounds-on-the-unrounded-number">Bounds on the unrounded number<a class="anchor" aria-label="anchor" href="#bounds-on-the-unrounded-number"></a>
 </h3>
 <p><code><a href="reference/unround.html">unround()</a></code> computes the range of an unknown original number, given its rounded version. The rounding procedure determines whether the bounds are inclusive or not:</p>
-<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="reference/unround.html">unround</a></span><span class="op">(</span><span class="st">"3.60"</span><span class="op">)</span></span>
 <span><span class="co">#&gt; # A tibble: 1 × 7</span></span>
 <span><span class="co">#&gt;   range                     rounding   lower incl_lower x     incl_upper upper</span></span>
@@ -123,6 +125,7 @@
   </main><aside class="col-md-3"><div class="links">
 <h2 data-toc-skip>Links</h2>
 <ul class="list-unstyled">
+<li><a href="https://cloud.r-project.org/package=roundwork" class="external-link">View on CRAN</a></li>
 <li><a href="https://github.com/lhdjung/roundwork/" class="external-link">Browse source code</a></li>
 <li><a href="https://github.com/lhdjung/roundwork/issues" class="external-link">Report a bug</a></li>
 </ul>
