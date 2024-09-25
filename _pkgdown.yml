@@ -26,6 +26,9 @@ reference:
   - title: Main API
   - contents:
     - reround
+  - title: Min and max values before rounding
+  - contents:
+    - unround
   - title: Individual rounding procedures
   - contents:
     - round_up
@@ -36,7 +39,6 @@ reference:
     - round_floor
   - title: Other
   - contents:
-    - unround
     - reround_to_fraction
     - rounding_bias
     - round_ties_to_even

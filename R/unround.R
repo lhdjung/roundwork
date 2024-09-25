@@ -103,7 +103,7 @@ rounding_bounds <- Vectorize(
 #'   | `"trunc"` (zero `x`)                   | `lower < x < upper`          |
 #'   | `"anti_trunc"` (positive `x`)          | `lower < x = upper`          |
 #'   | `"anti_trunc"` (negative `x`)          | `lower = x < upper`          |
-#'   | `"anti_trunc"` (zero `x`)              | (undefined; error)           |
+#'   | `"anti_trunc"` (zero `x`)              | `0 = x = 0`                  |
 #'
 #' Base R's own `round()` (R version >= 4.0.0), referenced by `rounding =
 #' "even"`, is reconstructed in the same way as `"up_or_down"`, but whether the

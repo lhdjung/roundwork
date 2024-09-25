@@ -78,7 +78,7 @@ rounded. Set \code{rounding} to the rounding method that hypothetically lead to
    \code{"trunc"} (zero \code{x}) \tab \verb{lower < x < upper} \cr
    \code{"anti_trunc"} (positive \code{x}) \tab \code{lower < x = upper} \cr
    \code{"anti_trunc"} (negative \code{x}) \tab \code{lower = x < upper} \cr
-   \code{"anti_trunc"} (zero \code{x}) \tab (undefined; error) \cr
+   \code{"anti_trunc"} (zero \code{x}) \tab \code{0 = x = 0} \cr
 }
 
 
