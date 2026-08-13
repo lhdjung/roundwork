@@ -108,11 +108,11 @@ rounded. Set \code{rounding} to the rounding method that hypothetically lead to
 }
 
 
-The bounds come from the same internal machinery that \code{\link[scrutiny:grim]{scrutiny::grim()}}
-and \code{\link[scrutiny:grimmer]{scrutiny::grimmer()}} use to derive their candidate ranges, so
-\code{unround()} accepts exactly the rounding methods those tests do, and
-\code{threshold} and \code{symmetric} mean the same thing everywhere. See
-\code{\link[=bound_numerators]{bound_numerators()}} for the exact-integer form of the same bounds.
+The bounds come from the same internal machinery that a consistency test
+derives its candidate range from, so \code{unround()} accepts exactly the
+rounding methods such a test does, and \code{threshold} and \code{symmetric} mean the
+same thing everywhere. See \code{\link[=bound_numerators]{bound_numerators()}} for the exact-integer
+form of the same bounds.
 
 The four \code{"ties_*"} methods each name a complete tie-breaking procedure,
 so they say by themselves what \code{rounding} and \code{symmetric} say together:

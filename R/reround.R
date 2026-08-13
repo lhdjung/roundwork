@@ -10,8 +10,7 @@
 # each input value's own pair of results stays together. A caller that pools
 # them across input values compares matches that did not come from the same
 # original value -- which was the false-pass bug
-# <https://github.com/lhdjung/scrutiny/issues/85> in scrutiny's GRIMMER
-# implementation.
+# <https://github.com/lhdjung/scrutiny/issues/85> in a GRIMMER implementation.
 #
 # Interleaving is what `Vectorize()` produced anyway, one column of the result
 # matrix per input value. Doing it explicitly lets
@@ -89,9 +88,8 @@ reconstruct_rounded_numbers_scalar <- function(
 #'   values.
 #'
 #'   This function provides an interface to all of roundwork's rounding
-#'   functions as well as [`base::round()`]. It is used as a helper within
-#'   [`scrutiny::grim()`], [`scrutiny::grimmer()`], and [`scrutiny::debit()`];
-#'   and it might find use in other places for consistency testing or
+#'   functions as well as [`base::round()`]. It is meant as a helper within
+#'   consistency tests, and it might find use in other places for
 #'   reconstruction of statistical analyses.
 #'
 
@@ -104,8 +102,7 @@ reconstruct_rounded_numbers_scalar <- function(
 #'
 #' @param x Numeric. Vector of possibly original values.
 #' @param digits Integer. Number of decimal places in the reported key values
-#'   (i.e., mean or percentage within [`scrutiny::grim()`], or standard
-#'   deviation within [`scrutiny::grimmer()`]).
+#'   (e.g., in a reported mean, percentage, or standard deviation).
 #' @param rounding String. The rounding method that is supposed to have been
 #'   used originally. See `vignette("rounding-options")`. Default is
 #'   `"up_or_down"`, which returns two values: `x` rounded up *and* down.
@@ -137,7 +134,7 @@ reconstruct_rounded_numbers_scalar <- function(
 #'   value is `c(up_1, down_1, up_2, down_2, ...)` and has length `2 *
 #'   length(x)`. Take care not to pool the pairs across elements of `x`: matches
 #'   found in different pairs did not come from the same original value. (This
-#'   was the cause of a false-pass bug in `scrutiny::grimmer()`; see
+#'   was the cause of a false-pass bug in a GRIMMER implementation; see
 #'   <https://github.com/lhdjung/scrutiny/issues/85>.)
 #'
 #' @examples
@@ -155,7 +152,7 @@ reround <- function(
   symmetric = FALSE
 ) {
   # The last three arguments describe one rounding procedure; `x` is the vector.
-  # Up to roundwork 0.0.1 they could each be vectors of their own, which meant
+  # Up to roundwork 0.1.0 they could each be vectors of their own, which meant
   # dispatching once per element of `x` through `Vectorize()`, plus a set of
   # checks -- `check_rounding_singular()` and a length-congruence check -- for
   # the ways in which such a call can be malformed. No consistency test ever

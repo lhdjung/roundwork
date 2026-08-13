@@ -1,6 +1,6 @@
 # roundwork 0.1.0
 
-This release takes over the rounding infrastructure as it was revamped in [scrutiny](https://lhdjung.github.io/scrutiny/) 1.0.0. Nearly every function was rewritten, and scrutiny now depends on roundwork for all of it rather than keeping its own copies. See Github issue [lhdjung/scrutiny#68](https://github.com/lhdjung/scrutiny/issues/68).
+This release is a revamp of the whole package: nearly every function was rewritten, and the rounding bounds and the rounding procedures are now derived from a single shared source. See Github issue [lhdjung/scrutiny#68](https://github.com/lhdjung/scrutiny/issues/68) for the background.
 
 ## New functions
 
@@ -12,7 +12,7 @@ This release takes over the rounding infrastructure as it was revamped in [scrut
 
 ## Rounding bounds
 
--   `unround()` now derives its bounds from the same machinery that scrutiny's GRIM, GRIMMER, and DEBIT use, so the tests and the bounds can no longer disagree about what a rounded number means, about which rounding methods exist, or about what `threshold` and `symmetric` mean.
+-   `unround()` now derives its bounds from the same machinery that a consistency test derives its candidate range from, so a test and the bounds can no longer disagree about what a rounded number means, about which rounding methods exist, or about what `threshold` and `symmetric` mean.
 
 -   `unround()` gains a `symmetric` argument, matching the rounding functions it inverts.
 
@@ -38,7 +38,7 @@ This release takes over the rounding infrastructure as it was revamped in [scrut
 
 -   `rounding`, `threshold`, and `symmetric` must now each have length 1. They describe a single rounding procedure, which is applied to all of `x`; passing vectors paired values with procedures by position, which no consistency test ever wanted. `unround()` keeps the old behavior for its display use case.
 
--   The compound methods `"up_or_down"`, `"up_from_or_down_from"`, and `"ceiling_or_floor"` return their two results per input value *interleaved*, so that each input value's own pair stays together. Pooling the pairs across input values compares matches that did not come from the same original value; that was a false-pass bug in scrutiny's GRIMMER ([lhdjung/scrutiny#85](https://github.com/lhdjung/scrutiny/issues/85)).
+-   The compound methods `"up_or_down"`, `"up_from_or_down_from"`, and `"ceiling_or_floor"` return their two results per input value *interleaved*, so that each input value's own pair stays together. Pooling the pairs across input values compares matches that did not come from the same original value; that was a false-pass bug in a GRIMMER implementation ([lhdjung/scrutiny#85](https://github.com/lhdjung/scrutiny/issues/85)).
 
 -   `reround()` is no longer built on `Vectorize()`. Every rounding function is natively vectorized, so the dispatch now happens once for the whole of `x`.
 

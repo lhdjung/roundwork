@@ -126,7 +126,7 @@ test_that("`check_lengths_congruent()` remains silent when it should", {
 test_that("`check_lengths_congruent()` accepts arguments of equal length", {
   # Two arguments of the same length are congruent -- that is the whole point of
   # the check -- so they warn about being paired but must not error. Up to
-  # roundwork 0.0.1 they did error whenever a length-1 argument sat between them
+  # roundwork 0.1.0 they did error whenever a length-1 argument sat between them
   # in the list, because the deduplication of lengths was indexed by the lengths
   # of *all* arguments rather than of those longer than 1, and so silently did
   # nothing. `reround_to_fraction(c(0.4, 0.6), denominator = 2, digits = c(1,

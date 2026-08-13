@@ -56,9 +56,8 @@ integer numerators over \code{10^(digits + 1)}, and a comparison of some value
 to a bound becomes a comparison between integers, which is exact in double
 precision as long as every integer involved stays below \code{2^53}.
 
-This is what \code{\link[scrutiny:grim]{scrutiny::grim()}} and \code{\link[scrutiny:grimmer]{scrutiny::grimmer()}} derive their
-candidate ranges from, which is why those tests and \code{unround()} always
-agree on what the bounds of a rounded number are.
+A consistency test that derives its candidate range from here can never
+disagree with \code{unround()} about what the bounds of a rounded number are.
 
 If \code{threshold} is fractional, the numerators and the denominator are both
 scaled up by a power of ten until they are whole numbers again.

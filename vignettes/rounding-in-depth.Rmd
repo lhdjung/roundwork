@@ -222,7 +222,7 @@ The duplication is deliberate. roundwork's own names were chosen without the sta
 
 Rounding leads to a loss of information. The mantissa is cut off in part or in full, and the resulting number is underdetermined with respect to the original number: The latter can't be inferred from the former. It might be of interest, however, to compute the range of the original number given the rounded number (especially the number of decimal places to which it was rounded) and the presumed rounding method.
 
-While it's often easy to infer such a range, we better have the computer do it. Enter `unround()`. It returns the lower and upper bounds, and it says whether these bounds are inclusive or not --- something that varies greatly by rounding procedure. `unround()` is used as a helper within [scrutiny's DEBIT implementation](https://lhdjung.github.io/scrutiny/articles/debit.html), and the same bounds are what its GRIM and GRIMMER implementations derive their candidate values from.
+While it's often easy to infer such a range, we better have the computer do it. Enter `unround()`. It returns the lower and upper bounds, and it says whether these bounds are inclusive or not --- something that varies greatly by rounding procedure. These are the same bounds that a consistency test derives its candidate values from.
 
 The default rounding procedure for `unround()` is `"up_or_down"`:
 
@@ -246,7 +246,7 @@ By default, decimal places are counted internally so that the function always op
 unround(x = "3.50", rounding = "up")
 ```
 
-Alternatively, a function that uses `unround()` as a helper might count decimal places by itself (i.e., by internally calling `scrutiny::decimal_places()`). It should then pass these numbers to `unround()` via the `digits` argument instead of letting it redundantly count decimal places a second time.
+Alternatively, a function that uses `unround()` as a helper might count decimal places by itself. It should then pass these numbers to `unround()` via the `digits` argument instead of letting it redundantly count decimal places a second time.
 
 In this case, `x` can be numeric because trailing zeros are no longer needed. (That, in turn, is because the responsibility to count decimal places in number-strings rather than numeric values shifts from `unround()` to the higher-level function.)
 

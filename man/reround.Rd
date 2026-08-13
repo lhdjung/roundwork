@@ -16,8 +16,7 @@ reround(
 \item{x}{Numeric. Vector of possibly original values.}
 
 \item{digits}{Integer. Number of decimal places in the reported key values
-(i.e., mean or percentage within \code{\link[scrutiny:grim]{scrutiny::grim()}}, or standard
-deviation within \code{\link[scrutiny:grimmer]{scrutiny::grimmer()}}).}
+(e.g., in a reported mean, percentage, or standard deviation).}
 
 \item{rounding}{String. The rounding method that is supposed to have been
 used originally. See \code{vignette("rounding-options")}. Default is
@@ -48,7 +47,7 @@ result of each of their two constituent procedures.
 The two values of a compound method stay next to each other, so the return
 value is \code{c(up_1, down_1, up_2, down_2, ...)} and has length \code{2 * length(x)}. Take care not to pool the pairs across elements of \code{x}: matches
 found in different pairs did not come from the same original value. (This
-was the cause of a false-pass bug in \code{scrutiny::grimmer()}; see
+was the cause of a false-pass bug in a GRIMMER implementation; see
 \url{https://github.com/lhdjung/scrutiny/issues/85}.)
 }
 \description{
@@ -58,9 +57,8 @@ to have been rounded originally, in the process that generated the reported
 values.
 
 This function provides an interface to all of roundwork's rounding
-functions as well as \code{\link[base:Round]{base::round()}}. It is used as a helper within
-\code{\link[scrutiny:grim]{scrutiny::grim()}}, \code{\link[scrutiny:grimmer]{scrutiny::grimmer()}}, and \code{\link[scrutiny:debit]{scrutiny::debit()}};
-and it might find use in other places for consistency testing or
+functions as well as \code{\link[base:Round]{base::round()}}. It is meant as a helper within
+consistency tests, and it might find use in other places for
 reconstruction of statistical analyses.
 }
 \details{

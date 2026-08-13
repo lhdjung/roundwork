@@ -1,8 +1,8 @@
 # Integer offsets of the lower and upper rounding bounds from `x_num`, measured
 # in units of `1 / 10^(digits + 1)`, plus the inclusivity of each bound. This is
 # the single source of truth for rounding bounds in the package: `unround()` and
-# `bound_numerators()` both derive their ranges from it, and so do the
-# consistency tests in scrutiny that call `bound_numerators()`. The offsets
+# `bound_numerators()` both derive their ranges from it, and so does every
+# consistency test built on `bound_numerators()`. The offsets
 # follow the table in the `Rounding` section of `unround()`'s documentation,
 # extended by the three compound rounding methods: their bounds are the union of
 # the bounds of the two constituent methods, and since both constituents include
@@ -180,9 +180,8 @@ rounding_offsets <- function(rounding, threshold, x_num, symmetric = FALSE) {
 #'   to a bound becomes a comparison between integers, which is exact in double
 #'   precision as long as every integer involved stays below `2^53`.
 #'
-#'   This is what [`scrutiny::grim()`] and [`scrutiny::grimmer()`] derive their
-#'   candidate ranges from, which is why those tests and `unround()` always
-#'   agree on what the bounds of a rounded number are.
+#'   A consistency test that derives its candidate range from here can never
+#'   disagree with `unround()` about what the bounds of a rounded number are.
 #'
 #'   If `threshold` is fractional, the numerators and the denominator are both
 #'   scaled up by a power of ten until they are whole numbers again.
@@ -332,11 +331,11 @@ bound_numerators <- function(x_num, digits, rounding, threshold, symmetric) {
 #'   | `"down_from"`                          | `lower < x <= upper`         |
 #'   | `"up_from_or_down_from"`               | (depends on `threshold`)     |
 #'
-#'   The bounds come from the same internal machinery that [`scrutiny::grim()`]
-#'   and [`scrutiny::grimmer()`] use to derive their candidate ranges, so
-#'   `unround()` accepts exactly the rounding methods those tests do, and
-#'   `threshold` and `symmetric` mean the same thing everywhere. See
-#'   [`bound_numerators()`] for the exact-integer form of the same bounds.
+#'   The bounds come from the same internal machinery that a consistency test
+#'   derives its candidate range from, so `unround()` accepts exactly the
+#'   rounding methods such a test does, and `threshold` and `symmetric` mean the
+#'   same thing everywhere. See [`bound_numerators()`] for the exact-integer
+#'   form of the same bounds.
 #'
 #'   The four `"ties_*"` methods each name a complete tie-breaking procedure,
 #'   so they say by themselves what `rounding` and `symmetric` say together:
@@ -475,9 +474,9 @@ unround <- function(
   symmetric <- recycle(symmetric)
 
   # Determine the boundary values and whether they are inclusive, going by the
-  # `rounding` argument. `bound_numerators()` is the same helper that scrutiny's
-  # GRIM and GRIMMER derive their candidate ranges from, so all of them agree on
-  # what the bounds of a rounded number are, on which rounding methods exist,
+  # `rounding` argument. `bound_numerators()` is the same helper that a
+  # consistency test derives its candidate range from, so the two always agree
+  # on what the bounds of a rounded number are, on which rounding methods exist,
   # and on what `threshold` and `symmetric` mean. It expresses each bound as an
   # exact integer numerator over a common denominator; dividing recovers the
   # boundary value itself:

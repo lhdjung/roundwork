@@ -125,12 +125,11 @@ test_that("`unround()` bounds agree with the rounding they invert", {
 #
 # The package holds two independent encodings of every rounding procedure: the
 # forward `round_*()` functions dispatched by `reround()`, and the inverse
-# `rounding_offsets()` / `bound_numerators()` in unround.R, which is also what
-# scrutiny's GRIM, GRIMMER, and DEBIT derive their candidate ranges from. If the
-# two ever drift apart -- an offset table edit, a tolerance change in a forward
-# function -- a consistency test would compare a value rounded by one convention
-# against bounds derived from the other, and verdicts could flip with nothing to
-# catch it.
+# `rounding_offsets()` / `bound_numerators()` in unround.R, which is also what a
+# consistency test derives its candidate range from. If the two ever drift apart
+# -- an offset table edit, a tolerance change in a forward function -- such a
+# test would compare a value rounded by one convention against bounds derived
+# from the other, and verdicts could flip with nothing to catch it.
 #
 # The sweep covers every rounding method, the sign of `x`, `symmetric`, several
 # decimal counts, and several thresholds, and it checks the *inclusivity* of
@@ -286,6 +285,60 @@ test_that("`unround()` supports every rounding method that `reround()` does", {
 })
 
 
+test_that("a missing value is `NA` under every rounding method", {
+  # A missing value is undecidable rather than a value whose bounds are known.
+  # The bounds of `"trunc"` and `"anti_trunc"` depend on the sign of `x`, and
+  # `symmetric` mirrors the methods it applies to -- and a missing value has no
+  # sign. Every one of these used to abort with "missing value where TRUE/FALSE
+  # needed", the very error this behavior was meant to replace, so a caller
+  # failed for a whole vector over a single missing value.
+  for (m in c(
+    "up_or_down",
+    "up",
+    "down",
+    "even",
+    "ceiling",
+    "floor",
+    "ceiling_or_floor",
+    "trunc",
+    "anti_trunc",
+    "up_from",
+    "down_from",
+    "up_from_or_down_from",
+    "ties_up",
+    "ties_down",
+    "ties_away",
+    "ties_zero"
+  )) {
+    for (symmetric in c(FALSE, TRUE)) {
+      info <- paste0("rounding = ", m, ", symmetric = ", symmetric)
+      bounds <- unround(
+        NA_real_,
+        digits = 2,
+        rounding = m,
+        symmetric = symmetric
+      )
+      expect_true(is.na(bounds$lower), info = info)
+      expect_true(is.na(bounds$upper), info = info)
+      expect_true(is.na(bounds$incl_lower), info = info)
+      expect_true(is.na(bounds$incl_upper), info = info)
+    }
+  }
+
+  # ...and it is still vectorized over the values that are not missing:
+  bounds <- unround(c(0.53, NA), digits = 2)
+  expect_equal(bounds$lower, c(0.525, NA))
+  expect_equal(bounds$upper, c(0.535, NA))
+})
+
+
+test_that("a missing value does not excuse an unknown `rounding`", {
+  # An undecidable case is still no reason to accept a rounding method that does
+  # not exist -- that is an input error whatever `x` is:
+  unround(NA_real_, digits = 2, rounding = "nonsense") |> expect_error()
+})
+
+
 test_that("`threshold` only affects the `*_from` rounding methods", {
   # `round_up()` and `round_down()` round from a fixed 5, so reconstructing
   # their bounds must not depend on `threshold`. `unround()` used to widen the
@@ -345,9 +398,8 @@ test_that("`\"anti_trunc\"` at zero is a single point, not an undefined range", 
   # unit, an arbitrary sign choice -- and the bounds here were `NA` in
   # consequence.
   #
-  # It follows that a mean of zero pins the sum to exactly zero, so scrutiny's
-  # GRIM is decidable there rather than `NA`, and consistent only for all-zero
-  # data.
+  # It follows that a mean of zero pins the sum to exactly zero, so a GRIM test
+  # is decidable there rather than `NA`, and consistent only for all-zero data.
   bounds <- unround("0.00", rounding = "anti_trunc")
   expect_equal(bounds$lower, 0)
   expect_equal(bounds$upper, 0)
@@ -362,8 +414,8 @@ test_that("`\"anti_trunc\"` at zero is a single point, not an undefined range", 
 # `bound_numerators()` ----------------------------------------------------
 
 test_that("`bound_numerators()` gives the same bounds as `unround()`", {
-  # It is the exported low-level entry point that scrutiny's consistency tests
-  # build on, so the two must not come apart.
+  # It is the exported low-level entry point that consistency tests build on,
+  # so the two must not come apart.
   for (m in c("up_or_down", "up", "down", "ceiling", "floor", "trunc")) {
     for (digits in 0:2) {
       for (x_num in c(0.53, -0.53, 0, 2)) {

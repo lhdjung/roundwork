@@ -76,10 +76,10 @@ wrap_in_backticks <- function(x) {
 #'   considers a vector integer-like, use `rlang::is_integerish()` instead.
 #'
 #' @param x Numeric.
-#' @param tolerance Numeric. Any difference between `x` and a truncated version
-#'   of `x` less than `tolerance` (in the absolute value) will be ignored. The
-#'   default is close to `1 / (10 ^ 8)`. This avoids errors due to spurious
-#'   precision in floating-point arithmetic.
+#' @param tolerance Numeric. Any difference between `x` and the whole number
+#'   nearest to it that is less than `tolerance` (in the absolute value) will be
+#'   ignored. The default is close to `1 / (10 ^ 8)`. This avoids errors due to
+#'   spurious precision in floating-point arithmetic.
 #'
 #' @return Logical vector of the same length as `x`.
 #'
@@ -226,7 +226,7 @@ check_lengths_congruent <- function(var_list, error = TRUE, warn = TRUE) {
 #'   of the two directions can never be taken, which silently turns the method
 #'   into `"ceiling"`-like or `"floor"`-like behavior.
 #'
-#'   Up to roundwork 0.0.1, the check here was a different one
+#'   Up to roundwork 0.1.0, the check here was a different one
 #'   (`check_threshold_specified()`): it threw an error if `threshold` was `5`,
 #'   on the theory that a threshold of `5` must be the argument's default value
 #'   showing through, and that the user meant to specify something else. That
@@ -294,7 +294,7 @@ rounding_tolerance <- .Machine$double.eps^0.5 / 10
 # nudge it by `rounding_tolerance` beforehand. This is the amount they add or
 # subtract.
 #
-# Before roundwork 0.0.1 the nudge was written there as `threshold -
+# Before roundwork 0.1.0 the nudge was written there as `threshold -
 # .Machine$double.eps^0.5`, which the `/ 10` below turns into the very same
 # additive `rounding_tolerance`. Everything depended on that equality, since
 # `unround()` reports bounds that assume one shared tolerance, but it was not
@@ -361,8 +361,8 @@ rounding_constituents <- function(rounding) {
 # `dplyr::if_else()` would say the same thing, but these are the package's
 # innermost primitives: `round_trunc()`, `anti_trunc()`, and the `symmetric`
 # branches of `round_up_from()` and `round_down_from()` run once per candidate
-# value inside GRIMMER's loop over sums of squares, which scrutiny's seq mappers
-# multiply by hundreds of rows.
+# value in a consistency test's innermost loop, which a caller may in turn
+# repeat for every row of a data frame.
 
 restore_sign <- function(value, x) {
   value * (1 - 2 * (x < 0))
@@ -374,8 +374,7 @@ restore_sign <- function(value, x) {
 # already dropped its trailing zero and gives 1. This is why `unround()`'s `x`
 # must be a string unless `digits` is given.
 #
-# Copied from scrutiny, where it is exported as `decimal_places()`. It is just a
-# helper here, not part of roundwork's API.
+# This is just a helper, not part of roundwork's API.
 
 decimal_places <- function(x, sep = "\\.") {
   pieces <- stringr::str_split(stringr::str_trim(x), sep, n = 2L)
