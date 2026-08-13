@@ -42,7 +42,11 @@ vector rounded in the specified way.
 
 The function passes all arguments except for \code{mean} down to \code{\link[=reround]{reround()}}.
 Other than there, however, \code{rounding} is \code{"up"} by default, and it can't be
-set to \code{"up_or_down"}, \code{"up_from_or_down_from"}, or\code{"ceiling_or_floor"}.
+set to \code{"up_or_down"}, \code{"up_from_or_down_from"}, or \code{"ceiling_or_floor"}.
+Bias is a property of one rounding procedure, and each of those three names
+two: they would leave two rounded values per element of \code{x}, with no one
+value to subtract \code{x} from. Call \code{rounding_bias()} once per procedure to
+compare them.
 }
 \examples{
 # Define example vector:

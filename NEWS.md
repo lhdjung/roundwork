@@ -58,6 +58,10 @@ This release takes over the rounding infrastructure as it was revamped in [scrut
 
 -   Both functions accept one `digits` value per element of `x`, which is what the argument is documented to take. This used to fail an internal length check.
 
+## Rounding bias
+
+-   `rounding_bias()` now throws an error when `rounding` is set to one of the compound methods `"up_or_down"`, `"up_from_or_down_from"`, or `"ceiling_or_floor"`, which its documentation has always ruled out. Nothing enforced that before: the compound method left two rounded values per element of `x`, subtracting `x` recycled it across the pairs, and the result was twice as long as `x` and misaligned throughout. The error names the two constituent procedures so that they can be compared one at a time.
+
 ## Other
 
 -   `check_lengths_congruent()`, which backs the length checks in several functions, no longer errors on arguments that are in fact the same length. Its deduplication of lengths was indexed by the lengths of all arguments rather than of those longer than 1, so it silently did nothing whenever a length-1 argument sat in between.
