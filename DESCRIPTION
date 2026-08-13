@@ -1,6 +1,6 @@
 Package: roundwork
 Title: Rounding Infrastructure
-Version: 0.0.1
+Version: 0.1.0
 Authors@R: c(
     person(given = "Lukas",
            family = "Jung",
@@ -12,19 +12,20 @@ Description: Flexible rounding functions for use in error detection. They were
 License: MIT + file LICENSE
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
-RoxygenNote: 7.3.2
-Suggests: 
+RoxygenNote: 7.3.3
+Suggests:
     conflicted,
     ggplot2,
     knitr,
     rmarkdown,
     testthat (>= 3.0.0)
 VignetteBuilder: knitr
-Imports: 
+Depends:
+    R (>= 4.1.0)
+Imports:
     cli,
     dplyr,
     magrittr,
-    purrr,
     rlang,
     stringr,
     tibble
@@ -35,6 +36,7 @@ Collate:
     'reround-to-fraction.R'
     'round-ceil-floor.R'
     'reround.R'
+    'round-ties.R'
     'rounding-bias.R'
     'unround.R'
     'utils-pipe.R'

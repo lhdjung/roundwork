@@ -67,6 +67,20 @@ reround(1.275, digits = 2)
 #> [1] 1.28 1.27
 ```
 
+### Ties
+
+“Up” and “down” mean up and down *on the number line*, so they only part
+company with “away from zero” and “toward zero” below zero. If you would
+rather not have to keep that straight, name the tie-breaking rule
+outright:
+
+``` r
+round_ties_up(-2.5)     # Stata
+#> [1] -2
+round_ties_away(-2.5)   # Excel, SPSS, SAS, Matlab
+#> [1] -3
+```
+
 ### Bounds on the unrounded number
 
 `unround()` computes the range of an unknown original number, given its
@@ -86,9 +100,9 @@ unround("3.60", rounding = "up")
 #>   <chr>                    <chr>    <dbl> <lgl>      <chr> <lgl>      <dbl>
 #> 1 3.595 <= x(3.60) < 3.605 up        3.60 TRUE       3.60  FALSE       3.60
 
-unround("3.60", rounding = "even")
+unround("3.60", rounding = "ceiling")
 #> # A tibble: 1 × 7
-#>   range                     rounding lower incl_lower x     incl_upper upper
-#>   <chr>                     <chr>    <dbl> <lgl>      <chr> <lgl>      <dbl>
-#> 1 3.595 NA x(3.60) NA 3.605 even      3.60 NA         3.60  NA          3.60
+#>   range                 rounding lower incl_lower x     incl_upper upper
+#>   <chr>                 <chr>    <dbl> <lgl>      <chr> <lgl>      <dbl>
+#> 1 3.59 < x(3.60) <= 3.6 ceiling   3.59 FALSE      3.60  TRUE         3.6
 ```

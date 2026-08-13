@@ -26,7 +26,21 @@
 #'
 #'   Internally, these functions are just wrappers around other roundwork
 #'   functions as well as [`base::round()`]. They are presented here for easy
-#'   compliance with the IEEE 754 standard in R.
+#'   compliance with the IEEE 754 standard in R. Each of them has an equivalent
+#'   elsewhere in the package, and the results are identical:
+#'
+#'   | \strong{IEEE 754 name}   | \strong{Equivalent}                       |
+#'   | ---                      | ---                                       |
+#'   | `round_ties_to_even()`   | [`base::round()`]                         |
+#'   | `round_ties_to_away()`   | [`round_ties_away()`]                     |
+#'   | `round_toward_positive()`| [`round_ceiling()`]                       |
+#'   | `round_toward_negative()`| [`round_floor()`]                         |
+#'   | `round_toward_zero()`    | [`round_trunc()`]                         |
+#'
+#'   Note that IEEE 754 has no name for the other three tie-breaking procedures
+#'   in [`round_ties_up()`] and friends, nor for rounding away from zero
+#'   ([`round_anti_trunc()`]), nor for the custom thresholds of
+#'   [`round_up_from()`].
 #'
 #' @return Numeric. `x` rounded to `digits`.
 #'
@@ -34,6 +48,10 @@
 #'
 #' @name ieee-754
 #' @export
+#'
+#' @seealso [`round_ties_up()`] and friends for the same tie-breaking
+#'   procedures under names that do not presuppose the standard, and
+#'   [`reround()`] for reaching any of them through a `rounding` string.
 #'
 #' @references IEEE (2019). *IEEE Standard for Floating-Point Arithmetic.*
 #'   https://doi.org/10.1109/IEEESTD.2019.8766229
@@ -60,7 +78,6 @@
 #' # Always round toward zero:
 #' round_toward_zero(6.38, digits = 1)
 #' round_toward_zero(-6.38, digits = 1)
-
 
 round_ties_to_even <- function(x, digits = 0, ...) {
   round(x = x, digits = digits, ...)

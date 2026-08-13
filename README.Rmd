@@ -69,6 +69,15 @@ The default is to return two numbers — one rounded up, one rounded down. This 
 reround(1.275, digits = 2)
 ```
 
+### Ties
+
+"Up" and "down" mean up and down *on the number line*, so they only part company with "away from zero" and "toward zero" below zero. If you would rather not have to keep that straight, name the tie-breaking rule outright:
+
+```{r}
+round_ties_up(-2.5)     # Stata
+round_ties_away(-2.5)   # Excel, SPSS, SAS, Matlab
+```
+
 ### Bounds on the unrounded number
 
 `unround()` computes the range of an unknown original number, given its rounded version. The rounding procedure determines whether the bounds are inclusive or not:
@@ -78,5 +87,5 @@ unround("3.60")
 
 unround("3.60", rounding = "up")
 
-unround("3.60", rounding = "even")
+unround("3.60", rounding = "ceiling")
 ```

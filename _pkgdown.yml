@@ -24,21 +24,27 @@ articles:
   - rounding-in-depth
 reference:
   - title: Main API
+    desc: >
+      Reconstruct rounded numbers, or the bounds of the numbers behind them.
   - contents:
     - reround
-  - title: Min and max values before rounding
-  - contents:
     - unround
   - title: Individual rounding procedures
+    desc: >
+      Each of these can also be reached through `reround()`'s `rounding`
+      argument.
   - contents:
     - round_up
-    - round_down
-    - round_up_from
-    - round_down_from
+    - round_ties_up
     - round_ceiling
-    - round_floor
-  - title: Other
+    - round_ties_to_even
+  - title: Fractions and bias
   - contents:
     - reround_to_fraction
     - rounding_bias
-    - round_ties_to_even
+  - title: For package developers
+    desc: >
+      The exact-integer form of `unround()`'s bounds, for building consistency
+      tests on.
+  - contents:
+    - bound_numerators

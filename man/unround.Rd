@@ -4,7 +4,13 @@
 \alias{unround}
 \title{Reconstruct rounding bounds}
 \usage{
-unround(x, rounding = "up_or_down", threshold = 5, digits = NULL)
+unround(
+  x,
+  rounding = "up_or_down",
+  threshold = 5,
+  digits = NULL,
+  symmetric = FALSE
+)
 }
 \arguments{
 \item{x}{String or numeric. Rounded number. \code{x} must be a string unless
@@ -14,14 +20,26 @@ helper).}
 \item{rounding}{String. Rounding method presumably used to create \code{x}.
 Default is \code{"up_or_down"}. For more, see section \code{Rounding}.}
 
-\item{threshold}{Integer. Number from which to round up or down. Other
-rounding methods are not affected. Default is \code{5}.}
+\item{threshold}{Numeric. The point within a step at which rounding switches
+direction, in tenths of a step, for the \code{"up_from"}, \code{"down_from"}, and
+\code{"up_from_or_down_from"} methods; it must be greater than \code{0} and less than
+\code{10}. Other rounding methods are not affected. Default is \code{5}, which makes
+those three methods the same as \code{"up"}, \code{"down"}, and \code{"up_or_down"}. See
+\code{\link[=round_up_from]{round_up_from()}}, which spells out how \code{round_down_from()} mirrors the
+threshold.}
 
 \item{digits}{Integer. This argument is meant to make \code{unround()} more
 efficient to use as a helper function so that it doesn't need to
 redundantly count decimal places. Don't specify it otherwise. Default is
 \code{NULL}, in which case decimal places really are counted internally and \code{x}
 must be a string.}
+
+\item{symmetric}{Logical. Set \code{symmetric} to \code{TRUE} if the rounding of
+negative numbers with \code{"up"}, \code{"down"}, \code{"up_from"}, or \code{"down_from"}
+mirrored that of positive numbers, so that their absolute values were
+always equal. Default is \code{FALSE}. It only ever affects ties in negative
+numbers, but \code{TRUE} is what reconstructs Excel, SAS, SPSS, and Matlab; see
+\code{vignette("rounding-options")}.}
 }
 \value{
 A tibble with seven columns: \code{range}, \code{rounding}, \code{lower},
@@ -68,23 +86,51 @@ rounded. Set \code{rounding} to the rounding method that hypothetically lead to
 \code{x}:\tabular{ll}{
    \strong{Value of \code{rounding}} \tab \strong{Corresponding range} \cr
    \code{"up_or_down"} (default) \tab \verb{lower <= x <= upper} \cr
-   \code{"up"} \tab \verb{lower <= x < upper} \cr
-   \code{"down"} \tab \verb{lower < x <= upper} \cr
-   \code{"even"} \tab (no fix range; \code{NA}) \cr
+   \code{"up"}, \code{"ties_up"} \tab \verb{lower <= x < upper} \cr
+   \code{"down"}, \code{"ties_down"} \tab \verb{lower < x <= upper} \cr
+   \code{"ties_away"} (positive \code{x}) \tab \verb{lower <= x < upper} \cr
+   \code{"ties_away"} (negative \code{x}) \tab \verb{lower < x <= upper} \cr
+   \code{"ties_zero"} (positive \code{x}) \tab \verb{lower < x <= upper} \cr
+   \code{"ties_zero"} (negative \code{x}) \tab \verb{lower <= x < upper} \cr
+   \code{"even"} \tab \verb{lower <= x <= upper} \cr
    \code{"ceiling"} \tab \code{lower < x = upper} \cr
    \code{"floor"} \tab \code{lower = x < upper} \cr
+   \code{"ceiling_or_floor"} \tab \verb{lower < x < upper} \cr
    \code{"trunc"} (positive \code{x}) \tab \code{lower = x < upper} \cr
    \code{"trunc"} (negative \code{x}) \tab \code{lower < x = upper} \cr
    \code{"trunc"} (zero \code{x}) \tab \verb{lower < x < upper} \cr
    \code{"anti_trunc"} (positive \code{x}) \tab \code{lower < x = upper} \cr
    \code{"anti_trunc"} (negative \code{x}) \tab \code{lower = x < upper} \cr
-   \code{"anti_trunc"} (zero \code{x}) \tab \code{0 = x = 0} \cr
+   \code{"anti_trunc"} (zero \code{x}) \tab \code{lower = x = upper} (all \code{0}) \cr
+   \code{"up_from"} \tab \verb{lower <= x < upper} \cr
+   \code{"down_from"} \tab \verb{lower < x <= upper} \cr
+   \code{"up_from_or_down_from"} \tab (depends on \code{threshold}) \cr
 }
 
 
-Base R's own \code{round()} (R version >= 4.0.0), referenced by \code{rounding = "even"}, is reconstructed in the same way as \code{"up_or_down"}, but whether the
-boundary values are inclusive or not is hard to predict. Therefore,
-\code{unround()} checks if they are, and informs you about it.
+The bounds come from the same internal machinery that \code{\link[scrutiny:grim]{scrutiny::grim()}}
+and \code{\link[scrutiny:grimmer]{scrutiny::grimmer()}} use to derive their candidate ranges, so
+\code{unround()} accepts exactly the rounding methods those tests do, and
+\code{threshold} and \code{symmetric} mean the same thing everywhere. See
+\code{\link[=bound_numerators]{bound_numerators()}} for the exact-integer form of the same bounds.
+
+The four \code{"ties_*"} methods each name a complete tie-breaking procedure,
+so they say by themselves what \code{rounding} and \code{symmetric} say together:
+\code{"ties_up"} is \code{"up"} with \code{symmetric = FALSE}, \code{"ties_away"} is \code{"up"}
+with \code{symmetric = TRUE}, and likewise for \code{"ties_down"} and \code{"ties_zero"}.
+\code{symmetric} is not consulted for them. See \code{\link[=round_ties_up]{round_ties_up()}}.
+
+Note that \code{threshold} applies only to \code{"up_from"}, \code{"down_from"}, and
+\code{"up_from_or_down_from"}. The plain \code{"up"}, \code{"down"}, and \code{"up_or_down"}
+methods round from a fixed 5 -- see \code{\link[=round_up]{round_up()}} -- so their bounds do
+not depend on it.
+
+Base R's own \code{round()} (R version >= 4.0.0), referenced by \code{rounding = "even"}, is reconstructed in the same way as \code{"up_or_down"}. Whether its
+boundary values are really inclusive is hard to predict: \code{round()} breaks
+midpoint ties by the parity of the preceding digit, and whether a tie occurs
+at all depends on the binary representation of the value. Both bounds are
+therefore reported as inclusive, which can only make a reconstructed range
+too wide, never too narrow. That is the safe direction for error detection.
 }
 
 \examples{
@@ -112,4 +158,6 @@ For more about rounding \code{"up"}, \code{"down"}, or to \code{"even"}, see
 
 For more about the less likely \code{rounding} methods, \code{"ceiling"}, \code{"floor"},
 \code{"trunc"}, and \code{"anti_trunc"}, see \code{\link[=round_ceiling]{round_ceiling()}}.
+
+For the bounds as exact integers, see \code{\link[=bound_numerators]{bound_numerators()}}.
 }

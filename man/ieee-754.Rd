@@ -22,7 +22,10 @@ round_toward_zero(x, digits = 0)
 \arguments{
 \item{x}{Numeric. The decimal number to round.}
 
-\item{digits}{Integer. Number of digits to round \code{x} to. Default is \code{0}.}
+\item{digits}{Integer. Number of digits to round \code{x} to. Default is \code{0}.
+Negative values round to powers of ten: \code{round_up(1250, digits = -2)} is
+\code{1300}, which reconstructs values reported as "rounded to the nearest
+hundred".}
 
 \item{...}{Only in \code{round_ties_to_even()}. Passed down to \code{\link[base:Round]{base::round()}}.}
 }
@@ -54,7 +57,21 @@ accessible but uses slightly different names).
 
 Internally, these functions are just wrappers around other roundwork
 functions as well as \code{\link[base:Round]{base::round()}}. They are presented here for easy
-compliance with the IEEE 754 standard in R.
+compliance with the IEEE 754 standard in R. Each of them has an equivalent
+elsewhere in the package, and the results are identical:\tabular{ll}{
+   \strong{IEEE 754 name} \tab \strong{Equivalent} \cr
+   \code{round_ties_to_even()} \tab \code{\link[base:Round]{base::round()}} \cr
+   \code{round_ties_to_away()} \tab \code{\link[=round_ties_away]{round_ties_away()}} \cr
+   \code{round_toward_positive()} \tab \code{\link[=round_ceiling]{round_ceiling()}} \cr
+   \code{round_toward_negative()} \tab \code{\link[=round_floor]{round_floor()}} \cr
+   \code{round_toward_zero()} \tab \code{\link[=round_trunc]{round_trunc()}} \cr
+}
+
+
+Note that IEEE 754 has no name for the other three tie-breaking procedures
+in \code{\link[=round_ties_up]{round_ties_up()}} and friends, nor for rounding away from zero
+(\code{\link[=round_anti_trunc]{round_anti_trunc()}}), nor for the custom thresholds of
+\code{\link[=round_up_from]{round_up_from()}}.
 }
 \examples{
 # Round to the nearest value. In case of a tie,
@@ -82,4 +99,9 @@ round_toward_zero(-6.38, digits = 1)
 \references{
 IEEE (2019). \emph{IEEE Standard for Floating-Point Arithmetic.}
 https://doi.org/10.1109/IEEESTD.2019.8766229
+}
+\seealso{
+\code{\link[=round_ties_up]{round_ties_up()}} and friends for the same tie-breaking
+procedures under names that do not presuppose the standard, and
+\code{\link[=reround]{reround()}} for reaching any of them through a \code{rounding} string.
 }

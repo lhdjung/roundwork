@@ -14,13 +14,24 @@ knitr::opts_chunk$set(
 )
 ```
 
-The roundwork package was outsourced from [scrutiny](https://lhdjung.github.io/scrutiny/), a much larger and less focused package. (See [this Github issue](https://github.com/ianhussey/ERROR/issues/6) for the rationale.) However, all functions that were copied to roundwork are still part of scrutiny as of version 0.5.0.
+The roundwork package was outsourced from [scrutiny](https://lhdjung.github.io/scrutiny/), a much larger and less focused package. (See [this Github issue](https://github.com/ianhussey/ERROR/issues/6) for the rationale.)
 
-For now, this can create ambiguities when using both packages together. Here is how to avoid such problems in an interactive script. Package developers should simply use `package::function()` syntax, as usual.
+## The division of labor
 
-## Resolving conflicts
+roundwork holds the rounding layer and nothing else:
 
-Make sure that all roundwork functions are used instead of their scrutiny counterparts by the same names. To do so, use the [conflicted](https://conflicted.r-lib.org/index.html) package:
+-   the individual rounding procedures (`round_up()`, `round_ceiling()`, `round_ties_away()`, ...);
+-   `reround()`, the string-driven interface to all of them;
+-   `unround()` and `bound_numerators()`, which run the same procedures backwards to recover the range of an original number;
+-   `reround_to_fraction()` and `rounding_bias()`.
+
+scrutiny keeps the error detection techniques --- GRIM, GRIMMER, DEBIT, the mapper function factories, `audit()`, the plots --- and calls roundwork for everything above. So a `rounding` argument anywhere in scrutiny means what `vignette("rounding-options")` says it means, and a scrutiny consistency verdict rests on the bounds that `unround()` reports.
+
+That last point is worth spelling out, because it is the reason the two layers have to agree exactly. A consistency test asks which unrounded values could have produced a reported number. `bound_numerators()` answers that question in exact integer arithmetic, and the forward `round_*()` functions answer the mirror-image question of what a given value rounds *to*. If the two ever came apart --- a changed tolerance in a rounding function, an edited bound --- a test would compare values rounded by one convention against bounds derived from the other, and verdicts could flip with nothing to catch it. roundwork's test suite sweeps the whole input space to check that they agree, inclusivity of each bound included.
+
+## Older versions of scrutiny
+
+Up to scrutiny 0.5.0, the rounding functions were part of both packages under the same names, which could create ambiguity when attaching both. If you are on such a version, use the [conflicted](https://conflicted.r-lib.org/index.html) package to say which one you mean:
 
 ```{r eval=FALSE}
 library(conflicted)
@@ -30,3 +41,5 @@ conflict_prefer_matching("round", "roundwork", quiet = TRUE)
 ```
 
 You can then run `round_up` without parentheses and check the `namespace` signature at the bottom. If it says `namespace:roundwork`, everything is fine. If not, please [open an issue](https://github.com/lhdjung/roundwork/issues).
+
+Package developers should simply use `package::function()` syntax, as usual.
