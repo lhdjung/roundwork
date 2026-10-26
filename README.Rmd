@@ -27,7 +27,7 @@ The goal of roundwork is to enable flexible rounding beyond `base::round()`. Its
 
 Given a rounded number, call `unround()` to get the lower and upper bounds of the original number. This also takes rounding options into account, just like `reround()` does.
 
-Many roundwork functions used to be part of [scrutiny](https://lhdjung.github.io/scrutiny/). They were outsourced here for better modularity within the errorverse.
+roundwork holds the rounding layer that used to be part of [scrutiny](https://lhdjung.github.io/scrutiny/). Since version 1.0.0, scrutiny imports it from here, as can any other package that reconstructs rounding. For building consistency tests, `bound_numerators()` and `sum_range()` return the bounds behind `unround()` as exact integers. See [Relation to scrutiny](https://lhdjung.github.io/roundwork/articles/scrutiny.html).
 
 ## Installation
 

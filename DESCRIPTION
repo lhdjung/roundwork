@@ -7,8 +7,10 @@ Authors@R: c(
            role = c("aut", "cre"),
            email = "jung-lukas@gmx.net")
   )
-Description: Flexible rounding functions for use in error detection. They were
-    outsourced from the 'scrutiny' package.
+Description: Flexible rounding functions for use in error detection, including
+    the exact rounding bounds that consistency tests are built on. They were
+    outsourced from the 'scrutiny' package, which depends on them since its
+    version 1.0.0.
 License: MIT + file LICENSE
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)

@@ -89,7 +89,7 @@ reconstruct_rounded_numbers_scalar <- function(
 #'   `"down"`, and `"up_or_down"`. See [`round_up_from()`].
 #' @param symmetric Logical (length 1). If `TRUE`, negative numbers are rounded
 #'   like their absolute values under `"up"`, `"down"`, `"up_or_down"`, and the
-#'   `"*_from"` methods. Default is `FALSE`. Must not be given with a `"ties_*"`
+#'   `"*_from"` methods. Default is `FALSE`. Must not be `TRUE` with a `"ties_*"`
 #'   method, which already fixes the direction: `"ties_up"` with `symmetric =
 #'   TRUE` would be `"ties_away"`, so write that instead.
 #'

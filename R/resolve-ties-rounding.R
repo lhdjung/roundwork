@@ -63,7 +63,7 @@ resolve_ties_rounding <- function(rounding, symmetric) {
       "Drop `symmetric`."
     )
     abort_in_export(
-      "`symmetric` must not be given with `rounding = \"{rounding}\"`.",
+      "`symmetric` must not be `TRUE` with `rounding = \"{rounding}\"`.",
       "x" = "It is {symmetric}.",
       "i" = "A \"ties_*\" string names a complete tie-breaking procedure, \\
         so it already determines which way ties go for negative numbers.",

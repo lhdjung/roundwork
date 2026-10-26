@@ -29,8 +29,6 @@ round_ties_even(x, digits = 0L)
 Numeric. \code{x} rounded to \code{digits}.
 }
 \description{
-\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
-
 Each of these functions rounds to the nearest number with
 \code{digits} decimal places. They differ only at a tie, a value exactly
 halfway between two such numbers:
@@ -48,8 +46,8 @@ The first four are \code{\link[=round_up]{round_up()}} and \code{\link[=round_do
 sides of zero. \code{round_ties_even()} is \code{\link[base:Round]{base::round()}}.
 
 The matching \code{rounding} strings, \code{"ties_up"} and so on, are accepted
-wherever \code{rounding} is, and giving \code{symmetric} alongside one of them is
-an error.
+wherever \code{rounding} is, and giving \code{symmetric = TRUE} alongside one of
+them is an error.
 }
 \details{
 \code{round_ties_away()} is IEEE 754's \emph{roundTiesToAway}, which Excel's

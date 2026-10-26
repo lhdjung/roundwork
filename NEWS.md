@@ -1,10 +1,10 @@
 # roundwork 0.1.0
 
-This release is a revamp of the whole package: nearly every function was rewritten, and the rounding bounds and the rounding procedures are now derived from a single shared source. See Github issue [lhdjung/scrutiny#68](https://github.com/lhdjung/scrutiny/issues/68) for the background.
+This release accompanies [scrutiny](https://lhdjung.github.io/scrutiny/) 1.0.0, which now imports its rounding from roundwork instead of keeping copies of the functions. The rounding layer was rewritten inside scrutiny in the run-up to that release and then moved here, so nearly every function changed, and the rounding bounds and the rounding procedures are now derived from a single shared source. See `vignette("scrutiny")` for how the two packages relate.
 
 ## New functions
 
--   `round_ties_up()`, `round_ties_down()`, `round_ties_away()`, `round_ties_zero()`, and `round_ties_even()` name a complete tie-breaking procedure each, so that `symmetric` does not have to be spelled out separately. The first four are the combinations of `round_up()` and `round_down()` with `symmetric`, and `round_ties_even()` is `base::round()`; nothing is deprecated by them. The `rounding` strings `"ties_up"`, `"ties_down"`, `"ties_away"`, `"ties_zero"`, and `"ties_even"` reach the same procedures through `reround()` and `unround()`. Combining one of these strings with `symmetric` is an error, because the string already determines how negative ties are broken.
+-   `round_ties_up()`, `round_ties_down()`, `round_ties_away()`, `round_ties_zero()`, and `round_ties_even()` name a complete tie-breaking procedure each, so that `symmetric` does not have to be spelled out separately. The first four are the combinations of `round_up()` and `round_down()` with `symmetric`, and `round_ties_even()` is `base::round()`; nothing is deprecated by them. The `rounding` strings `"ties_up"`, `"ties_down"`, `"ties_away"`, `"ties_zero"`, and `"ties_even"` reach the same procedures through `reround()` and `unround()`. Combining one of these strings with `symmetric = TRUE` is an error, because the string already determines how negative ties are broken.
 
     They exist because the translation is easy to get backwards: "up" means *on the number line* here, but *away from zero* in Excel, Java, and Python. `round_ties_away()` is the same procedure as `round_ties_to_away()` under a name that does not presuppose the IEEE 754 vocabulary.
 
@@ -72,7 +72,7 @@ This release is a revamp of the whole package: nearly every function was rewritt
 
 ## Other
 
--   `check_lengths_congruent()`, which backs the length checks in several functions, no longer errors on arguments that are in fact the same length. Its deduplication of lengths was indexed by the lengths of all arguments rather than of those longer than 1, so it silently did nothing whenever a length-1 argument sat in between.
+-   `unround()`, `reround_to_fraction()`, and `reround_to_fraction_level()` no longer throw a spurious length error when two arguments of the same length are separated by one of length 1, as in `unround(x, digits = digits)` with a vector `x`, a vector `digits`, and the default `rounding`. The shared length check deduplicated lengths by an index that counted all arguments rather than only those longer than 1.
 
 -   The tests now sweep every rounding method against its own bounds across signs, decimal counts, thresholds, and `symmetric`, checking the inclusivity of each bound as well as its position. This is what pins the forward rounding functions and the inverse bounds to each other.
 

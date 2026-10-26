@@ -30,7 +30,7 @@ helper would.}
 
 \item{symmetric}{Logical. If \code{TRUE}, negative numbers are assumed to have
 been rounded like their absolute values under \code{"up"}, \code{"down"}, and the
-\code{"*_from"} methods. Default is \code{FALSE}. Must not be given with a \code{"ties_*"}
+\code{"*_from"} methods. Default is \code{FALSE}. Must not be \code{TRUE} with a \code{"ties_*"}
 method; see \code{\link[=reround]{reround()}}.}
 }
 \value{
@@ -68,6 +68,7 @@ bounds with the appropriate signs:\tabular{ll}{
    \code{"ties_away"} (negative \code{x}) \tab \verb{lower < x <= upper} \cr
    \code{"ties_zero"} (positive \code{x}) \tab \verb{lower < x <= upper} \cr
    \code{"ties_zero"} (negative \code{x}) \tab \verb{lower <= x < upper} \cr
+   \code{"ties_away"}, \code{"ties_zero"} (zero \code{x}) \tab \verb{lower < x < upper} \cr
    \code{"even"}, \code{"ties_even"} \tab \verb{lower <= x <= upper} \cr
    \code{"ceiling"} \tab \code{lower < x = upper} \cr
    \code{"floor"} \tab \code{lower = x < upper} \cr
@@ -89,7 +90,7 @@ range without widening it; each spans exactly one step at every
 threshold.
 
 The \code{"ties_*"} methods each name a complete tie-breaking procedure, so
-giving \code{symmetric} with them is an error; see \code{\link[=round_ties_up]{round_ties_up()}}.
+giving \code{symmetric = TRUE} with them is an error; see \code{\link[=round_ties_up]{round_ties_up()}}.
 
 Under \code{"even"}, both bounds are reported as inclusive. \code{\link[base:Round]{base::round()}}
 decides a tie on the binary double, so whether a value on a bound rounds

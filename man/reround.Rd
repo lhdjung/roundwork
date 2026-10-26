@@ -31,7 +31,7 @@ switches direction, in tenths of a step; greater than \code{0} and less than
 
 \item{symmetric}{Logical (length 1). If \code{TRUE}, negative numbers are rounded
 like their absolute values under \code{"up"}, \code{"down"}, \code{"up_or_down"}, and the
-\code{"*_from"} methods. Default is \code{FALSE}. Must not be given with a \code{"ties_*"}
+\code{"*_from"} methods. Default is \code{FALSE}. Must not be \code{TRUE} with a \code{"ties_*"}
 method, which already fixes the direction: \code{"ties_up"} with \code{symmetric = TRUE} would be \code{"ties_away"}, so write that instead.}
 }
 \value{

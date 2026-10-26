@@ -321,16 +321,16 @@ test_that("`symmetric` is rejected for the `\"ties_*\"` strings", {
   for (rounding in names(TIES_METHODS)) {
     -2.5 |>
       reround(0, rounding, symmetric = TRUE) |>
-      expect_error("must not be given")
+      expect_error("must not be `TRUE`")
     # The bounds side resolves the same strings through the same helper, so it
     # has to agree -- including via `sum_range()`, which is where a silently
     # dropped `symmetric` would reach a verdict:
     "-2.5" |>
       unround(rounding = rounding, digits = 1, symmetric = TRUE) |>
-      expect_error("must not be given")
+      expect_error("must not be `TRUE`")
     -5.19 |>
       sum_range(28, 2, rounding, threshold = 5, symmetric = TRUE) |>
-      expect_error("must not be given")
+      expect_error("must not be `TRUE`")
   }
 })
 

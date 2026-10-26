@@ -1,8 +1,6 @@
 #' Rounding procedures named by their tie-breaking rule
 #'
-#' @description `r lifecycle::badge("experimental")`
-#'
-#'   Each of these functions rounds to the nearest number with
+#' @description Each of these functions rounds to the nearest number with
 #'   `digits` decimal places. They differ only at a tie, a value exactly
 #'   halfway between two such numbers:
 #'   - `round_ties_up()` sends a tie to the higher number.
@@ -17,8 +15,8 @@
 #'   sides of zero. `round_ties_even()` is [`base::round()`].
 #'
 #'   The matching `rounding` strings, `"ties_up"` and so on, are accepted
-#'   wherever `rounding` is, and giving `symmetric` alongside one of them is
-#'   an error.
+#'   wherever `rounding` is, and giving `symmetric = TRUE` alongside one of
+#'   them is an error.
 #'
 #' @details `round_ties_away()` is IEEE 754's *roundTiesToAway*, which Excel's
 #'   `ROUND()`, SPSS's `RND()`, SAS's `ROUND()`, and Matlab's `round()`

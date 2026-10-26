@@ -395,6 +395,7 @@ sum_range <- function(
 #'   | `"ties_away"` (negative `x`)           | `lower < x <= upper`         |
 #'   | `"ties_zero"` (positive `x`)           | `lower < x <= upper`         |
 #'   | `"ties_zero"` (negative `x`)           | `lower <= x < upper`         |
+#'   | `"ties_away"`, `"ties_zero"` (zero `x`) | `lower < x < upper`          |
 #'   | `"even"`, `"ties_even"`                | `lower <= x <= upper`        |
 #'   | `"ceiling"`                            | `lower < x = upper`          |
 #'   | `"floor"`                              | `lower = x < upper`          |
@@ -414,7 +415,7 @@ sum_range <- function(
 #'   threshold.
 #'
 #'   The `"ties_*"` methods each name a complete tie-breaking procedure, so
-#'   giving `symmetric` with them is an error; see [`round_ties_up()`].
+#'   giving `symmetric = TRUE` with them is an error; see [`round_ties_up()`].
 #'
 #'   Under `"even"`, both bounds are reported as inclusive. [`base::round()`]
 #'   decides a tie on the binary double, so whether a value on a bound rounds
@@ -435,7 +436,7 @@ sum_range <- function(
 #'   helper would.
 #' @param symmetric Logical. If `TRUE`, negative numbers are assumed to have
 #'   been rounded like their absolute values under `"up"`, `"down"`, and the
-#'   `"*_from"` methods. Default is `FALSE`. Must not be given with a `"ties_*"`
+#'   `"*_from"` methods. Default is `FALSE`. Must not be `TRUE` with a `"ties_*"`
 #'   method; see [`reround()`].
 #'
 #' @return A tibble with the columns `range`, `rounding`, `lower`,

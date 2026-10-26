@@ -35,7 +35,7 @@ First, I will present `reround()`, a general interface to reconstructing rounded
 
 ## Reconstruct rounded numbers with `reround()`
 
-Error detection techniques don't usually call the individual rounding functions directly. Instead, they call `reround()`, which mediates between these two levels. `reround()` takes the vector of "raw" reconstructed numbers that were not yet rounded in the way that's assumed to have been the original rounding procedure. Its next argument is `digits`, the number of decimal places to round to.
+Error detection techniques don't usually call the individual rounding functions directly. To reconstruct rounded numbers, they call `reround()`, which mediates between these two levels. To find the range of an original number behind a reported one, they call `unround()` or, in exact integer arithmetic, `bound_numerators()` and `sum_range()`; see below. `reround()` takes the vector of "raw" reconstructed numbers that were not yet rounded in the way that's assumed to have been the original rounding procedure. Its next argument is `digits`, the number of decimal places to round to.
 
 The remaining three arguments are about the rounding procedure. Most of the time, only `rounding` will be of any interest. It takes a string with the name of one of the rounding procedures discussed below.
 
@@ -123,7 +123,7 @@ round_ties_zero(-2.5)
 round_ties_even(-2.5)   # `base::round()`
 ```
 
-`round_ties_up()` is `round_up()` with `symmetric = FALSE`, and `round_ties_away()` is `round_up()` with `symmetric = TRUE`. Nothing is deprecated by them; use whichever spelling reads better. The `rounding` strings `"ties_up"`, `"ties_down"`, `"ties_away"`, `"ties_zero"`, and `"ties_even"` name the same procedures inside `reround()` and `unround()`. Each of them already determines the direction of a tie for negative numbers as well, so these strings cannot be combined with `symmetric`; doing so is an error.
+`round_ties_up()` is `round_up()` with `symmetric = FALSE`, and `round_ties_away()` is `round_up()` with `symmetric = TRUE`. Nothing is deprecated by them; use whichever spelling reads better. The `rounding` strings `"ties_up"`, `"ties_down"`, `"ties_away"`, `"ties_zero"`, and `"ties_even"` name the same procedures inside `reround()` and `unround()`. Each of them already determines the direction of a tie for negative numbers as well, so combining them with `symmetric = TRUE` is an error.
 
 ### To even (base R)
 
@@ -257,7 +257,7 @@ Alternatively, a function that uses `unround()` as a helper might count decimal 
 
 In this case, `x` can be numeric because trailing zeros are no longer needed. (That, in turn, is because the responsibility to count decimal places in number-strings rather than numeric values shifts from `unround()` to the higher-level function.)
 
-The following call returns the exact same tibble as above:
+The following call returns the same bounds as above. Only the `x` column differs, since it is now a number rather than a string:
 
 ```{r}
 unround(x = 3.5, digits = 2, rounding = "up")
