@@ -69,5 +69,5 @@ sum_range(0.345, 58, digits = 3, rounding = "up_or_down", threshold = 5)
 Brown, N. J. L., & Heathers, J. A. J. (2017). The GRIM Test: A
 Simple Technique Detects Numerous Anomalies in the Reporting of Results in
 Psychology. \emph{Social Psychological and Personality Science}, 8(4),
-363-369. \url{https://doi.org/10.1177/1948550616673876}
+363-369. \doi{10.1177/1948550616673876}
 }

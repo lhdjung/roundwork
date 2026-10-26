@@ -50,7 +50,7 @@ a given number of decimal places.
 }
 \details{
 The function names follow the official standard except for case
-conventions (IEEE 2019, pp. 27f.; the \href{https://en.m.wikipedia.org/wiki/IEEE_754#Rounding_rules}{Wikipedia page} is more
+conventions (IEEE 2019, pp. 27f.; the \href{https://en.wikipedia.org/wiki/IEEE_754#Rounding_rules}{Wikipedia page} is more
 accessible but uses slightly different names).
 
 Internally, these functions are just wrappers around other roundwork

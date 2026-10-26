@@ -21,7 +21,7 @@
 #'
 #' @details The function names follow the official standard except for case
 #'   conventions (IEEE 2019, pp. 27f.; the [Wikipedia
-#'   page](https://en.m.wikipedia.org/wiki/IEEE_754#Rounding_rules) is more
+#'   page](https://en.wikipedia.org/wiki/IEEE_754#Rounding_rules) is more
 #'   accessible but uses slightly different names).
 #'
 #'   Internally, these functions are just wrappers around other roundwork

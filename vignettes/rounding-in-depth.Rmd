@@ -127,7 +127,7 @@ round_ties_even(-2.5)   # `base::round()`
 
 ### To even (base R)
 
-Like Python's [`round()`](https://docs.python.org/3/library/functions.html#round) function, R's `base::round()` doesn't round up or down, or use any other procedure based solely on the truncated part of the number. Instead, `round()` strives to round to the next even number. This is also called "banker's rounding", and it follows a technical standard, [IEEE 754](https://en.m.wikipedia.org/wiki/IEEE_754#Roundings_to_nearest).
+Like Python's [`round()`](https://docs.python.org/3/builtins/functions.html#round) function, R's `base::round()` doesn't round up or down, or use any other procedure based solely on the truncated part of the number. Instead, `round()` strives to round to the next even number. This is also called "banker's rounding", and it follows a technical standard, [IEEE 754](https://en.wikipedia.org/wiki/IEEE_754#Roundings_to_nearest).
 
 Realizing that `round()` works in a highly unintuitive way sometimes leads to consternation. Why can't we just round like we learned in school, that is, up from 5? The reason seems to be bias. Because 5 is right in between two whole numbers, any procedure that rounds 5 in some predetermined direction introduces a bias toward that direction. Rounding up from 5 is therefore biased upward, and rounding down from 5 is biased downward.
 
@@ -211,7 +211,7 @@ For reconstruction, two claims about `round()` are easy to run together. `base::
 
 ### IEEE 754 rounding standard
 
-If you need to follow the IEEE 754 rounding standard, see `round_ties_to_even()` for wrapper functions that implement all five IEEE rounding procedures (or "rounding-direction attributes"). IEEE 754 defines standards for floating-point operations, which includes rounding (IEEE 2019, pp. 27f.; the [Wikipedia page](https://en.m.wikipedia.org/wiki/IEEE_754#Rounding_rules) is more accessible).
+If you need to follow the IEEE 754 rounding standard, see `round_ties_to_even()` for wrapper functions that implement all five IEEE rounding procedures (or "rounding-direction attributes"). IEEE 754 defines standards for floating-point operations, which includes rounding (IEEE 2019, pp. 27f.; the [Wikipedia page](https://en.wikipedia.org/wiki/IEEE_754#Rounding_rules) is more accessible).
 
 Each of them is a wrapper around a function that roundwork already had under a name of its own:
 
