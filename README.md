@@ -16,21 +16,22 @@ others may have rounded their data.
 
 Given a rounded number, call `unround()` to get the lower and upper
 bounds of the original number. This also takes rounding options into
-account, just like `reround()` does.
+account, just like `reround()` does. `bound_numerators()` and
+`sum_range()` are building blocks using exact integer arithmetic to
+avoid all the bugs that can occur with floating-point operations.
 
-roundwork holds the rounding layer that used to be part of
+roundwork contains the rounding layer that used to be part of
 [scrutiny](https://lhdjung.github.io/scrutiny/). Since version 1.0.0,
 scrutiny imports it from here, as can any other package that
-reconstructs rounding. For building consistency tests,
-`bound_numerators()` and `sum_range()` return the bounds behind
-`unround()` as exact integers. See [Relation to
-scrutiny](https://lhdjung.github.io/roundwork/articles/scrutiny.html).
+reconstructs rounding.
 
 ## Installation
 
 Install the package from CRAN:
 
-    install.packages("roundwork")
+``` r
+install.packages("roundwork")
+```
 
 Alternatively, install the development version from GitHub:
 
