@@ -23,7 +23,7 @@ WHOLE_NUMBER_TOLERANCE <- .Machine$double.eps^0.5
 # number it is meant to be would move it a whole step, making
 # `ceiling(0.28 * 100) / 100` 0.29. Every rounding function therefore nudges the
 # shifted value by this tolerance first -- directly in round-ceil-floor.R, and
-# folded into `tie_offset_up()` / `tie_offset_down()` in round.R. It is far
+# folded into `tie_offset_up()` / `tie_offset_down()` in utils.R. It is far
 # smaller than any difference a reported value could express, so it only absorbs
 # representation error.
 #

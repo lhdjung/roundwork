@@ -44,8 +44,9 @@ They are special cases of \code{round_up_from()} and \code{round_down_from()}, w
 switch direction at a \code{threshold} other than 5.
 }
 \details{
-These functions decide a tie by a fixed rule rather than by the
-parity of the preceding digit, as \code{\link[base:Round]{base::round()}} does. They exist to
+These functions decide a tie by a fixed rule. \code{\link[base:Round]{base::round()}}
+rounds ties to even instead, and decides on the binary double rather than
+the printed decimal. They exist to
 reconstruct the output of software that rounds this way; see
 \code{vignette("rounding-options")} for which program uses which procedure.
 They are not meant to replace \code{base::round()} in original computations.

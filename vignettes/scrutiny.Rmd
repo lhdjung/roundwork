@@ -16,11 +16,12 @@ knitr::opts_chunk$set(
 
 The roundwork package was outsourced from [scrutiny](https://lhdjung.github.io/scrutiny/), a much larger and less focused package. (See [this Github issue](https://github.com/ianhussey/ERROR/issues/6) for the rationale.)
 
-roundwork holds the rounding layer and nothing else:
+roundwork only contains the rounding layer:
 
--   the individual rounding procedures (`round_up()`, `round_ceiling()`, `round_ties_away()`, ...);
--   `reround()`, the string-driven interface to all of them;
--   `unround()` and `bound_numerators()`, which run the same procedures backwards to recover the range of an original number, and `sum_range()`, which finds the whole-number sums behind a rounded mean;
+-   The individual rounding procedures (`round_up()`, `round_ceiling()`, `round_ties_away()`, and so on);
+-   `reround()`, the interface that names each procedure by a string;
+-   `unround()` and `bound_numerators()`, which run the same procedures backwards to recover the range of an unknown original number;
+-   `sum_range()`, which finds the whole-number sums behind a rounded mean;
 -   `reround_to_fraction()` and `rounding_bias()`;
 -   `resolve_ties_rounding()`, for functions that branch on `rounding` themselves.
 
@@ -28,15 +29,18 @@ The error detection techniques that build on this layer --- GRIM, GRIMMER, DEBIT
 
 ## Resolving conflicts
 
-Up to version 0.6.1, scrutiny has its own copies of the rounding functions under the same names, so attaching both packages can create ambiguity. These copies are older, and some of them behave differently: for example, `round_down_from()` reads `threshold` differently there. If you use scrutiny 0.6.1 or earlier, use the [conflicted](https://conflicted.r-lib.org/index.html) package to say which one you mean:
+Before its 1.0.0 version, scrutiny had its own copies of the rounding functions, some of them under the same names. Attaching both packages --- roundwork and an older version of scrutiny --- can create ambiguity. These copies are older, and some of them behave differently: for example, `round_down_from()` reads `threshold` differently there.
+
+I strongly recommend using scrutiny 1.0.0 or later. However, just in case you use roundwork together with scrutiny 0.6.1 or earlier, use the [conflicted](https://conflicted.r-lib.org/index.html) package to clarify which package you mean when you call certain functions:
 
 ```{r eval=FALSE}
 library(conflicted)
 library(scrutiny)
 library(roundwork)
 conflict_prefer_matching("round", "roundwork", quiet = TRUE)
+conflict_prefer("anti_trunc", "roundwork", quiet = TRUE)
 ```
 
 You can then run `round_up` without parentheses and check the `namespace` signature at the bottom. If it says `namespace:roundwork`, everything is fine. If not, please [open an issue](https://github.com/lhdjung/roundwork/issues).
 
-Package developers should simply use `package::function()` syntax, as usual. With scrutiny 1.0.0 or later, there is no conflict to resolve.
+Package developers can simply use `package::function()` syntax, as usual, or call `usethis::use_import_from()`. With scrutiny 1.0.0 or later, there is no conflict to resolve.

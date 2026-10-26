@@ -157,7 +157,7 @@ mean(down1)
 mean(even1)
 ```
 
-However, this noble goal of unbiased rounding runs up against the reality of floating point arithmetic. You might therefore get results from `round()` that first seem bizarre, or at least unpredictable. Consider:
+However, unbiased in theory does not mean unbiased in every sample. Rounding to even only preserves the mean if the even neighbors fall equally often above and below the ties. Here, all values are exact ties, but four of the seven have their even neighbor below:
 
 ```{r}
 vec2 <- seq(from = 4.5, to = 10.5)
@@ -170,14 +170,17 @@ vec2
 up2
 down2
 
-even2 # No symmetry here...
+even2 # Every tie goes to even...
 
 mean(vec2)
 mean(up2)
 mean(down2)
-mean(even2) # ... and the mean is slightly biased downward!
+mean(even2) # ... but the mean is biased downward!
+```
 
+Floating-point arithmetic adds a second complication. Most decimal fractions cannot be represented exactly in binary, so numbers that look like ties usually are not. `round()` then rounds them to the nearer neighbor, even or not. Below, `1.15` goes to `1.1` and `1.85` to `1.9`:
 
+```{r}
 vec3 <- c(
   1.05,
   1.15,
@@ -191,7 +194,7 @@ vec3 <- c(
   1.95
 )
 
-# No bias here, though:
+# Still, the mean is preserved here:
 round(vec3, 1)
 mean(vec3)
 mean(round(vec3, 1))
@@ -288,7 +291,19 @@ bound_numerators(
 )
 ```
 
-This is the low-level entry point that consistency tests build on. Most users want `unround()` instead.
+`sum_range()` builds on these numerators. It returns the least and the greatest whole-number sum that, divided by `n_items` and rounded, gives the reported mean --- the arithmetic behind GRIM. A mean of 5.18 from 28 whole numbers requires their sum to be 145:
+
+```{r}
+sum_range(
+  x_num = 5.18,
+  n_items = 28,
+  digits = 2,
+  rounding = "up_or_down",
+  threshold = 5
+)
+```
+
+These are the low-level entry points that consistency tests build on. Most users want `unround()` instead.
 
 ## Fractional rounding
 
@@ -361,6 +376,7 @@ rounding_bias(x = vec5, digits = 0, rounding = "up", mean = FALSE)
 Admittedly, this example is somewhat overdramatic. Here is a rather harmless one:
 
 ```{r}
+set.seed(42)
 vec6 <- rnorm(50000, 100, 15)
 
 rounding_bias(vec6, digits = 2)

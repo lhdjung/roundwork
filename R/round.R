@@ -6,8 +6,9 @@
 #'   They are special cases of `round_up_from()` and `round_down_from()`, which
 #'   switch direction at a `threshold` other than 5.
 #'
-#' @details These functions decide a tie by a fixed rule rather than by the
-#'   parity of the preceding digit, as [`base::round()`] does. They exist to
+#' @details These functions decide a tie by a fixed rule. [`base::round()`]
+#'   rounds ties to even instead, and decides on the binary double rather than
+#'   the printed decimal. They exist to
 #'   reconstruct the output of software that rounds this way; see
 #'   `vignette("rounding-options")` for which program uses which procedure.
 #'   They are not meant to replace `base::round()` in original computations.
