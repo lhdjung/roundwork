@@ -317,8 +317,8 @@ test_that("`\"anti_trunc\"` at zero is a single point, not an undefined range", 
 
   # It follows that a mean of zero pins the sum to exactly zero, so the sums
   # are decidable there rather than `NA`, and only all-zero data qualify:
-  0    |> sum_range(40, digits = 2, rounding = "anti_trunc") |> expect_equal(c(0, 0))
-  0.01 |> sum_range(40, digits = 2, rounding = "anti_trunc") |> expect_equal(c(1, 0))
+  0    |> sum_range(40, 2, "anti_trunc", threshold = 5) |> expect_equal(c(0, 0))
+  0.01 |> sum_range(40, 2, "anti_trunc", threshold = 5) |> expect_equal(c(1, 0))
 })
 
 
@@ -580,22 +580,11 @@ test_that("`sum_range()` finds exactly the sums that round to `x`", {
 
 
 test_that("`sum_range()` returns `NA` for undecidable input", {
-  NA_real_ |> sum_range(28, 2)    |> expect_equal(c(NA_real_, NA_real_))
-  NA       |> sum_range(28, 2)    |> expect_equal(c(NA_real_, NA_real_))
-  Inf      |> sum_range(28, 2)    |> expect_equal(c(NA_real_, NA_real_))
-  5.18     |> sum_range(0, 2)     |> expect_equal(c(NA_real_, NA_real_))
-  5.18     |> sum_range(-28, 2)   |> expect_equal(c(NA_real_, NA_real_))
-  5.18     |> sum_range(28.5, 2)  |> expect_equal(c(NA_real_, NA_real_))
-  5.18     |> sum_range(Inf, 2)   |> expect_equal(c(NA_real_, NA_real_))
-  5.18     |> sum_range(NA, 2)    |> expect_equal(c(NA_real_, NA_real_))
-  5.18     |> sum_range(28, 2)    |> expect_equal(c(145, 145))
-})
-
-
-test_that("`sum_range()` rejects malformed input", {
-  c(5.18, 5.19) |> sum_range(28, 2)        |> expect_error("must each be a single number")
-  "5.18"        |> sum_range(28, 2)        |> expect_error("must each be a single number")
-  5.18          |> sum_range(c(28, 29), 2) |> expect_error("must each be a single number")
-  5.18          |> sum_range(28, 1.5)      |> expect_error("must be whole numbers")
-  5.18          |> sum_range(28, 2, "nope") |> expect_error("designated string values")
+  NA_real_ |> sum_range(28, 2, "up_or_down", 5)  |> expect_equal(c(NA_real_, NA_real_))
+  Inf      |> sum_range(28, 2, "up_or_down", 5)  |> expect_equal(c(NA_real_, NA_real_))
+  5.18     |> sum_range(0, 2, "up_or_down", 5)   |> expect_equal(c(NA_real_, NA_real_))
+  5.18     |> sum_range(-28, 2, "up_or_down", 5) |> expect_equal(c(NA_real_, NA_real_))
+  5.18     |> sum_range(Inf, 2, "up_or_down", 5) |> expect_equal(c(NA_real_, NA_real_))
+  5.18     |> sum_range(NA, 2, "up_or_down", 5)  |> expect_equal(c(NA_real_, NA_real_))
+  5.18     |> sum_range(28, 2, "up_or_down", 5)  |> expect_equal(c(145, 145))
 })

@@ -7,9 +7,10 @@
 bound_numerators(x_num, digits, rounding, threshold, symmetric)
 }
 \arguments{
-\item{x_num}{Numeric (length 1). The rounded number.}
+\item{x_num}{Numeric (length 1). The rounded number. Not checked.}
 
-\item{digits}{Integer (length 1). Number of decimal places in \code{x_num}.}
+\item{digits}{Integer (length 1). Number of decimal places in \code{x_num}. Not
+checked.}
 
 \item{rounding}{String (length 1). Rounding method presumably used to create
 \code{x_num}. See the \code{Rounding} section of \code{\link[=unround]{unround()}}.}
@@ -61,6 +62,13 @@ disagree with \code{unround()} about what the bounds of a rounded number are.
 
 If \code{threshold} is fractional, the numerators and the denominator are both
 scaled up by a power of ten until they are whole numbers again.
+
+\code{bound_numerators()} is a low-level primitive, meant to be called once per
+value set inside a consistency test, so it checks only \code{rounding},
+\code{threshold}, and \code{symmetric}. The caller is responsible for passing a
+single number as \code{x_num} and a whole number of decimal places that fits
+it as \code{digits}. Other input may return meaningless numerators or fail with
+an uninformative error. \code{\link[=unround]{unround()}} checks all of its input.
 }
 \examples{
 # The bounds of 2.7, rounded up or down from 5,

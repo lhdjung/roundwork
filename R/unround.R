@@ -192,8 +192,16 @@ rounding_offsets <- function(rounding, threshold, x_num, symmetric = FALSE) {
 #'   If `threshold` is fractional, the numerators and the denominator are both
 #'   scaled up by a power of ten until they are whole numbers again.
 #'
-#' @param x_num Numeric (length 1). The rounded number.
-#' @param digits Integer (length 1). Number of decimal places in `x_num`.
+#'   `bound_numerators()` is a low-level primitive, meant to be called once per
+#'   value set inside a consistency test, so it checks only `rounding`,
+#'   `threshold`, and `symmetric`. The caller is responsible for passing a
+#'   single number as `x_num` and a whole number of decimal places that fits
+#'   it as `digits`. Other input may return meaningless numerators or fail with
+#'   an uninformative error. [`unround()`] checks all of its input.
+#'
+#' @param x_num Numeric (length 1). The rounded number. Not checked.
+#' @param digits Integer (length 1). Number of decimal places in `x_num`. Not
+#'   checked.
 #' @param rounding String (length 1). Rounding method presumably used to create
 #'   `x_num`. See the `Rounding` section of [`unround()`].
 #' @param threshold Numeric (length 1). The point within a step at which
@@ -291,22 +299,21 @@ bound_numerators <- function(x_num, digits, rounding, threshold, symmetric) {
 #'   `n_items * 10^(digits + 1)` times the integer part of `x_num` stays below
 #'   `2^53`, which is far beyond any realistic input.
 #'
+#'   `sum_range()` is a low-level primitive, meant to be called once per value
+#'   set inside a consistency test, so it does not check its input. The caller
+#'   is responsible for passing single numbers, a whole-number `digits` that
+#'   fits `x_num`, and a whole-number `n_items`. A fractional `n_items` returns
+#'   a range for that fraction rather than an error or `NA`. Only `rounding`,
+#'   `threshold`, and `symmetric` are checked, by [`bound_numerators()`].
+#'
 #' @inheritParams bound_numerators
 #' @param n_items Numeric (length 1). The number of values averaged; a positive
-#'   whole number.
-#' @param rounding String (length 1). Rounding method presumably used to create
-#'   `x_num`. Default is `"up_or_down"`. See the `Rounding` section of
-#'   [`unround()`].
-#' @param threshold Numeric (length 1). For the `"*_from"` methods, the point
-#'   within a step at which rounding switches direction. Default is `5`. See
-#'   [`round_up_from()`].
-#' @param symmetric Logical (length 1). Whether the rounding of negative numbers
-#'   mirrored that of positive numbers. Default is `FALSE`. See [`round_up()`].
+#'   whole number. Not checked.
 #'
 #' @return A numeric vector of length 2, `c(lower, upper)`. If `lower` is
 #'   greater than `upper`, no whole-number sum is consistent with `x_num`. Both
-#'   are `NA` if `x_num` is missing or infinite, or if `n_items` is not a
-#'   positive whole number.
+#'   are `NA` if `x_num` is missing or infinite, or if `n_items` is missing,
+#'   infinite, or not positive.
 #'
 #' @references Brown, N. J. L., & Heathers, J. A. J. (2017). The GRIM Test: A
 #'   Simple Technique Detects Numerous Anomalies in the Reporting of Results in
@@ -317,51 +324,28 @@ bound_numerators <- function(x_num, digits, rounding, threshold, symmetric) {
 #'
 #' @examples
 #' # A mean of 5.18 from 28 whole numbers requires their sum to be 145:
-#' sum_range(5.18, n_items = 28, digits = 2)
+#' sum_range(5.18, 28, digits = 2, rounding = "up_or_down", threshold = 5)
 #'
 #' # No sum gives 5.19: 145 / 28 is 5.18, and 146 / 28 is 5.21:
-#' sum_range(5.19, n_items = 28, digits = 2)
+#' sum_range(5.19, 28, digits = 2, rounding = "up_or_down", threshold = 5)
 #'
 #' # 34.5% of a sample of 58 is 20 people (or 0.345 as a share):
-#' sum_range(0.345, n_items = 58, digits = 3)
+#' sum_range(0.345, 58, digits = 3, rounding = "up_or_down", threshold = 5)
 
 sum_range <- function(
   x_num,
   n_items,
   digits,
-  rounding = "up_or_down",
-  threshold = 5,
+  rounding,
+  threshold,
   symmetric = FALSE
 ) {
-  # A bare `NA` is a missing value, not a wrong type:
-  is_single_number <- function(v) {
-    length(v) == 1L && (is.numeric(v) || is.na(v))
-  }
-  if (
-    !is_single_number(x_num) ||
-      !is_single_number(n_items) ||
-      length(digits) != 1L
-  ) {
-    abort_in_export(
-      "`x_num`, `n_items`, and `digits` must each be a single number.",
-      "x" = "They are {an_a_type(x_num)}, {an_a_type(n_items)}, and \\
-        {an_a_type(digits)}."
-    )
-  }
-  check_digits_whole(digits)
-
   bounds <- bound_numerators(x_num, digits, rounding, threshold, symmetric)
 
-  if (
-    is.null(bounds) ||
-      !is.finite(n_items) ||
-      n_items <= 0 ||
-      abs(n_items - round(n_items)) >= WHOLE_NUMBER_TOLERANCE
-  ) {
+  if (is.null(bounds) || !is.finite(n_items) || n_items <= 0) {
     return(c(NA_real_, NA_real_))
   }
 
-  n_items <- round(n_items)
   denom <- bounds$denom
 
   # `s / n_items >= lower / denom`  <==>  `s * denom >= n_items * lower`

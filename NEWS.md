@@ -10,7 +10,7 @@ This release is a revamp of the whole package: nearly every function was rewritt
 
 -   `bound_numerators()` returns the same bounds as `unround()`, but as exact integer numerators over a common denominator instead of decimals. It is the low-level entry point that consistency tests build on: deriving candidate values from floating-point bounds can drop a legitimate candidate or admit a phantom one, either of which flips a verdict. See [lhdjung/scrutiny#86](https://github.com/lhdjung/scrutiny/issues/86).
 
--   `sum_range()` returns the least and the greatest whole-number sum that, divided by `n_items` and rounded, gives a reported mean. This is the arithmetic behind GRIM, and behind any other share of a whole such as a percentage. It is built on `bound_numerators()` and exact in the same way, so packages that check granularity no longer have to derive candidate sums from floating-point products.
+-   `sum_range()` returns the least and the greatest whole-number sum that, divided by `n_items` and rounded, gives a reported mean. This is the arithmetic behind GRIM, and behind any other share of a whole such as a percentage. It is built on `bound_numerators()` and exact in the same way, so packages that check granularity no longer have to derive candidate sums from floating-point products. Like `bound_numerators()`, it is a low-level primitive that leaves most input checks to the caller.
 
 ## Rounding bounds
 

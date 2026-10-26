@@ -4,39 +4,33 @@
 \alias{sum_range}
 \title{Whole-number sums behind a rounded mean}
 \usage{
-sum_range(
-  x_num,
-  n_items,
-  digits,
-  rounding = "up_or_down",
-  threshold = 5,
-  symmetric = FALSE
-)
+sum_range(x_num, n_items, digits, rounding, threshold, symmetric = FALSE)
 }
 \arguments{
-\item{x_num}{Numeric (length 1). The rounded number.}
+\item{x_num}{Numeric (length 1). The rounded number. Not checked.}
 
 \item{n_items}{Numeric (length 1). The number of values averaged; a positive
-whole number.}
+whole number. Not checked.}
 
-\item{digits}{Integer (length 1). Number of decimal places in \code{x_num}.}
+\item{digits}{Integer (length 1). Number of decimal places in \code{x_num}. Not
+checked.}
 
 \item{rounding}{String (length 1). Rounding method presumably used to create
-\code{x_num}. Default is \code{"up_or_down"}. See the \code{Rounding} section of
-\code{\link[=unround]{unround()}}.}
+\code{x_num}. See the \code{Rounding} section of \code{\link[=unround]{unround()}}.}
 
-\item{threshold}{Numeric (length 1). For the \code{"*_from"} methods, the point
-within a step at which rounding switches direction. Default is \code{5}. See
+\item{threshold}{Numeric (length 1). The point within a step at which
+rounding switches direction, in tenths of a step, for the \code{"up_from"},
+\code{"down_from"}, and \code{"up_from_or_down_from"} methods. See
 \code{\link[=round_up_from]{round_up_from()}}.}
 
 \item{symmetric}{Logical (length 1). Whether the rounding of negative numbers
-mirrored that of positive numbers. Default is \code{FALSE}. See \code{\link[=round_up]{round_up()}}.}
+mirrored that of positive numbers. See \code{\link[=round_up]{round_up()}}.}
 }
 \value{
 A numeric vector of length 2, \code{c(lower, upper)}. If \code{lower} is
 greater than \code{upper}, no whole-number sum is consistent with \code{x_num}. Both
-are \code{NA} if \code{x_num} is missing or infinite, or if \code{n_items} is not a
-positive whole number.
+are \code{NA} if \code{x_num} is missing or infinite, or if \code{n_items} is missing,
+infinite, or not positive.
 }
 \description{
 \code{sum_range()} returns the least and the greatest whole number
@@ -53,16 +47,23 @@ Like \code{\link[=bound_numerators]{bound_numerators()}}, on which it builds, \c
 works in exact integer arithmetic. This is exact as long as
 \code{n_items * 10^(digits + 1)} times the integer part of \code{x_num} stays below
 \code{2^53}, which is far beyond any realistic input.
+
+\code{sum_range()} is a low-level primitive, meant to be called once per value
+set inside a consistency test, so it does not check its input. The caller
+is responsible for passing single numbers, a whole-number \code{digits} that
+fits \code{x_num}, and a whole-number \code{n_items}. A fractional \code{n_items} returns
+a range for that fraction rather than an error or \code{NA}. Only \code{rounding},
+\code{threshold}, and \code{symmetric} are checked, by \code{\link[=bound_numerators]{bound_numerators()}}.
 }
 \examples{
 # A mean of 5.18 from 28 whole numbers requires their sum to be 145:
-sum_range(5.18, n_items = 28, digits = 2)
+sum_range(5.18, 28, digits = 2, rounding = "up_or_down", threshold = 5)
 
 # No sum gives 5.19: 145 / 28 is 5.18, and 146 / 28 is 5.21:
-sum_range(5.19, n_items = 28, digits = 2)
+sum_range(5.19, 28, digits = 2, rounding = "up_or_down", threshold = 5)
 
 # 34.5\% of a sample of 58 is 20 people (or 0.345 as a share):
-sum_range(0.345, n_items = 58, digits = 3)
+sum_range(0.345, 58, digits = 3, rounding = "up_or_down", threshold = 5)
 }
 \references{
 Brown, N. J. L., & Heathers, J. A. J. (2017). The GRIM Test: A

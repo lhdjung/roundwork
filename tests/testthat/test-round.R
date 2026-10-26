@@ -329,7 +329,7 @@ test_that("`symmetric` is rejected for the `\"ties_*\"` strings", {
       unround(rounding = rounding, digits = 1, symmetric = TRUE) |>
       expect_error("must not be given")
     -5.19 |>
-      sum_range(28, digits = 2, rounding = rounding, symmetric = TRUE) |>
+      sum_range(28, 2, rounding, threshold = 5, symmetric = TRUE) |>
       expect_error("must not be given")
   }
 })
