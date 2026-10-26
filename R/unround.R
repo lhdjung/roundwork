@@ -1,67 +1,89 @@
-# Integer offsets of the lower and upper rounding bounds from `x_num`, measured
-# in units of `1 / 10^(digits + 1)`, plus the inclusivity of each bound. This is
-# the single source of truth for rounding bounds in the package: `unround()` and
-# `bound_numerators()` both derive their ranges from it, and so does every
-# consistency test built on `bound_numerators()`. The offsets
+# Exact candidate-sum arithmetic ------------------------------------------
+
+# Consistency tests such as GRIM need the set of integer sums `s` for which
+# `s / n_items` would have been rounded to the reported mean. Deriving it from
+# floating-point products such as `floor(upper * n_items)` is unsafe: where such
+# a product is mathematically an exact integer, its `double` can fall on either
+# side of it, dropping a legitimate sum or admitting a phantom one, and the
+# verdict flips (scrutiny issue #86).
+#
+# The functions below therefore work in integer arithmetic. Every bound that
+# `unround()` can return is `x` plus a whole number of units of
+# `1 / 10^(digits + 1)`, and `x` itself is such a whole number because it has
+# `digits` decimal places -- so both bounds have exact integer numerators over
+# `10^(digits + 1)`, and `s / n_items` vs. `numerator / 10^(digits + 1)` becomes
+# a comparison of the integers `s * 10^(digits + 1)` and `n_items * numerator`.
+#
+# This is exact while every integer involved stays below `2^53`. The products
+# are on the order of `n * 10^(2 * digits)`, far below it for any realistic
+# input; beyond it the arithmetic degrades to plain floating point.
+#
+# Dividing two such integers is exact as well, so `floor(a / b)` and
+# `ceiling(a / b)` need no correction. IEEE 754 division returns the double
+# nearest the true quotient, and a quotient that is not an integer lies at least
+# `1 / b` from every integer -- more than half the spacing of doubles there, as
+# long as `|a| < 2^53`. Don't add a check that multiplies the result back out:
+# below that limit it never corrects anything, and above it, where the product
+# rounds, it turns correct results into wrong ones more often than the reverse.
+
+
+# Integer offsets of the lower and upper rounding bounds from `x_num`, in units
+# of `1 / 10^(digits + 1)`, plus each bound's inclusivity. This is the single
+# source of truth for rounding bounds: `unround()`, the consistency tests, and
+# every other function that needs such bounds derive them from it. The offsets
 # follow the table in the `Rounding` section of `unround()`'s documentation,
-# extended by the three compound rounding methods: their bounds are the union of
-# the bounds of the two constituent methods, and since both constituents include
-# `x_num` itself, that union is again a single interval.
+# plus the compound methods, whose bounds are the union of their constituents'
+# (a single interval, since both constituents include `x_num`).
 #
-# Each bound is inclusive or exclusive exactly as the corresponding rounding
-# function in reround.R behaves at that bound -- e.g. `"up"` excludes its upper
-# bound because a value at the midpoint rounds up, i.e. away from `x_num`, and
-# `"ceiling"` excludes its lower bound because a value there ceilings to `x_num
-# - 1` unit.
-#
-# `"even"` is the one method whose bounds cannot be pinned down: `base::round()`
-# breaks midpoint ties by the parity of the preceding digit, and whether a tie
-# occurs at all depends on the binary representation of the value. Both of its
-# bounds are therefore treated as inclusive, which can only make a consistency
-# test too permissive, never too strict -- the safe direction for an
-# error-detection tool.
+# Each bound is inclusive exactly as the corresponding function in reround.R
+# behaves there -- e.g. `"up"` excludes its upper bound, where a value rounds
+# away from `x_num`. `"even"` is the exception: `base::round()` breaks ties by
+# the parity of the preceding digit, and whether a tie occurs at all depends on
+# the binary representation, so both its bounds are treated as inclusive. That
+# makes a test too permissive rather than too strict -- the safe direction.
 #
 # `threshold` deliberately plays no role for `"up_or_down"`, `"up"`, and
 # `"down"`, matching `round_up()` and `round_down()`, which round from a fixed
 # 5. The `"*_from"` methods are the parameterized ones.
 #
-# Returns a list of four elements -- lower offset, upper offset, `incl_lower`,
-# `incl_upper` -- all four of them `NA` if `x_num` is missing, or `NULL` if
-# `rounding` is not a known method.
+# Returns a list of lower offset, upper offset, `incl_lower`, `incl_upper` --
+# all `NA` if `x_num` is missing or infinite, or `NULL` if `rounding` is
+# unknown.
 
 rounding_offsets <- function(rounding, threshold, x_num, symmetric = FALSE) {
-  # A missing value has no sign, and the branches below need one: `"trunc"` and
-  # `"anti_trunc"` have different bounds on either side of zero, and `symmetric`
-  # mirrors the methods it applies to. Standing in a positive number keeps
-  # `rounding` validated the way it is for any other value -- an unknown method
-  # is an input error whatever `x_num` is -- and the offsets it yields are
-  # discarded at the end. A missing value is undecidable, not a value whose
-  # bounds are known:
-  x_missing <- is.na(x_num)
+  check_rounding_spec_singular(rounding, threshold, symmetric)
+
+  # The branches below need a sign, and a missing value has none. A positive
+  # stand-in keeps `rounding` validated as for any other value; its offsets are
+  # discarded at the end. An infinity counts as missing, as in the tests: its
+  # "bounds" would be `Inf` on both sides, which is no range at all.
+  x_missing <- !is.finite(x_num)
   if (x_missing) {
     x_num <- 1
   }
 
-  # A `"ties_*"` string names a complete tie-breaking procedure, so it stands in
-  # for a `rounding` and a `symmetric` together. `reround()` resolves it through
-  # the same table, so the bounds below stay in step with the rounding functions
-  # they invert:
+  # `reround()` resolves `"ties_*"` strings through the same helper, so the
+  # bounds stay in step with the rounding functions they invert:
   spec <- resolve_ties_rounding(rounding, symmetric)
   rounding <- spec$rounding
   symmetric <- spec$symmetric
 
-  # The parameterized methods are the ones that `threshold` applies to, so they
-  # are the ones that validate it -- as in `reround()`, and for the same reason:
-  # a threshold outside `(0, 10)` makes one of the two directions unreachable,
-  # and the offsets below would encode that silently:
+  # Only the parameterized methods validate `threshold`, as in `reround()`: a
+  # threshold outside `(0, 10)` makes one direction unreachable, and the offsets
+  # below would encode that silently:
   if (rounding %in% c("up_from", "down_from", "up_from_or_down_from")) {
     check_threshold_valid(threshold)
   }
 
-  # With `symmetric`, the rounding of a negative number mirrors that of its
-  # absolute value, which is precisely what the opposite method does to a
-  # negative number anyway. Swapping the method here is therefore enough:
+  # With `symmetric`, a negative number rounds like its absolute value -- which
+  # is what the opposite method does to it anyway, so swapping the method
+  # suffices. A threshold is measured from the lower end of the step, so
+  # mirroring the step mirrors it too; at the fixed `5` of `"up"`/`"down"`,
+  # `10 - threshold` is `threshold` again:
   if (symmetric && x_num < 0) {
+    if (rounding %in% c("up_from", "down_from", "up_from_or_down_from")) {
+      threshold <- 10 - threshold
+    }
     # fmt: skip
     rounding <- switch(
       rounding,
@@ -73,8 +95,7 @@ rounding_offsets <- function(rounding, threshold, x_num, symmetric = FALSE) {
     )
   }
 
-  # Rounding with truncation and "anti-truncation" depends on the sign of the
-  # input number:
+  # Truncation and "anti-truncation" depend on the sign of `x_num`:
 
   # fmt: skip
   if (rounding == "trunc") {
@@ -87,11 +108,9 @@ rounding_offsets <- function(rounding, threshold, x_num, symmetric = FALSE) {
     }
   } else if (rounding == "anti_trunc") {
     # `anti_trunc()` is `round_ceiling()` above zero and `round_floor()` below
-    # it, so it takes those bounds. At zero it is neither: every non-zero value,
-    # however small, is taken away from zero to the next step out, so the only
-    # value reported as zero is zero itself. That degenerate range is a real
-    # answer rather than a missing one -- a mean reported as 0.00 under this
-    # method really does pin the sum to exactly 0.
+    # it. At zero it is neither: every non-zero value is taken away from zero,
+    # so only zero itself is reported as zero. That single-point range is a real
+    # answer, not a missing one.
     offsets <- if (x_num > 0) {
       list(-10, 0,   FALSE, TRUE)
     } else if (x_num < 0) {
@@ -99,20 +118,6 @@ rounding_offsets <- function(rounding, threshold, x_num, symmetric = FALSE) {
     } else {
       list(0,   0,   TRUE,  TRUE)
     }
-  } else if (rounding == "up_from_or_down_from") {
-    # The union of the two constituent intervals. Which one supplies each
-    # endpoint -- and hence whether that endpoint is inclusive -- depends on
-    # `threshold`; on a tie, the inclusive constituent wins:
-    lower_up   <- threshold - 10
-    lower_down <- -threshold
-    upper_up   <- threshold
-    upper_down <- 10 - threshold
-    offsets <- list(
-      min(lower_up, lower_down),
-      max(upper_up, upper_down),
-      lower_up <= lower_down,   # `"up_from"` includes its lower bound
-      upper_down >= upper_up    # `"down_from"` includes its upper bound
-    )
   } else {
     # fmt: skip
     offsets <- switch(
@@ -125,14 +130,15 @@ rounding_offsets <- function(rounding, threshold, x_num, symmetric = FALSE) {
       "floor"                = list(0,              10,             TRUE,       FALSE),
       "ceiling_or_floor"     = list(-10,            10,             FALSE,      FALSE),
       "up_from"              = list(threshold - 10, threshold,      TRUE,       FALSE),
-      "down_from"            = list(-threshold,     10 - threshold, FALSE,      TRUE),
+      "down_from"            = list(threshold - 10, threshold,      FALSE,      TRUE),
+      "up_from_or_down_from" = list(threshold - 10, threshold,      TRUE,       TRUE),
       return(NULL)
     )
   }
 
-  # At zero, the mirroring happens inside the interval rather than beside it:
-  # the negative half of the interval is the reflection of the positive half, so
-  # both ends behave like the upper end does for a positive number.
+  # At zero the mirroring happens inside the interval: its negative half is the
+  # reflection of its positive half, so both ends behave like the upper end
+  # does for a positive number.
 
   # fmt: skip
   if (
@@ -198,7 +204,7 @@ rounding_offsets <- function(rounding, threshold, x_num, symmetric = FALSE) {
 #'   mirrored that of positive numbers. See [`round_up()`].
 #'
 #' @return A list of five elements, or `NULL` if the bounds are undefined, which
-#'   is the case only for a missing `x_num`:
+#'   is the case only for a missing or infinite `x_num`:
 #'   - `lower`, `upper`: integer numerators of the two bounds.
 #'   - `denom`: the common denominator.
 #'   - `incl_lower`, `incl_upper`: whether each bound is inclusive.
@@ -230,22 +236,20 @@ bound_numerators <- function(x_num, digits, rounding, threshold, symmetric) {
   offsets <- rounding_offsets(rounding, threshold, x_num, symmetric)
 
   if (is.null(offsets)) {
-    cli::cli_abort(c(
+    abort_in_export(
       "`rounding` must be one of the designated string values.",
       "x" = "It is {wrong_spec_string(rounding)}.",
       "i" = "See `vignette(\"rounding-options\")`."
-    ))
+    )
   }
 
   if (anyNA(offsets)) {
     return(NULL)
   }
 
-  # `threshold` is documented as an integer but not enforced to be one. If it is
-  # fractional, the offsets are scaled up by a power of ten (along with the
-  # denominator) until they are whole numbers again. If no such power is found
-  # within a sensible range, the arithmetic downstream silently degrades to
-  # floating point:
+  # A fractional `threshold` is scaled up by a power of ten, along with the
+  # denominator, until the offsets are whole again; failing that, the
+  # arithmetic degrades to floating point:
   bounds <- c(offsets[[1L]], offsets[[2L]])
   scale <- 1
   while (scale < 1e6 && any(bounds * scale != round(bounds * scale))) {
@@ -271,42 +275,132 @@ bound_numerators <- function(x_num, digits, rounding, threshold, symmetric) {
 }
 
 
+#' Whole-number sums behind a rounded mean
+#'
+#' @description `sum_range()` returns the least and the greatest whole number
+#'   `s` for which `s / n_items`, rounded as specified, would be reported as
+#'   `x_num`. Every whole number between the two qualifies as well.
+#'
+#'   This is the arithmetic behind the GRIM test (Brown and Heathers 2017): a
+#'   mean of `n_items` whole numbers is GRIM-consistent if the range is not
+#'   empty. The same goes for any other share of a whole, such as a percentage
+#'   of a sample.
+#'
+#' @details Like [`bound_numerators()`], on which it builds, `sum_range()`
+#'   works in exact integer arithmetic. This is exact as long as
+#'   `n_items * 10^(digits + 1)` times the integer part of `x_num` stays below
+#'   `2^53`, which is far beyond any realistic input.
+#'
+#' @inheritParams bound_numerators
+#' @param n_items Numeric (length 1). The number of values averaged; a positive
+#'   whole number.
+#' @param rounding String (length 1). Rounding method presumably used to create
+#'   `x_num`. Default is `"up_or_down"`. See the `Rounding` section of
+#'   [`unround()`].
+#' @param threshold Numeric (length 1). For the `"*_from"` methods, the point
+#'   within a step at which rounding switches direction. Default is `5`. See
+#'   [`round_up_from()`].
+#' @param symmetric Logical (length 1). Whether the rounding of negative numbers
+#'   mirrored that of positive numbers. Default is `FALSE`. See [`round_up()`].
+#'
+#' @return A numeric vector of length 2, `c(lower, upper)`. If `lower` is
+#'   greater than `upper`, no whole-number sum is consistent with `x_num`. Both
+#'   are `NA` if `x_num` is missing or infinite, or if `n_items` is not a
+#'   positive whole number.
+#'
+#' @references Brown, N. J. L., & Heathers, J. A. J. (2017). The GRIM Test: A
+#'   Simple Technique Detects Numerous Anomalies in the Reporting of Results in
+#'   Psychology. *Social Psychological and Personality Science*, 8(4),
+#'   363-369. <https://doi.org/10.1177/1948550616673876>
+#'
+#' @export
+#'
+#' @examples
+#' # A mean of 5.18 from 28 whole numbers requires their sum to be 145:
+#' sum_range(5.18, n_items = 28, digits = 2)
+#'
+#' # No sum gives 5.19: 145 / 28 is 5.18, and 146 / 28 is 5.21:
+#' sum_range(5.19, n_items = 28, digits = 2)
+#'
+#' # 34.5% of a sample of 58 is 20 people (or 0.345 as a share):
+#' sum_range(0.345, n_items = 58, digits = 3)
+
+sum_range <- function(
+  x_num,
+  n_items,
+  digits,
+  rounding = "up_or_down",
+  threshold = 5,
+  symmetric = FALSE
+) {
+  # A bare `NA` is a missing value, not a wrong type:
+  is_single_number <- function(v) {
+    length(v) == 1L && (is.numeric(v) || is.na(v))
+  }
+  if (
+    !is_single_number(x_num) ||
+      !is_single_number(n_items) ||
+      length(digits) != 1L
+  ) {
+    abort_in_export(
+      "`x_num`, `n_items`, and `digits` must each be a single number.",
+      "x" = "They are {an_a_type(x_num)}, {an_a_type(n_items)}, and \\
+        {an_a_type(digits)}."
+    )
+  }
+  check_digits_whole(digits)
+
+  bounds <- bound_numerators(x_num, digits, rounding, threshold, symmetric)
+
+  if (
+    is.null(bounds) ||
+      !is.finite(n_items) ||
+      n_items <= 0 ||
+      abs(n_items - round(n_items)) >= WHOLE_NUMBER_TOLERANCE
+  ) {
+    return(c(NA_real_, NA_real_))
+  }
+
+  n_items <- round(n_items)
+  denom <- bounds$denom
+
+  # `s / n_items >= lower / denom`  <==>  `s * denom >= n_items * lower`
+  lower <- ceiling(n_items * bounds$lower / denom)
+  if (!bounds$incl_lower && lower * denom == n_items * bounds$lower) {
+    lower <- lower + 1
+  }
+
+  # `s / n_items <= upper / denom`  <==>  `s * denom <= n_items * upper`
+  upper <- floor(n_items * bounds$upper / denom)
+  if (!bounds$incl_upper && upper * denom == n_items * bounds$upper) {
+    upper <- upper - 1
+  }
+
+  c(lower, upper)
+}
+
+
 #' Reconstruct rounding bounds
 #'
-#' @description `unround()` takes a rounded number and returns the range of the
-#'   original value: lower and upper bounds for the hypothetical earlier number
-#'   that was later rounded to the input number. It also displays a range with
-#'   inequation signs, showing whether the bounds are inclusive or not.
+#' @description `unround()` takes a rounded number and returns the range of
+#'   values that would have been rounded to it: a lower and an upper bound,
+#'   and whether each is inclusive. The default rounding method is
+#'   `"up_or_down"`; see *Rounding* for the others.
 #'
-#'   By default, the presumed rounding method is rounding up (or down) from 5.
-#'   See the `Rounding` section for other methods.
-
-#' @details The function is vectorized over `x` and `rounding`. This can be
-#'   useful to unround multiple numbers at once, or to check how a single number
-#'   is unrounded with different assumed rounding methods.
+#' @details `x` is a string by default so that its trailing zeros can be
+#'   counted, since a numeric value loses them. If the number of decimal places
+#'   is known, pass it as `digits`, and `x` may be numeric.
+#'   [`bound_numerators()`] and [`sum_range()`] derive their bounds from the
+#'   same internal functions as `unround()`, so they always agree with it.
 #'
-#'   If both vectors have a length greater than 1, it must be the same
-#'   length. However, this will pair numbers with rounding methods, which can be
-#'   confusing. It is recommended that at least one of these input vectors has
-#'   length 1.
+#'   All arguments are vectorized. Those of length greater than 1 must have the
+#'   same length and are paired element by element. Pairing `x` with
+#'   `rounding` in this way gives a warning.
 #'
-#'   Why does `x` need to be a string if `digits` is not specified? In that
-#'   case, `unround()` must count decimal places by itself. If `x` then was
-#'   numeric, it wouldn't have any trailing zeros because these get dropped from
-#'   numerics.
-#'
-#'   Trailing zeros are as important for reconstructing boundary values as any
-#'   other trailing digits would be. Strings don't drop trailing zeros, so they
-#'   are used instead.
-
-#' @section Rounding: Depending on how `x` was rounded, the boundary values can
-#'   be inclusive or exclusive. The `incl_lower` and `incl_upper` columns in the
-#'   resulting tibble are `TRUE` in the first case and `FALSE` in the second.
-#'   The `range` column reflects this with equation and inequation signs.
-#'
-#'   However, these ranges are based on assumptions about the way `x` was
-#'   rounded. Set `rounding` to the rounding method that hypothetically lead to
-#'   `x`:
+#' @section Rounding: Whether a bound is inclusive depends on the rounding
+#'   method. Under `"up"`, a value on the lower bound rounds up to `x`, but a
+#'   value on the upper bound rounds up past it. The `range` column shows the
+#'   bounds with the appropriate signs:
 #'
 #'   | \strong{Value of `rounding`}           | \strong{Corresponding range} |
 #'   | ---                                    | ---                          |
@@ -317,7 +411,7 @@ bound_numerators <- function(x_num, digits, rounding, threshold, symmetric) {
 #'   | `"ties_away"` (negative `x`)           | `lower < x <= upper`         |
 #'   | `"ties_zero"` (positive `x`)           | `lower < x <= upper`         |
 #'   | `"ties_zero"` (negative `x`)           | `lower <= x < upper`         |
-#'   | `"even"`                               | `lower <= x <= upper`        |
+#'   | `"even"`, `"ties_even"`                | `lower <= x <= upper`        |
 #'   | `"ceiling"`                            | `lower < x = upper`          |
 #'   | `"floor"`                              | `lower = x < upper`          |
 #'   | `"ceiling_or_floor"`                   | `lower < x < upper`          |
@@ -329,98 +423,63 @@ bound_numerators <- function(x_num, digits, rounding, threshold, symmetric) {
 #'   | `"anti_trunc"` (zero `x`)              | `lower = x = upper` (all `0`)|
 #'   | `"up_from"`                            | `lower <= x < upper`         |
 #'   | `"down_from"`                          | `lower < x <= upper`         |
-#'   | `"up_from_or_down_from"`               | (depends on `threshold`)     |
+#'   | `"up_from_or_down_from"`               | `lower <= x <= upper`        |
 #'
-#'   The bounds come from the same internal machinery that a consistency test
-#'   derives its candidate range from, so `unround()` accepts exactly the
-#'   rounding methods such a test does, and `threshold` and `symmetric` mean the
-#'   same thing everywhere. See [`bound_numerators()`] for the exact-integer
-#'   form of the same bounds.
-#'
-#'   The four `"ties_*"` methods each name a complete tie-breaking procedure,
-#'   so they say by themselves what `rounding` and `symmetric` say together:
-#'   `"ties_up"` is `"up"` with `symmetric = FALSE`, `"ties_away"` is `"up"`
-#'   with `symmetric = TRUE`, and likewise for `"ties_down"` and `"ties_zero"`.
-#'   `symmetric` is not consulted for them. See [`round_ties_up()`].
-#'
-#'   Note that `threshold` applies only to `"up_from"`, `"down_from"`, and
-#'   `"up_from_or_down_from"`. The plain `"up"`, `"down"`, and `"up_or_down"`
-#'   methods round from a fixed 5 -- see [`round_up()`] -- so their bounds do
-#'   not depend on it.
-#'
-#' Base R's own `round()` (R version >= 4.0.0), referenced by `rounding =
-#' "even"`, is reconstructed in the same way as `"up_or_down"`. Whether its
-#' boundary values are really inclusive is hard to predict: `round()` breaks
-#' midpoint ties by the parity of the preceding digit, and whether a tie occurs
-#' at all depends on the binary representation of the value. Both bounds are
-#' therefore reported as inclusive, which can only make a reconstructed range
-#' too wide, never too narrow. That is the safe direction for error detection.
-
-#' @param x String or numeric. Rounded number. `x` must be a string unless
-#'   `digits` is specified (most likely by a function that uses `unround()` as a
-#'   helper).
-#' @param rounding String. Rounding method presumably used to create `x`.
-#'   Default is `"up_or_down"`. For more, see section `Rounding`.
-#' @param threshold Numeric. The point within a step at which rounding switches
-#'   direction, in tenths of a step, for the `"up_from"`, `"down_from"`, and
-#'   `"up_from_or_down_from"` methods; it must be greater than `0` and less than
-#'   `10`. Other rounding methods are not affected. Default is `5`, which makes
-#'   those three methods the same as `"up"`, `"down"`, and `"up_or_down"`. See
-#'   [`round_up_from()`], which spells out how `round_down_from()` mirrors the
+#'   `threshold` only applies to the three `"*_from"` methods. It moves their
+#'   range without widening it; each spans exactly one step at every
 #'   threshold.
-#' @param digits Integer. This argument is meant to make `unround()` more
-#'   efficient to use as a helper function so that it doesn't need to
-#'   redundantly count decimal places. Don't specify it otherwise. Default is
-#'   `NULL`, in which case decimal places really are counted internally and `x`
-#'   must be a string.
-#' @param symmetric Logical. Set `symmetric` to `TRUE` if the rounding of
-#'   negative numbers with `"up"`, `"down"`, `"up_from"`, or `"down_from"`
-#'   mirrored that of positive numbers, so that their absolute values were
-#'   always equal. Default is `FALSE`. It only ever affects ties in negative
-#'   numbers, but `TRUE` is what reconstructs Excel, SAS, SPSS, and Matlab; see
-#'   `vignette("rounding-options")`.
 #'
-#' @return A tibble with seven columns: `range`, `rounding`, `lower`,
-#'   `incl_lower`, `x`, `incl_upper`, and `upper`. The `range` column is a handy
-#'   representation of the information stored in the columns from `lower` to
-#'   `upper`, in the same order.
+#'   The `"ties_*"` methods each name a complete tie-breaking procedure, so
+#'   giving `symmetric` with them is an error; see [`round_ties_up()`].
 #'
-#' @seealso For more about rounding `"up"`, `"down"`, or to `"even"`, see
-#'   [`round_up()`].
+#'   Under `"even"`, both bounds are reported as inclusive. [`base::round()`]
+#'   decides a tie on the binary double, so whether a value on a bound rounds
+#'   to `x` cannot be predicted from its decimal digits. Treating both bounds
+#'   as inclusive can only widen the range, which is the safe direction for
+#'   error detection.
 #'
-#'   For more about the less likely `rounding` methods, `"ceiling"`, `"floor"`,
-#'   `"trunc"`, and `"anti_trunc"`, see [`round_ceiling()`].
+#' @param x String or numeric. The rounded number. Must be a string unless
+#'   `digits` is specified. A missing or infinite `x` has `NA` bounds.
+#' @param rounding String. The rounding method assumed to have produced `x`.
+#'   Default is `"up_or_down"`. See *Rounding*.
+#' @param threshold Numeric. For the `"*_from"` methods, the point within a
+#'   step at which rounding switches direction, in tenths of a step; greater
+#'   than `0` and less than `10`. Default is `5`. See [`round_up_from()`].
+#' @param digits Integer. The number of decimal places in `x`. Default is
+#'   `NULL`, in which case it is counted from the string `x`. Specify it if
+#'   the number is already known, as a function that uses `unround()` as a
+#'   helper would.
+#' @param symmetric Logical. If `TRUE`, negative numbers are assumed to have
+#'   been rounded like their absolute values under `"up"`, `"down"`, and the
+#'   `"*_from"` methods. Default is `FALSE`. Must not be given with a `"ties_*"`
+#'   method; see [`reround()`].
 #'
-#'   For the bounds as exact integers, see [`bound_numerators()`].
+#' @return A tibble with the columns `range`, `rounding`, `lower`,
+#'   `incl_lower`, `x`, `incl_upper`, and `upper`. `range` summarizes the
+#'   columns from `lower` to `upper`.
+#'
+#' @seealso [`round_up()`] for rounding up or down from 5, and
+#'   [`round_ceiling()`] for the one-directional methods.
 #'
 #' @include utils.R
 #'
 #' @export
 #'
 #' @examples
-#' # By default, the function assumes that `x`
-#' # was either rounded up or down:
+#' # By default, `x` may have been rounded up or down:
 #' unround(x = "2.7")
 #'
-#' # If `x` was rounded up, run this:
+#' # If it was rounded up, the upper bound is exclusive:
 #' unround(x = "2.7", rounding = "up")
 #'
 #' # Likewise with rounding down...
 #' unround(x = "2.7", rounding = "down")
 #'
-#' # ...and with `base::round()` which, broadly
-#' # speaking, rounds to the nearest even number:
+#' # ...and with `base::round()`:
 #' unround(x = "2.7", rounding = "even")
 #'
-#' # Multiple input number-strings return
-#' # multiple rows in the output data frame:
+#' # One row per input value:
 #' unround(x = c(3.6, "5.20", 5.174))
-
-# # Full example inputs:
-# x <- "2.37"
-# rounding <- "up_or_down"
-# threshold <- 5
-# digits <- NULL
 
 unround <- function(
   x,
@@ -429,42 +488,56 @@ unround <- function(
   digits = NULL,
   symmetric = FALSE
 ) {
-  # If any two arguments called right below are length > 1, they need to have
-  # the same length. Otherwise, the call will fail. But even so, there will be a
-  # warning that values will get paired:
+  # Pairing values of `x` with values of `rounding` is confusing enough to warn
+  # about:
   check_lengths_congruent(list(x, rounding))
 
-  # The number of decimal places might be given from within another function via
-  # the `digits` argument. Otherwise -- if `digits` is not specified, and
-  # therefore `NULL` -- the `x` argument must be a string so that decimal places
-  # can be counted accurately (cf. trailing zeros), which is then done:
-  if (is.null(digits)) {
+  # No warning for the others: one `digits` per `x` is the ordinary way to call
+  # this from a helper.
+  check_lengths_congruent(
+    list(x, rounding, digits, threshold, symmetric),
+    warn = FALSE
+  )
+
+  digits_given <- !is.null(digits)
+  if (digits_given) {
+    check_digits_whole(digits)
+
+    # `as.numeric()` below would read a factor's level codes and `TRUE` as 1:
+    if (
+      !is.numeric(x) &&
+        !is.character(x) &&
+        !(is.logical(x) && all(is.na(x)))
+    ) {
+      abort_in_export(
+        "`x` must be a string or a number.",
+        "x" = "It is {.obj_type_friendly {x}}."
+      )
+    }
+  } else {
+    # Only a string keeps trailing zeros to count:
     if (!is.character(x)) {
-      cli::cli_abort(c(
+      abort_in_export(
         "`x` is {an_a_type(x)}.",
         "x" = "If `digits` is not specified, `x` must be a string."
-      ))
+      )
     }
     digits <- decimal_places(x)
   }
 
-  # The bound helpers operate on the numeric value of `x`:
   x_num <- as.numeric(x)
 
-  # Every argument is vectorized, and they may have different lengths -- a
-  # single `x` with five `digits` values is as meaningful as the reverse.
-  # Recycle them all to a common length so that each row of the output describes
-  # one complete combination. (Before this was done explicitly, the output
-  # tibble kept the length of `x` as its row count while its columns took
-  # whatever length `paste0()` recycling produced, which could yield a malformed
-  # tibble.)
-  n_out <- max(
+  # Recycle explicitly: `paste0()` could make the columns longer than `x`,
+  # i.e. a malformed tibble. An empty argument means no rows at all:
+  lengths_in <- c(
     length(x_num),
     length(rounding),
     length(digits),
     length(threshold),
     length(symmetric)
   )
+  n_out <- if (any(lengths_in == 0L)) 0L else max(lengths_in)
+
   recycle <- function(value) rep_len(value, n_out)
   x_out <- recycle(x)
   x_num <- recycle(x_num)
@@ -473,13 +546,39 @@ unround <- function(
   threshold <- recycle(threshold)
   symmetric <- recycle(symmetric)
 
-  # Determine the boundary values and whether they are inclusive, going by the
-  # `rounding` argument. `bound_numerators()` is the same helper that a
-  # consistency test derives its candidate range from, so the two always agree
-  # on what the bounds of a rounded number are, on which rounding methods exist,
-  # and on what `threshold` and `symmetric` mean. It expresses each bound as an
-  # exact integer numerator over a common denominator; dividing recovers the
-  # boundary value itself:
+  # With `digits` given, `x` must fit into it: the bounds are `x` plus whole
+  # units of the next decimal place, so `unround(1.234, digits = 1)` would give
+  # the bounds of nothing at all. Trailing zeros are fine (`"4.50"` at one
+  # decimal place is 4.5), so the test is the two-step one of
+  # `check_newly_numeric()`: `round()` decides, and the expensive decimal count
+  # runs only on what it leaves open. `round()` rejects a zero-length `digits`,
+  # hence the guard.
+  too_many <- rep(FALSE, n_out)
+  if (digits_given && n_out > 0L) {
+    unsettled <-
+      !is.na(x_num) &
+      !is.na(digits) &
+      x_num != round(x_num, digits)
+    if (any(unsettled)) {
+      too_many[unsettled] <-
+        decimal_places(x_out[unsettled]) > digits[unsettled]
+    }
+  }
+
+  if (any(too_many)) {
+    decimals_x <- decimal_places(x_out[too_many])
+    abort_in_export(
+      "`x` has more decimal places than `digits` states.",
+      "x" = "`digits` is {utils::head(digits[too_many], 3L)} for \\
+      {utils::head(x_out[too_many], 3L)}, which {?has/have} \\
+      {utils::head(decimals_x, 3L)}.",
+      "i" = "`digits` is meant for helper use, where the decimal count is \\
+      known. Leave it `NULL` to count the decimal places from a string `x`."
+    )
+  }
+
+  # `sum_range()` and the consistency tests built on it use the same helper, so
+  # they all agree on the bounds and on what each setting means:
   bounds <- lapply(seq_len(n_out), function(i) {
     bound_numerators(
       x_num = x_num[i],
@@ -490,8 +589,7 @@ unround <- function(
     )
   })
 
-  # `bound_numerators()` returns `NULL` where the bounds are undefined, which is
-  # the case for a missing `x`:
+  # `NULL` where the bounds are undefined, i.e. for a missing `x`:
   extract <- function(name, na_value) {
     vapply(
       bounds,
@@ -507,11 +605,9 @@ unround <- function(
   incl_lower <- extract("incl_lower", NA)
   incl_upper <- extract("incl_upper", NA)
 
-  sign_lower <- ifelse(incl_lower, "<=", "<")
-  sign_upper <- ifelse(incl_upper, "<=", "<")
+  sign_lower <- dplyr::if_else(incl_lower, "<=", "<")
+  sign_upper <- dplyr::if_else(incl_upper, "<=", "<")
 
-  # Return a tibble that displays the range with its appropriate signs and
-  # includes all the results that constitute the range
   tibble::new_tibble(
     list(
       # fmt: skip

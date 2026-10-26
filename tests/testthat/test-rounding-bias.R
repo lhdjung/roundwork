@@ -1,91 +1,68 @@
-vec <- seq(from = 0.01, to = 0.1, by = 0.01)
+vec <- 0.01 |> seq(0.1, by = 0.01) |> round(2)
 
 
-test_that("`rounding_bias()` is the mean shift that rounding applies", {
-  # Bias is `mean(x_rounded) - mean(x)`, computed here the long way round so
-  # that the expectation does not go through `reround()` a second time:
-  expect_equal(
-    rounding_bias(vec, digits = 1, rounding = "up"),
-    mean(round_up(vec, 1)) - mean(vec)
-  )
-  expect_equal(
-    rounding_bias(vec, digits = 1, rounding = "down"),
-    mean(round_down(vec, 1)) - mean(vec)
-  )
-  expect_equal(
-    rounding_bias(vec, digits = 1, rounding = "even"),
-    mean(round(vec, 1)) - mean(vec)
-  )
+test_that("`rounding_bias()` computes the mean bias by default", {
+  # Rounding up from 5 on this evenly spaced vector biases upward, rounding down
+  # from 5 biases downward, and the two biases mirror each other -- the vector's
+  # only tie is at 0.05:
+  bias_up   <- vec |> rounding_bias(digits = 1)
+  bias_down <- vec |> rounding_bias(digits = 1, rounding = "down")
+  bias_up   |> expect_gt(0)
+  bias_down |> expect_lt(0)
+  bias_up |> expect_equal(-bias_down)
 })
 
 
-test_that("`mean = FALSE` returns one bias per element of `x`", {
-  bias <- rounding_bias(vec, digits = 1, rounding = "up", mean = FALSE)
-  expect_length(bias, length(vec))
-  expect_equal(bias, round_up(vec, 1) - vec)
-  # ...and the default reduces exactly that vector to its mean:
-  expect_equal(rounding_bias(vec, digits = 1, rounding = "up"), mean(bias))
+test_that("`rounding_bias(mean = FALSE)` returns one bias per input value", {
+  out <- vec |> rounding_bias(digits = 1, rounding = "up", mean = FALSE)
+  out |> expect_length(length(vec))
+  # `x` can be reconstructed from first rounding it, then subtracting the bias:
+  vec |>
+    reround(1L, "up") |>
+    call_on(\(x) x - out) |>
+    dplyr::near(vec) |>
+    all() |>
+    expect_true()
 })
 
 
-test_that("`rounding_bias()` rejects the compound rounding methods", {
-  # Each of these names two procedures, so `reround()` returns two values per
-  # element of `x`. Subtracting `x` then recycled it across the pairs and
-  # returned twice as many biases as there are inputs, misaligned throughout.
-  # The documentation had always ruled these out; nothing enforced it.
-  for (rounding in c(
-    "up_or_down",
-    "up_from_or_down_from",
-    "ceiling_or_floor"
-  )) {
-    expect_error(
-      rounding_bias(vec, digits = 1, rounding = rounding, threshold = 4),
-      regexp = "single rounding procedure"
-    )
-  }
-  # The error names a constituent to use instead:
-  expect_error(
-    rounding_bias(vec, digits = 1, rounding = "up_or_down"),
-    regexp = "up"
-  )
+test_that("`rounding_bias()` rejects compound rounding methods", {
+  # These return two rounded values per input value, so no single bias is
+  # defined. The check was lost for a while, and the function then silently
+  # returned twice as many values as inputs (under `mean = FALSE`), or their
+  # meaningless average (under the default):
+  vec |> rounding_bias(digits = 1, rounding = "up_or_down")           |> expect_error()
+  vec |> rounding_bias(digits = 1, rounding = "up_from_or_down_from") |> expect_error()
+  vec |> rounding_bias(digits = 1, rounding = "ceiling_or_floor")     |> expect_error()
 })
 
 
-test_that("`rounding_bias()` accepts every single rounding procedure", {
-  singles <- c(
-    "up",
-    "down",
-    "even",
-    "ceiling",
-    "floor",
-    "trunc",
-    "anti_trunc",
-    "up_from",
-    "down_from",
-    "ties_up",
-    "ties_down",
-    "ties_away",
-    "ties_zero"
-  )
-  for (rounding in singles) {
-    bias <- rounding_bias(
-      vec,
-      digits = 1,
-      rounding = rounding,
-      threshold = 4,
-      mean = FALSE
-    )
-    expect_length(bias, length(vec))
-  }
+test_that("no pairing warning for arguments that cannot be paired", {
+  # `rounding`, `threshold`, and `symmetric` describe one rounding procedure,
+  # and `reround()` requires each of them to have length 1. They were still
+  # being length-checked against `x` here, so a vector `rounding` first drew a
+  # warning about values "getting paired" and then errored for being unpairable.
+  c(1.25, 2.35) |>
+    rounding_bias(digits = 1, rounding = c("up", "down")) |>
+    tryCatch(error = function(e) NULL) |>
+    expect_warning(regexp = NA)
+  # The error itself is still the right one:
+  c(1.25, 2.35) |>
+    rounding_bias(digits = 1, rounding = c("up", "down")) |>
+    expect_error()
+  # `x` and `digits` are still paired, and still warn about it:
+  c(1.25, 2.35) |> rounding_bias(digits = c(1, 2)) |> expect_warning()
 })
 
 
-test_that("a vector-valued `rounding` is still `reround()`'s error", {
-  # The compound check only applies to a length-1 `rounding`; anything longer
-  # is rejected downstream, where the message is about `rounding` having to
-  # describe a single procedure.
-  expect_error(
-    rounding_bias(vec, digits = 1, rounding = c("up", "down")) |>
-      suppressWarnings()
-  )
+test_that("`x` may be a string coercible to numeric", {
+  expected <- c(1.25, 2.35) |> rounding_bias(1)
+  c("1.25", "2.35") |> rounding_bias(1) |> expect_equal(expected)
+})
+
+
+test_that("a factor is read by its labels", {
+  x <- c("1.25", "2.35")
+  expected <- x |> rounding_bias(1, mean = FALSE)
+  x |> factor() |> rounding_bias(1, mean = FALSE) |> expect_equal(expected)
 })

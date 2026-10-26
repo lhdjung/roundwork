@@ -20,7 +20,7 @@ roundwork holds the rounding layer and nothing else:
 
 -   the individual rounding procedures (`round_up()`, `round_ceiling()`, `round_ties_away()`, ...);
 -   `reround()`, the string-driven interface to all of them;
--   `unround()` and `bound_numerators()`, which run the same procedures backwards to recover the range of an original number;
+-   `unround()` and `bound_numerators()`, which run the same procedures backwards to recover the range of an original number, and `sum_range()`, which finds the whole-number sums behind a rounded mean;
 -   `reround_to_fraction()` and `rounding_bias()`.
 
 The error detection techniques that build on this layer --- GRIM, GRIMMER, DEBIT --- live elsewhere.

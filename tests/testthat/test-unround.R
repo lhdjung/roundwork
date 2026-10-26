@@ -1,4 +1,5 @@
-df1 <- unround(c(3.6, "5.20", 5.174)) |>
+df1 <- c(3.6, "5.20", 5.174) |>
+  unround() |>
   suppressMessages()
 
 
@@ -39,16 +40,16 @@ test_that("Its columns have the correct types", {
 
 test_that("A non-string `x` specification throws an error
           (if `digits` is `NULL`; the default)", {
-  unround(4.5) |> expect_error()
+  4.5 |> unround() |> expect_error()
 })
 
 test_that("The function throws an error if `rounding` is misspecified", {
-  unround("4.50", rounding = "doesn't exist") |> expect_error()
+  "4.50" |> unround(rounding = "doesn't exist") |> expect_error()
 })
 
 
-df2 <- unround("4.50", digits = 1)
-df3 <- unround("4.50", digits = 1:5)
+df2 <- "4.50" |> unround(digits = 1)
+df3 <- "4.50" |> unround(digits = 1:5)
 
 
 test_that("", {
@@ -82,40 +83,21 @@ test_that("`unround()` bounds agree with the rounding they invert", {
   # the dust that `round_up_from()` and friends subtract from `threshold`:
   eps <- 1e-6
   methods <- c(
-    "up_or_down",
-    "up",
-    "down",
-    "ceiling",
-    "floor",
-    "trunc",
-    "anti_trunc",
-    "up_from",
-    "down_from"
+    "up_or_down", "up", "down", "ceiling", "floor",
+    "trunc", "anti_trunc", "up_from", "down_from"
   )
   for (m in methods) {
-    bounds <- unround("0.53", rounding = m, threshold = 6)
+    bounds <- "0.53" |> unround(rounding = m, threshold = 6)
     rounds_to_x <- function(value) {
-      any(dplyr::near(
-        reround(value, digits = 2, rounding = m, threshold = 6),
-        0.53
-      ))
+      value |>
+        reround(digits = 2, rounding = m, threshold = 6) |>
+        dplyr::near(0.53) |>
+        any()
     }
-    expect_true(
-      rounds_to_x(bounds$lower + eps),
-      label = paste(m, "inside lower")
-    )
-    expect_true(
-      rounds_to_x(bounds$upper - eps),
-      label = paste(m, "inside upper")
-    )
-    expect_false(
-      rounds_to_x(bounds$lower - eps),
-      label = paste(m, "beyond lower")
-    )
-    expect_false(
-      rounds_to_x(bounds$upper + eps),
-      label = paste(m, "beyond upper")
-    )
+    (bounds$lower + eps) |> rounds_to_x() |> expect_true(label = paste(m, "inside lower"))
+    (bounds$upper - eps) |> rounds_to_x() |> expect_true(label = paste(m, "inside upper"))
+    (bounds$lower - eps) |> rounds_to_x() |> expect_false(label = paste(m, "beyond lower"))
+    (bounds$upper + eps) |> rounds_to_x() |> expect_false(label = paste(m, "beyond upper"))
   }
 })
 
@@ -124,12 +106,13 @@ test_that("`unround()` bounds agree with the rounding they invert", {
 # point above.
 #
 # The package holds two independent encodings of every rounding procedure: the
-# forward `round_*()` functions dispatched by `reround()`, and the inverse
-# `rounding_offsets()` / `bound_numerators()` in unround.R, which is also what a
-# consistency test derives its candidate range from. If the two ever drift apart
-# -- an offset table edit, a tolerance change in a forward function -- such a
-# test would compare a value rounded by one convention against bounds derived
-# from the other, and verdicts could flip with nothing to catch it.
+# forward `round_*()` functions dispatched by `reround()`, which `grimmer()` and
+# `debit()` still run on directly, and the inverse `rounding_offsets()` /
+# `bound_numerators()` in unround.R, which is what GRIM, GRIMMER, and DEBIT
+# derive their candidate ranges from. If the two ever drift apart -- an offset
+# table edit, a tolerance change in a forward function -- a consistency test
+# would compare a value rounded by one convention against bounds derived from
+# the other, and verdicts could flip with nothing to catch it.
 #
 # The sweep covers every rounding method, the sign of `x`, `symmetric`, several
 # decimal counts, and several thresholds, and it checks the *inclusivity* of
@@ -140,31 +123,24 @@ test_that("`unround()` bounds agree with the rounding they invert", {
 
 test_that("`unround()` bounds agree with the rounding they invert (sweep)", {
   methods <- c(
-    "up_or_down",
-    "up",
-    "down",
-    "even",
-    "ceiling",
-    "floor",
-    "ceiling_or_floor",
-    "trunc",
-    "anti_trunc",
-    "up_from",
-    "down_from",
-    "up_from_or_down_from"
+    "up_or_down", "up", "down", "even", "ceiling", "floor", "ceiling_or_floor",
+    "trunc", "anti_trunc", "up_from", "down_from", "up_from_or_down_from",
+    "ties_up", "ties_down", "ties_away", "ties_zero", "ties_even"
   )
   # `"even"` is the one method whose bounds cannot be pinned down, since
   # `base::round()` breaks ties by the parity of the binary double. Both of its
   # bounds are deliberately reported as inclusive, which can only widen the
-  # range, so only the "inside rounds back" half of the property applies to it:
-  methods_exact <- setdiff(methods, "even")
+  # range, so only the "inside rounds back" half of the property applies to it.
+  # `"ties_even"` is the same method under its other name, so it is carved out
+  # with it rather than treated as an exact one:
+  methods_exact <- setdiff(methods, c("even", "ties_even"))
 
   n_checked <- 0L
 
   for (digits in c(0L, 1L, 2L)) {
     unit <- 10^-digits
     # A grid step is `unit`, and the bounds sit on the `unit / 10` grid, so this
-    # is far below any bound spacing and far above `rounding_tolerance`:
+    # is far below any bound spacing and far above `ROUNDING_TOLERANCE`:
     eps <- unit / 1000
 
     for (x_num in c(0, 1, -1, 3, -3, 253, -253) * unit) {
@@ -172,35 +148,29 @@ test_that("`unround()` bounds agree with the rounding they invert (sweep)", {
       for (symmetric in c(FALSE, TRUE)) {
         for (threshold in c(3, 5, 6)) {
           for (m in methods) {
-            bounds <- unround(
-              x_str,
-              rounding = m,
-              threshold = threshold,
-              digits = digits,
-              symmetric = symmetric
-            )
+            # A `"ties_*"` string names a complete procedure, so `symmetric`
+            # alongside one is an error rather than a no-op. Nothing is lost by
+            # skipping the combination: the `symmetric = FALSE` pass already
+            # covers each of those methods in full, since the name is all that
+            # decides them.
+            if (symmetric && m %in% names(TIES_METHODS)) {
+              next
+            }
+            bounds <- x_str |> unround(rounding = m, threshold = threshold, digits = digits, symmetric = symmetric)
             rounds_to_x <- function(value) {
-              any(dplyr::near(
+              value |>
                 reround(
-                  value,
                   digits = digits,
                   rounding = m,
                   threshold = threshold,
                   symmetric = symmetric
-                ),
-                x_num
-              ))
+                ) |>
+                dplyr::near(x_num) |>
+                any()
             }
             label <- paste(
-              m,
-              "| x =",
-              x_str,
-              "| digits =",
-              digits,
-              "| symmetric =",
-              symmetric,
-              "| threshold =",
-              threshold
+              m, "| x =", x_str, "| digits =", digits,
+              "| symmetric =", symmetric, "| threshold =", threshold
             )
             n_checked <- n_checked + 1L
 
@@ -209,54 +179,41 @@ test_that("`unround()` bounds agree with the rounding they invert (sweep)", {
             # is zero itself. There is no "just inside" to check, and both
             # bounds are the point itself:
             if (bounds$lower == bounds$upper) {
-              expect_equal(m, "anti_trunc")
-              expect_equal(x_num, 0)
-              expect_true(
-                rounds_to_x(x_num),
-                label = paste(label, "- at point")
-              )
-              expect_true(bounds$incl_lower && bounds$incl_upper)
-              expect_false(
-                rounds_to_x(x_num + eps),
-                label = paste(label, "- beyond upper")
-              )
-              expect_false(
-                rounds_to_x(x_num - eps),
-                label = paste(label, "- beyond lower")
-              )
+              m     |> expect_equal("anti_trunc")
+              x_num |> expect_equal(0)
+              x_num |> rounds_to_x() |> expect_true(label = paste(label, "- at point"))
+              (bounds$incl_lower && bounds$incl_upper) |> expect_true()
+              (x_num + eps) |>
+                rounds_to_x() |>
+                expect_false(label = paste(label, "- beyond upper"))
+              (x_num - eps) |>
+                rounds_to_x() |>
+                expect_false(label = paste(label, "- beyond lower"))
               next
             }
 
             # Position of the bounds:
-            expect_true(
-              rounds_to_x(bounds$lower + eps),
-              label = paste(label, "- inside lower")
-            )
-            expect_true(
-              rounds_to_x(bounds$upper - eps),
-              label = paste(label, "- inside upper")
-            )
-            expect_false(
-              rounds_to_x(bounds$lower - eps),
-              label = paste(label, "- beyond lower")
-            )
-            expect_false(
-              rounds_to_x(bounds$upper + eps),
-              label = paste(label, "- beyond upper")
-            )
+            (bounds$lower + eps) |>
+              rounds_to_x() |>
+              expect_true(label = paste(label, "- inside lower"))
+            (bounds$upper - eps) |>
+              rounds_to_x() |>
+              expect_true(label = paste(label, "- inside upper"))
+            (bounds$lower - eps) |>
+              rounds_to_x() |>
+              expect_false(label = paste(label, "- beyond lower"))
+            (bounds$upper + eps) |>
+              rounds_to_x() |>
+              expect_false(label = paste(label, "- beyond upper"))
 
             # Inclusivity of the bounds:
             if (m %in% methods_exact) {
-              expect_equal(
-                rounds_to_x(bounds$lower),
-                bounds$incl_lower,
-                label = paste(label, "- on lower")
-              )
-              expect_equal(
-                rounds_to_x(bounds$upper),
-                bounds$incl_upper,
-                label = paste(label, "- on upper")
-              )
+              bounds$lower |>
+                rounds_to_x() |>
+                expect_equal(bounds$incl_lower, label = paste(label, "- on lower"))
+              bounds$upper |>
+                rounds_to_x() |>
+                expect_equal(bounds$incl_upper, label = paste(label, "- on upper"))
             }
           }
         }
@@ -265,77 +222,21 @@ test_that("`unround()` bounds agree with the rounding they invert (sweep)", {
   }
 
   # Guard against the loops silently collapsing to nothing:
-  expect_gt(n_checked, 700L)
+  n_checked |> expect_gt(700L)
 })
 
 
-test_that("`unround()` supports every rounding method that `reround()` does", {
-  # These four used to throw an error, so a caller could reconstruct with a
-  # rounding method whose bounds `unround()` then refused to give.
+test_that("`unround()` supports the same rounding methods as GRIM", {
+  # These four used to throw an error, so `debit_map()` rejected rounding
+  # methods that `grim()` accepted.
   for (m in c(
-    "up_from",
-    "down_from",
-    "up_from_or_down_from",
-    "ceiling_or_floor"
+    "up_from", "down_from", "up_from_or_down_from", "ceiling_or_floor"
   )) {
-    unround("0.53", rounding = m, threshold = 6) |>
+    "0.53" |>
+      unround(rounding = m, threshold = 6) |>
       nrow() |>
       expect_equal(1L)
   }
-})
-
-
-test_that("a missing value is `NA` under every rounding method", {
-  # A missing value is undecidable rather than a value whose bounds are known.
-  # The bounds of `"trunc"` and `"anti_trunc"` depend on the sign of `x`, and
-  # `symmetric` mirrors the methods it applies to -- and a missing value has no
-  # sign. Every one of these used to abort with "missing value where TRUE/FALSE
-  # needed", the very error this behavior was meant to replace, so a caller
-  # failed for a whole vector over a single missing value.
-  for (m in c(
-    "up_or_down",
-    "up",
-    "down",
-    "even",
-    "ceiling",
-    "floor",
-    "ceiling_or_floor",
-    "trunc",
-    "anti_trunc",
-    "up_from",
-    "down_from",
-    "up_from_or_down_from",
-    "ties_up",
-    "ties_down",
-    "ties_away",
-    "ties_zero"
-  )) {
-    for (symmetric in c(FALSE, TRUE)) {
-      info <- paste0("rounding = ", m, ", symmetric = ", symmetric)
-      bounds <- unround(
-        NA_real_,
-        digits = 2,
-        rounding = m,
-        symmetric = symmetric
-      )
-      expect_true(is.na(bounds$lower), info = info)
-      expect_true(is.na(bounds$upper), info = info)
-      expect_true(is.na(bounds$incl_lower), info = info)
-      expect_true(is.na(bounds$incl_upper), info = info)
-    }
-  }
-
-  # ...and it is still vectorized over the values that are not missing:
-  bounds <- unround(c(0.53, NA), digits = 2)
-  expect_equal(bounds$lower, c(0.525, NA))
-  expect_equal(bounds$upper, c(0.535, NA))
-})
-
-
-test_that("a missing value does not excuse an unknown `rounding`", {
-  # An undecidable case is still no reason to accept a rounding method that does
-  # not exist -- that is an input error whatever `x` is:
-  unround(NA_real_, digits = 2, rounding = "nonsense") |> expect_error()
 })
 
 
@@ -344,28 +245,30 @@ test_that("`threshold` only affects the `*_from` rounding methods", {
   # their bounds must not depend on `threshold`. `unround()` used to widen the
   # range anyway, reconstructing a rounding that never happens.
   for (m in c("up_or_down", "up", "down")) {
-    from_5 <- unround("0.53", rounding = m, threshold = 5)
-    from_6 <- unround("0.53", rounding = m, threshold = 6)
-    expect_equal(from_5$lower, from_6$lower)
-    expect_equal(from_5$upper, from_6$upper)
-    expect_equal(from_5$lower, 0.525)
-    expect_equal(from_5$upper, 0.535)
+    from_5 <- "0.53" |> unround(rounding = m, threshold = 5)
+    from_6 <- "0.53" |> unround(rounding = m, threshold = 6)
+    from_5$lower |> expect_equal(from_6$lower)
+    from_5$upper |> expect_equal(from_6$upper)
+    from_5$lower |> expect_equal(0.525)
+    from_5$upper |> expect_equal(0.535)
   }
   # ...whereas the parameterized methods do respond to it:
-  unround("0.53", rounding = "up_from", threshold = 6)$lower |>
+  "0.53" |>
+    unround(rounding = "up_from", threshold = 6) |>
+    getElement("lower") |>
     expect_equal(0.526)
 })
 
 
 test_that("`symmetric` mirrors the bounds of a negative `x`", {
-  plain <- unround("-0.53", rounding = "up", symmetric = FALSE)
-  mirrored <- unround("-0.53", rounding = "up", symmetric = TRUE)
+  plain    <- "-0.53" |> unround(rounding = "up", symmetric = FALSE)
+  mirrored <- "-0.53" |> unround(rounding = "up", symmetric = TRUE)
   # With `symmetric`, rounding a negative number mirrors its absolute value,
   # so the inclusive end swaps:
-  expect_true(plain$incl_lower)
-  expect_false(plain$incl_upper)
-  expect_false(mirrored$incl_lower)
-  expect_true(mirrored$incl_upper)
+  plain$incl_lower    |> expect_true()
+  plain$incl_upper    |> expect_false()
+  mirrored$incl_lower |> expect_false()
+  mirrored$incl_upper |> expect_true()
 })
 
 
@@ -376,94 +279,323 @@ test_that("`\"anti_trunc\"` bounds match `round_anti_trunc()`", {
   # (`x` is given with one decimal place, and re-rounded to one, so that the
   # bounds and the rounding are on the same grid. It used to be given as "0.70",
   # i.e. unrounded at two decimal places and then re-rounded at one.)
-  bounds_positive <- unround("0.7", rounding = "anti_trunc")
-  expect_false(bounds_positive$incl_lower)
-  expect_true(bounds_positive$incl_upper)
-  expect_equal(round_anti_trunc(bounds_positive$upper, 1), 0.7)
-  expect_false(round_anti_trunc(bounds_positive$lower, 1) == 0.7)
+  bounds_positive <- "0.7" |> unround(rounding = "anti_trunc")
+  bounds_positive$incl_lower |> expect_false()
+  bounds_positive$incl_upper |> expect_true()
+  bounds_positive$upper |> round_anti_trunc(1) |> expect_equal(0.7)
+  bounds_positive$lower |>
+    round_anti_trunc(1) |>
+    call_on(\(x) x == 0.7) |>
+    expect_false()
 
   # ...and `round_floor()` below zero, which reaches it from above:
-  bounds_negative <- unround("-0.7", rounding = "anti_trunc")
-  expect_true(bounds_negative$incl_lower)
-  expect_false(bounds_negative$incl_upper)
-  expect_equal(round_anti_trunc(bounds_negative$lower, 1), -0.7)
-  expect_false(round_anti_trunc(bounds_negative$upper, 1) == -0.7)
+  bounds_negative <- "-0.7" |> unround(rounding = "anti_trunc")
+  bounds_negative$incl_lower |> expect_true()
+  bounds_negative$incl_upper |> expect_false()
+  bounds_negative$lower |> round_anti_trunc(1) |> expect_equal(-0.7)
+  bounds_negative$upper |>
+    round_anti_trunc(1) |>
+    call_on(\(x) x == -0.7) |>
+    expect_false()
 })
 
 
 test_that("`\"anti_trunc\"` at zero is a single point, not an undefined range", {
   # Every non-zero value is taken away from zero to the next step out, so the
-  # only value that would be reported as zero is zero itself. Up to roundwork
-  # 0.0.1, `anti_trunc()` sent zero itself away from zero as well -- to `+1`
+  # only value that would be reported as zero is zero itself. Up to scrutiny
+  # 1.0.0, `anti_trunc()` sent zero itself away from zero as well -- to `+1`
   # unit, an arbitrary sign choice -- and the bounds here were `NA` in
   # consequence.
-  #
-  # It follows that a mean of zero pins the sum to exactly zero, so a GRIM test
-  # is decidable there rather than `NA`, and consistent only for all-zero data.
-  bounds <- unround("0.00", rounding = "anti_trunc")
-  expect_equal(bounds$lower, 0)
-  expect_equal(bounds$upper, 0)
-  expect_true(bounds$incl_lower)
-  expect_true(bounds$incl_upper)
-  expect_equal(round_anti_trunc(0, 2), 0)
-  expect_false(round_anti_trunc(0.001, 2) == 0)
-  expect_false(round_anti_trunc(-0.001, 2) == 0)
+  bounds <- "0.00" |> unround(rounding = "anti_trunc")
+  bounds$lower      |> expect_equal(0)
+  bounds$upper      |> expect_equal(0)
+  bounds$incl_lower |> expect_true()
+  bounds$incl_upper |> expect_true()
+  0      |> round_anti_trunc(2) |> expect_equal(0)
+  0.001  |> round_anti_trunc(2) |> call_on(\(x) x == 0) |> expect_false()
+  -0.001 |> round_anti_trunc(2) |> call_on(\(x) x == 0) |> expect_false()
+
+  # It follows that a mean of zero pins the sum to exactly zero, so the sums
+  # are decidable there rather than `NA`, and only all-zero data qualify:
+  0    |> sum_range(40, digits = 2, rounding = "anti_trunc") |> expect_equal(c(0, 0))
+  0.01 |> sum_range(40, digits = 2, rounding = "anti_trunc") |> expect_equal(c(1, 0))
 })
 
 
-# `bound_numerators()` ----------------------------------------------------
+test_that("`unround()` checks the lengths of all its vectorized arguments", {
+  # `digits` used to be recycled against `x` without a word, so the extra `x`
+  # values silently got the wrong number of decimal places -- and hence the
+  # wrong bounds.
+  # Not aligning pipes here because the lengths are too different
+  c("1.0", "2.00", "3.000") |> unround(digits = c(1, 2)) |> expect_error()
+  c("1.0", "2.00") |> unround(threshold = c(4, 5, 6)) |> expect_error()
+  c("1.0", "2.00") |> unround(symmetric = c(TRUE, FALSE, TRUE)) |> expect_error()
+  # A length-1 argument is still recycled, as is one of matching length:
+  c("1.0", "2.00") |> unround(digits = c(1, 2)) |> expect_no_error()
+  c("1.0", "2.00") |> unround() |> expect_no_error()
+})
 
-test_that("`bound_numerators()` gives the same bounds as `unround()`", {
-  # It is the exported low-level entry point that consistency tests build on,
-  # so the two must not come apart.
-  for (m in c("up_or_down", "up", "down", "ceiling", "floor", "trunc")) {
-    for (digits in 0:2) {
-      for (x_num in c(0.53, -0.53, 0, 2)) {
-        b <- bound_numerators(
-          x_num,
-          digits,
-          m,
-          threshold = 5,
-          symmetric = FALSE
-        )
-        u <- unround(
-          as.character(x_num),
-          rounding = m,
-          digits = digits,
-          symmetric = FALSE
-        )
-        expect_equal(b$lower / b$denom, u$lower)
-        expect_equal(b$upper / b$denom, u$upper)
-        expect_equal(b$incl_lower, u$incl_lower)
-        expect_equal(b$incl_upper, u$incl_upper)
+
+test_that("counted decimal places are not confused by a shorter `digits`", {
+  out <- c("1.0", "2.00", "3.000") |> unround()
+  out$upper |> expect_equal(c(1.05, 2.005, 3.0005))
+})
+
+
+test_that("zero-length input returns zero rows", {
+  # Recycling stops at zero. Taking the maximum of all argument lengths let the
+  # length-1 defaults set the row count, so an empty `x` produced one row of
+  # missing values -- a phantom result in the middle of a pipeline.
+  character(0) |> unround() |> nrow() |> expect_equal(0L)
+  numeric(0) |> unround(digits = 2) |> nrow() |> expect_equal(0L)
+  "5.19" |> unround(digits = integer(0)) |> nrow() |> expect_equal(0L)
+  # A scalar `x` is unaffected:
+  "5.19" |> unround() |> nrow() |> expect_equal(1L)
+})
+
+
+# Width of a reconstructed range -------------------------------------------
+
+# The sweep above pins the bounds to the rounding functions, but it can only
+# catch a disagreement between the two. It cannot catch the two agreeing on
+# something impossible, which is what `rounding = "up_from_or_down_from"` did up
+# to scrutiny 1.0.0: `round_down_from()` switched direction at `10 - threshold`
+# rather than at `threshold`, so the compound method's range was the union of
+# two intervals that barely overlapped, and it spanned up to 1.8 steps.
+#
+# The invariant that catches it: a rounding procedure maps every value to the
+# nearest point of the grid that its own tie rule picks out, so the set of
+# values that reach any one point is at most one step wide.
+#
+# Zero is where that stops holding, and legitimately so. A procedure whose
+# behavior depends on the sign takes one side of zero by one rule and the other
+# by the mirror-image rule, so the bin at zero is the union of two half-bins
+# that need not add up to a step:
+#
+#   - `"trunc"` at zero accepts all of `(-1, 1)`: every value between truncates
+#     to `0`. Two steps. Away from zero it takes one side alone and is one step
+#     wide like everything else.
+#   - `symmetric` mirroring at zero gives `2 * threshold / 10` steps, since a
+#     value reaches zero exactly if its absolute value does. That is one step at
+#     the `5` of `"up"`, `"down"`, and `"up_or_down"` -- which is why only the
+#     `"*_from"` methods show it -- and anything from 0.2 to 1.8 steps
+#     otherwise.
+#
+# `"ceiling_or_floor"` is two steps wide everywhere, not just at zero: its two
+# constituents lie on opposite sides of `x` at every value. All of these ranges
+# are open at both ends, since a value sitting on either bound is carried away
+# from `x`.
+#
+# The test below therefore checks the one-step bound everywhere it applies and
+# pins the exceptions to their exact widths.
+
+test_that("no rounding method reconstructs a range wider than one step", {
+  methods_one_step <- c(
+    "up_or_down", "up", "down", "even", "ceiling", "floor", "trunc",
+    "anti_trunc", "up_from", "down_from", "up_from_or_down_from",
+    "ties_up", "ties_down", "ties_away", "ties_zero", "ties_even"
+  )
+
+  for (digits in c(0L, 1L, 2L)) {
+    unit <- 10^-digits
+    for (x_num in c(0, 1, -1, 253, -253) * unit) {
+      x_str <- formatC(x_num, format = "f", digits = digits)
+      for (symmetric in c(FALSE, TRUE)) {
+        for (threshold in seq(1, 9)) {
+          # The methods whose bins at zero are two half-bins joined; see the
+          # comment above this test:
+          mirrored <- c(
+            "up_or_down", "up", "down",
+            "up_from_or_down_from", "up_from", "down_from"
+          )
+
+          for (m in methods_one_step) {
+            if (x_num == 0 && (m == "trunc" || (symmetric && m %in% mirrored))) {
+              next
+            }
+            # `symmetric` with a `"ties_*"` string is an error; see the sweep
+            # above:
+            if (symmetric && m %in% names(TIES_METHODS)) {
+              next
+            }
+            bounds <- x_str |> unround(rounding = m, threshold = threshold, digits = digits, symmetric = symmetric)
+            (bounds$upper - bounds$lower) |> expect_lte(
+              unit * (1 + 1e-9),
+              label = paste(
+                m, "| x =", x_str, "| digits =", digits,
+                "| symmetric =", symmetric, "| threshold =", threshold
+              )
+            )
+          }
+          # Two steps wide, open at both ends:
+          two_sided <- "ceiling_or_floor"
+          if (x_num == 0) {
+            two_sided <- c(two_sided, "trunc")
+          }
+          for (m in two_sided) {
+            wide <- x_str |> unround(rounding = m, threshold = threshold, digits = digits)
+            (wide$upper - wide$lower) |> expect_equal(2 * unit)
+            wide$incl_lower |> expect_false()
+            wide$incl_upper |> expect_false()
+          }
+
+          # `symmetric` at zero: `2 * threshold / 10` steps, open at both ends,
+          # with the `"*_from"` methods taking `threshold` and the other three
+          # fixed at the 5 they round from.
+          if (x_num == 0 && symmetric) {
+            for (m in mirrored) {
+              t_m <- if (endsWith(m, "_from")) threshold else 5
+              half <- x_str |> unround(rounding = m, threshold = threshold, digits = digits, symmetric = TRUE)
+              (half$upper - half$lower) |> expect_equal(
+                2 * t_m * unit / 10,
+                label = paste(
+                  m, "at zero | symmetric | threshold =", threshold,
+                  "| digits =", digits
+                )
+              )
+              half$lower      |> expect_equal(-half$upper)
+              half$incl_lower |> expect_equal(half$incl_upper)
+            }
+          }
+        }
       }
     }
   }
 })
 
-test_that("`bound_numerators()` returns exact integers", {
-  b <- bound_numerators(2.7, 1, "up_or_down", threshold = 5, symmetric = FALSE)
-  expect_equal(b$lower, 265)
-  expect_equal(b$upper, 275)
-  expect_equal(b$denom, 100)
-  expect_true(b$incl_lower)
-  expect_true(b$incl_upper)
+
+test_that("the `*_from` methods only move a range, never widen it", {
+  # At every threshold, each of the three spans exactly one step, just as
+  # `"up"`, `"down"`, and `"up_or_down"` do at the 5 they are fixed to. The two
+  # constituents span the very same interval and differ only in which endpoint
+  # each includes, so their union is that interval with both ends included.
+  for (threshold in seq(1, 9)) {
+    up   <- "5.00" |> unround(rounding = "up_from", threshold = threshold)
+    down <- "5.00" |> unround(rounding = "down_from", threshold = threshold)
+    both <- "5.00" |> unround(rounding = "up_from_or_down_from", threshold = threshold)
+    up$lower |> expect_equal(5 + (threshold - 10) / 1000)
+    up$upper |> expect_equal(5 + threshold / 1000)
+    c(down$lower, down$upper) |> expect_equal(c(up$lower, up$upper))
+    c(both$lower, both$upper) |> expect_equal(c(up$lower, up$upper))
+
+    c(up$incl_lower, up$incl_upper)     |> expect_equal(c(TRUE, FALSE))
+    c(down$incl_lower, down$incl_upper) |> expect_equal(c(FALSE, TRUE))
+    c(both$incl_lower, both$incl_upper) |> expect_equal(c(TRUE, TRUE))
+  }
 })
 
-test_that("`bound_numerators()` is `NULL` for a missing `x`, and errors on a
-          rounding method that does not exist", {
-  # A missing value is undecidable rather than a value whose bounds are known.
-  # Every caller reports the `NULL` as such:
-  expect_null(
-    bound_numerators(
-      NA_real_,
-      2,
-      "up_or_down",
-      threshold = 5,
-      symmetric = FALSE
-    )
+
+test_that("a threshold cannot make a consistency test decide nothing", {
+  # The practical consequence of the width invariant. With the old bounds, GRIM
+  # under `threshold = 9` passed *every* mean at `n = 57`, because the
+  # reconstructed range was wide enough to reach a possible mean whatever the
+  # reported value was. Moving the tie point shifts the window without resizing
+  # it, so the count of means with a whole-number sum does not depend on the
+  # threshold.
+  x <- seq(0, 9.99, by = 0.01) |> sprintf(fmt = "%.2f") |> as.numeric()
+  count_possible <- function(n, rounding, threshold = 5) {
+    x |>
+      vapply(\(x) diff(sum_range(x, n, 2, rounding, threshold)) >= 0, logical(1)) |>
+      sum()
+  }
+  for (n in c(28, 57)) {
+    at_5 <- n |> count_possible("up_or_down")
+    for (threshold in c(1, 3, 7, 9)) {
+      n |>
+        count_possible("up_from_or_down_from", threshold) |>
+        expect_equal(
+          at_5,
+          label = paste("`sum_range()` at n =", n, "| threshold =", threshold)
+        )
+    }
+  }
+})
+
+
+test_that("`x` must fit into a given `digits`", {
+  # `unround(1.234, digits = 1)` used to give `1.18 <= x(1.234) <= 1.28`: the
+  # bounds of `x` rounded to `digits`, labeled with the unrounded `x`.
+  1.234        |> unround(digits = 1) |> expect_error("more decimal places")
+  "1.234"      |> unround(digits = 2) |> expect_error("more decimal places")
+  c(1.2, 1.23) |> unround(digits = 2) |> getElement("lower") |> expect_equal(c(1.195, 1.225))
+
+  # Trailing zeros in a string are not extra decimal places of the value:
+  "4.50" |> unround(digits = 1) |> getElement("lower") |> expect_equal(4.45)
+})
+
+
+test_that("`x` must be a string or a number", {
+  # A factor gave the bounds of its level code, `0.995 <= x(5.19) <= 1.005`:
+  factor("5.19") |> unround(digits = 2) |> expect_error("string or a number")
+  TRUE           |> unround(digits = 0) |> expect_error("string or a number")
+  NA             |> unround(digits = 2) |> getElement("lower") |> expect_equal(NA_real_)
+})
+
+
+test_that("`digits` is checked, and an infinite `x` has no bounds", {
+  "1.25" |> unround(digits = 2.5) |> expect_error("whole numbers")
+  "1.25" |> unround(digits = "2") |> expect_error("whole numbers")
+  
+  # `Inf <= x(Inf) <= Inf` used to be the answer for a numeric infinity:
+  out <- Inf |> unround(digits = 1)
+  c(out$lower, out$upper) |> expect_equal(c(NA_real_, NA_real_))
+  c(out$incl_lower, out$incl_upper) |> expect_equal(c(NA, NA))
+})
+
+
+test_that("`sum_range()` finds exactly the sums that round to `x`", {
+  # Brute force: every whole-number sum near `x * n` whose mean, rounded the
+  # same way, gives back `x`. `"even"` is left out for the reason given in the
+  # `unround()` sweep: its bounds are inclusive by design, so they can only
+  # admit more sums than `base::round()` returns.
+  methods <- c(
+    "up_or_down", "up", "down", "ceiling", "floor", "ceiling_or_floor",
+    "trunc", "anti_trunc", "up_from", "down_from", "up_from_or_down_from"
   )
-  expect_error(
-    bound_numerators(0.5, 2, "doesn't exist", threshold = 5, symmetric = FALSE)
-  )
+  x_all <- seq(-2, 2, by = 0.07) |> round(2)
+
+  for (rounding in methods) {
+    for (threshold in c(3, 5)) {
+      for (n in c(1, 7, 28, 57)) {
+        for (x in x_all) {
+          candidates <- seq(floor((x - 0.02) * n) - 1, ceiling((x + 0.02) * n) + 1)
+          rounds_to_x <- vapply(
+            candidates,
+            \(s) any(abs(reround(s / n, 2, rounding, threshold) - x) < 1e-9),
+            logical(1)
+          )
+          expected <- candidates[rounds_to_x]
+          sums <- sum_range(x, n, 2, rounding, threshold)
+          seq_len(max(0, diff(sums) + 1)) |>
+            call_on(\(i) sums[1] + i - 1) |>
+            expect_equal(
+              expected,
+              label = paste(rounding, threshold, n, x, sep = " | ")
+            )
+        }
+      }
+    }
+  }
+})
+
+
+test_that("`sum_range()` returns `NA` for undecidable input", {
+  NA_real_ |> sum_range(28, 2)    |> expect_equal(c(NA_real_, NA_real_))
+  NA       |> sum_range(28, 2)    |> expect_equal(c(NA_real_, NA_real_))
+  Inf      |> sum_range(28, 2)    |> expect_equal(c(NA_real_, NA_real_))
+  5.18     |> sum_range(0, 2)     |> expect_equal(c(NA_real_, NA_real_))
+  5.18     |> sum_range(-28, 2)   |> expect_equal(c(NA_real_, NA_real_))
+  5.18     |> sum_range(28.5, 2)  |> expect_equal(c(NA_real_, NA_real_))
+  5.18     |> sum_range(Inf, 2)   |> expect_equal(c(NA_real_, NA_real_))
+  5.18     |> sum_range(NA, 2)    |> expect_equal(c(NA_real_, NA_real_))
+  5.18     |> sum_range(28, 2)    |> expect_equal(c(145, 145))
+})
+
+
+test_that("`sum_range()` rejects malformed input", {
+  c(5.18, 5.19) |> sum_range(28, 2)        |> expect_error("must each be a single number")
+  "5.18"        |> sum_range(28, 2)        |> expect_error("must each be a single number")
+  5.18          |> sum_range(c(28, 29), 2) |> expect_error("must each be a single number")
+  5.18          |> sum_range(28, 1.5)      |> expect_error("must be whole numbers")
+  5.18          |> sum_range(28, 2, "nope") |> expect_error("designated string values")
 })

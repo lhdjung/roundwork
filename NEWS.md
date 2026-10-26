@@ -4,11 +4,13 @@ This release is a revamp of the whole package: nearly every function was rewritt
 
 ## New functions
 
--   `round_ties_up()`, `round_ties_down()`, `round_ties_away()`, and `round_ties_zero()` name a complete tie-breaking procedure each, so that `symmetric` does not have to be spelled out separately. They are the four combinations of `round_up()` and `round_down()` with `symmetric`, and nothing is deprecated by them. The `rounding` strings `"ties_up"`, `"ties_down"`, `"ties_away"`, and `"ties_zero"` reach the same procedures through `reround()` and `unround()`; `symmetric` is ignored when one of them is given.
+-   `round_ties_up()`, `round_ties_down()`, `round_ties_away()`, `round_ties_zero()`, and `round_ties_even()` name a complete tie-breaking procedure each, so that `symmetric` does not have to be spelled out separately. The first four are the combinations of `round_up()` and `round_down()` with `symmetric`, and `round_ties_even()` is `base::round()`; nothing is deprecated by them. The `rounding` strings `"ties_up"`, `"ties_down"`, `"ties_away"`, `"ties_zero"`, and `"ties_even"` reach the same procedures through `reround()` and `unround()`. Combining one of these strings with `symmetric` is an error, because the string already determines how negative ties are broken.
 
     They exist because the translation is easy to get backwards: "up" means *on the number line* here, but *away from zero* in Excel, Java, and Python. `round_ties_away()` is the same procedure as `round_ties_to_away()` under a name that does not presuppose the IEEE 754 vocabulary.
 
 -   `bound_numerators()` returns the same bounds as `unround()`, but as exact integer numerators over a common denominator instead of decimals. It is the low-level entry point that consistency tests build on: deriving candidate values from floating-point bounds can drop a legitimate candidate or admit a phantom one, either of which flips a verdict. See [lhdjung/scrutiny#86](https://github.com/lhdjung/scrutiny/issues/86).
+
+-   `sum_range()` returns the least and the greatest whole-number sum that, divided by `n_items` and rounded, gives a reported mean. This is the arithmetic behind GRIM, and behind any other share of a whole such as a percentage. It is built on `bound_numerators()` and exact in the same way, so packages that check granularity no longer have to derive candidate sums from floating-point products.
 
 ## Rounding bounds
 
@@ -16,7 +18,9 @@ This release is a revamp of the whole package: nearly every function was rewritt
 
 -   `unround()` gains a `symmetric` argument, matching the rounding functions it inverts.
 
--   `unround()` now supports `"up_from"`, `"down_from"`, `"up_from_or_down_from"`, `"ceiling_or_floor"`, and the four `"ties_*"` methods. These used to throw an error, so a caller could reconstruct with a rounding method whose bounds `unround()` then refused to give.
+-   An infinite `x` has `NA` bounds, like a missing one. Its "bounds" used to be infinite on both sides, which no rounded number can have.
+
+-   `unround()` now supports `"up_from"`, `"down_from"`, `"up_from_or_down_from"`, `"ceiling_or_floor"`, and the five `"ties_*"` methods. These used to throw an error, so a caller could reconstruct with a rounding method whose bounds `unround()` then refused to give.
 
 -   `threshold` no longer affects `"up_or_down"`, `"up"`, and `"down"`. Those round from a fixed 5, so a `threshold` other than 5 used to widen the reconstructed range for a rounding that never happens.
 
@@ -30,13 +34,15 @@ This release is a revamp of the whole package: nearly every function was rewritt
 
 -   `anti_trunc()` and `round_anti_trunc()` leave a value that already sits on the rounding grid where it is, and `0` stays `0`. Previously they moved such a value one step further out, so `anti_trunc(3)` was `4`. This makes them exact matches for Excel's and Google Sheets' `ROUNDUP()`, Java's `RoundingMode.UP`, and Python's `decimal.ROUND_UP`.
 
--   `round_up_from()` and `round_down_from()` document how `round_down_from()` mirrors `threshold`: it rounds down when the cut-off part is at most `10 - threshold` tenths of a step. The two coincide at 5, which is why the difference had gone unnoticed.
+-   `round_down_from()` interprets `threshold` like `round_up_from()`: it rounds down if the part cut off is at most `threshold` tenths of a rounding step. It used to switch at `10 - threshold`, so `"up_from_or_down_from"` could span up to 1.8 steps, and a GRIM test with `threshold = 9` accepted every mean at `n = 57`. Results at the default `threshold = 5` are unchanged.
 
 -   `digits` may be negative, rounding to powers of ten.
 
 ## `reround()`
 
 -   `rounding`, `threshold`, and `symmetric` must now each have length 1. They describe a single rounding procedure, which is applied to all of `x`; passing vectors paired values with procedures by position, which no consistency test ever wanted. `unround()` keeps the old behavior for its display use case.
+
+-   In every function, `rounding` must be a string and `symmetric` a single `TRUE` or `FALSE`. A numeric or logical `rounding` was silently read as a position in the list of rounding methods, so `rounding = 2` was `"ties_down"`.
 
 -   The compound methods `"up_or_down"`, `"up_from_or_down_from"`, and `"ceiling_or_floor"` return their two results per input value *interleaved*, so that each input value's own pair stays together. Pooling the pairs across input values compares matches that did not come from the same original value; that was a false-pass bug in a GRIMMER implementation ([lhdjung/scrutiny#85](https://github.com/lhdjung/scrutiny/issues/85)).
 

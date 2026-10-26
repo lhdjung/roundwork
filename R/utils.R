@@ -1,153 +1,70 @@
 # Do NOT export any of these! ---------------------------------------------
 
-#' Write "an" or "a", depending on the next word
-#'
-#' @param x String. A string value that ends on a vowel letter returns `"an"`;
-#'   else, it returns `"a"`.
-#'
-#' @return String.
-#'
-#' @noRd
-an_a <- function(x) {
-  dplyr::if_else(stringr::str_detect(x, "^[aeiou]"), "an", "a")
-}
-
-
-#' Prefix an object's type with "an" or "a"
-#'
-#' This uses `an_a()` to prepend the type of `x` with "an" or "a". Because the
-#' function meant to be used in messages, it replaces "double" by "double
-#' (numeric value)" and "character" by "string".
-#'
-#' @param x Any object.
-#'
-#' @return String.
-#'
-#' @noRd
-an_a_type <- function(x) {
-  type <- typeof(x)
-  if (type == "double") {
-    type <- "double (numeric value)"
-  } else if (type == "character") {
-    type <- "string"
-  }
-  paste(an_a(typeof(x)), type)
-}
-
-
-#' Mark a string as wrong
-#'
-#' @param x Object that should have been a string (it isn't; that's why the
-#'   function is called.)
-#'
-#' @return String.
-#'
-#' @noRd
 wrong_spec_string <- function(x) {
   if (is.character(x)) {
-    paste0("\"", x, "\"")
+    wrap_in_quotes_or_backticks(x)
   } else {
     paste0("`", x, "` (not a string)")
   }
 }
 
 
-#' Wrap into backticks
-#'
-#' For error messages and similar.
-#'
-#' @param x String (or coercible to string).
-#'
-#' @return String of length `length(x)`.
-#'
-#' @noRd
-wrap_in_backticks <- function(x) {
-  paste0("`", x, "`")
+an_a <- function(x) {
+  dplyr::if_else(
+    stringr::str_detect(x, "^[aeiou]"),
+    "an",
+    "a"
+  )
 }
 
 
-#' Check whether numbers are whole
-#'
-#' @description For each element of a numeric vector `x`, `is_whole_number()`
-#'   checks whether that element is a whole number.
-#'
-#'   This is not the same as the integer data type, so doubles and integers are
-#'   tested the same way. See the note in `?integer`. To test if R itself
-#'   considers a vector integer-like, use `rlang::is_integerish()` instead.
-#'
-#' @param x Numeric.
-#' @param tolerance Numeric. Any difference between `x` and the whole number
-#'   nearest to it that is less than `tolerance` (in the absolute value) will be
-#'   ignored. The default is close to `1 / (10 ^ 8)`. This avoids errors due to
-#'   spurious precision in floating-point arithmetic.
-#'
-#' @return Logical vector of the same length as `x`.
-#'
-#' @details This function was adapted (with naming modifications) from the
-#'   examples of `?integer`, where a very similar function is called
-#'   `is.wholenumber()`.
-#'
-#' @author R Core Team, Lukas Jung
-#'
-#' @noRd
-is_whole_number <- function(x, tolerance = .Machine$double.eps^0.5) {
+an_a_type <- function(x) {
+  type <- typeof(x)
+
+  if (is.factor(x)) {
+    type <- "factor"
+  } else if (type == "double") {
+    type <- "double (numeric value)"
+  } else if (type == "character") {
+    type <- "string"
+  }
+
+  article <- an_a(type)
+  paste(article, type)
+}
+
+
+# `is_decidable_n_items()` and `check_newly_numeric()` write this test out
+# rather than calling it, because they run once per row; keep them in step.
+is_whole_number <- function(x, tolerance = WHOLE_NUMBER_TOLERANCE) {
   abs(x - round(x)) < tolerance
 }
 
 
-#' Check whether lengths are congruent
-#'
-#' `check_lengths_congruent()` is called within a function `f()` and takes a
-#' list of arguments to `f()` supplied by the user (`var_list`). It checks if
-#' two or more of those arguments have lengths that are greater than 1.
-#'
-#' If at least two of these lengths are also different from each other and the
-#' `error` argument is `TRUE` (the default), the function will throw a precisely
-#' informative error. If they have the same > 1 length and the `warn` argument
-#' is `TRUE` (the default), there will be an informative warning.
-#'
-#' The only dependencies of this function are {rlang} and {cli}. As these are
-#' tidyverse backend packages that most users have installed already, the
-#' function might conceivably be used more widely.
-#'
-#' @param var_list List of variables that were passed to the enclosing function
-#'   as arguments.
-#' @param error Logical (length 1). Should an error be thrown if lengths are not
-#'   congruent? Default is `TRUE`.
-#' @param warn Logical (length 1). If no error is thrown, should a warning be
-#'   issued if appropriate (see description)? Default is `TRUE`.
-#'
-#' @return No return value; might throw error or warning.
-#'
-#' @noRd
 check_lengths_congruent <- function(var_list, error = TRUE, warn = TRUE) {
-  var_names <- rlang::enexprs(var_list)
   var_lengths <- lengths(var_list)
   var_list_gt1 <- var_list[var_lengths > 1L]
 
-  # Condition of checking for error and warning:
   if (length(var_list_gt1) > 1L) {
-    var_names <- var_names[[1L]][-1L]
+    # Capturing the argument names costs some thirty times everything else here,
+    # and only this branch needs them. `reround()` calls this every time, so it
+    # must not happen unconditionally.
+    #
+    # `substitute()` rather than `enexprs()`: `lengths()` above has forced the
+    # promise, and `enexprs()` then returns the *values*, losing the names.
+    # `substitute()` reads `PRCODE`, which survives forcing.
+    var_names <- as.list(substitute(var_list))[-1L]
     var_names <- as.character(var_names)
     var_names_gt1 <- var_names[var_lengths > 1L]
     vnames_gt1_all <- var_names_gt1 # for the warning
 
-    # Two arguments of the same length are congruent, so only one of each
-    # distinct length needs to survive into the error condition below. The
-    # duplicates have to be found among the lengths greater than 1, not among
-    # all of them: `duplicated(var_lengths)` is as long as `var_list`, and
-    # indexing the shorter `var_list_gt1` with it dropped whichever elements
-    # happened to line up with a repeated length-1 argument -- usually none of
-    # them, so the deduplication did nothing at all. Two arguments that were
-    # both length 2 then counted as two distinct lengths and raised an error
-    # about having to be the same length, which they already were.
+    # Only one argument of each distinct length needs to reach the error
+    # condition. Deduplicate among the lengths greater than 1, so that the
+    # index lines up with `var_list_gt1`:
     length_dup <- duplicated(var_lengths[var_lengths > 1L])
     var_list_gt1 <- var_list_gt1[!length_dup]
     var_names_gt1 <- var_names_gt1[!length_dup]
 
-    # Error condition, checking if there is more than one element of `var_list`
-    # with a unique length greater than one (the duplicated lengths were
-    # filtered out from `var_list_gt1` right above):
     if (error && (length(var_list_gt1) > 1L)) {
       x <- var_list_gt1[[1L]]
       y <- var_list_gt1[[2L]]
@@ -163,7 +80,6 @@ check_lengths_congruent <- function(var_list, error = TRUE, warn = TRUE) {
         "*" = "`{y_name}` has length {length(y)}."
       )
 
-      # Append-to-error-message condition:
       if (length(residues_names) > 0L) {
         residues_names <- paste0("`", residues_names, "`")
         msg_error <- append(
@@ -172,13 +88,10 @@ check_lengths_congruent <- function(var_list, error = TRUE, warn = TRUE) {
         )
       }
 
-      # Throw error:
-      cli::cli_abort(msg_error, call = rlang::caller_env())
+      abort_in_export(msg_error)
     }
 
-    # Warning condition, triggered if more than one element of `var_list` has
-    # length > 1, it's the same length for all (hence no error), and the `warn`
-    # argument is `TRUE` (the default):
+    # Same length greater than 1 for all of them:
     if (warn) {
       x_name <- vnames_gt1_all[[1L]]
       y_name <- vnames_gt1_all[[2L]]
@@ -201,7 +114,6 @@ check_lengths_congruent <- function(var_list, error = TRUE, warn = TRUE) {
 
       vnames_gt1_all <- paste0("`", vnames_gt1_all, "`")
 
-      # Throw warning:
       cli::cli_warn(c(
         "Values of {vnames_gt1_all} get paired.",
         "!" = "Are you sure that{msg_example} each `{x_name}` value \\
@@ -214,32 +126,73 @@ check_lengths_congruent <- function(var_list, error = TRUE, warn = TRUE) {
 }
 
 
-#' Check that a rounding threshold is usable
-#'
-#' @description `check_threshold_valid()` is called within curly braces inside
-#'   of the switch statement in `reconstruct_rounded_numbers_scalar()`, and from
-#'   `rounding_offsets()`, if `rounding` includes `"_from"` and therefore
-#'   depends on `threshold`.
-#'
-#'   A threshold is the point within a step at which rounding switches
-#'   direction, so it has to lie strictly inside the step: at `0` or `10`, one
-#'   of the two directions can never be taken, which silently turns the method
-#'   into `"ceiling"`-like or `"floor"`-like behavior.
-#'
-#'   Up to roundwork 0.1.0, the check here was a different one
-#'   (`check_threshold_specified()`): it threw an error if `threshold` was `5`,
-#'   on the theory that a threshold of `5` must be the argument's default value
-#'   showing through, and that the user meant to specify something else. That
-#'   conflated "unspecified" with "specified as 5" -- any caller computing a
-#'   threshold and passing it on failed spuriously at exactly the most common
-#'   value -- and `"up_from"` with a threshold of `5` is simply `"up"`, which is
-#'   a correct answer rather than an error.
-#'
-#' @param threshold The `threshold` argument of the calling function.
-#'
-#' @return No return value; might throw an error.
-#'
-#' @noRd
+check_type <- function(x, t) {
+  # A factor's type is `"integer"`, but its values are level codes, not the
+  # numbers it shows:
+  if (is.factor(x) || !any(typeof(x) == t)) {
+    msg_name <- deparse(substitute(x))
+    if (length(t) == 1L) {
+      msg_object <- "be of type"
+    } else {
+      msg_object <- "be one of these types:"
+    }
+
+    abort_in_export(
+      "!" = "`{msg_name}` must {msg_object} {t}.",
+      "x" = "It is {an_a_type(x)}."
+    )
+  }
+}
+
+
+check_digits_whole <- function(digits, name = "digits") {
+  if (!is.numeric(digits) && !(is.logical(digits) && all(is.na(digits)))) {
+    abort_in_export(
+      "`{name}` must be whole numbers.",
+      "x" = "It is {.obj_type_friendly {digits}}."
+    )
+  }
+
+  # The cheap, normal case. `NaN` passes with the other missing values. 308 is
+  # the greatest power of ten a double can hold:
+  ok <-
+    is.na(digits) |
+    (abs(digits) <= 308 &
+      abs(digits - round(digits)) < WHOLE_NUMBER_TOLERANCE)
+
+  if (all(ok)) {
+    return(NULL)
+  }
+
+  # Failure path. Not being whole is reported first; an infinity counts as not
+  # whole:
+  offenders <- digits[!ok]
+  not_whole <- offenders[
+    !is.finite(offenders) |
+      abs(offenders - round(offenders)) >= WHOLE_NUMBER_TOLERANCE
+  ]
+
+  if (length(not_whole) > 0L) {
+    abort_in_export(
+      "`{name}` must be whole numbers.",
+      "x" = "It has {length(not_whole)} value{?s} that {?is/are} not: \\
+        {not_whole}.",
+      "i" = "Each value is a number of decimal places, so a fractional one \\
+        would scale `x` by a non-power of ten and return a number on no \\
+        decimal grid."
+    )
+  }
+
+  abort_in_export(
+    "`{name}` must be between -308 and 308.",
+    "x" = "It has {length(offenders)} value{?s} that {?is/are} not: \\
+      {offenders}.",
+    "i" = "Beyond that, `10^digits` is not a finite, non-zero number, so \\
+      `x` could not be scaled by it."
+  )
+}
+
+
 check_threshold_valid <- function(threshold) {
   if (
     length(threshold) != 1L ||
@@ -248,99 +201,50 @@ check_threshold_valid <- function(threshold) {
       threshold <= 0 ||
       threshold >= 10
   ) {
-    cli::cli_abort(
-      message = c(
-        "`threshold` must be a single number greater than 0 and less than 10.",
-        "x" = "It is {wrong_spec_string(threshold)}.",
-        "i" = "It is the point within a step at which rounding switches \\
+    msg_what_it_is <- if (is.numeric(threshold) && length(threshold) == 1L) {
+      "It is {threshold}."
+    } else {
+      "It is {.obj_type_friendly {threshold}}."
+    }
+    abort_in_export(
+      "`threshold` must be a single number greater than 0 and less than 10.",
+      "x" = msg_what_it_is,
+      "i" = "It is the point within a step at which rounding switches \\
         direction, so both directions have to remain possible.",
-        "i" = "With `rounding` set to \"up_from\", \"down_from\", or \\
+      "i" = "With `rounding` set to \"up_from\", \"down_from\", or \\
         \"up_from_or_down_from\", `x` is rounded up or down from `threshold` \\
         instead of from 5."
-      ),
-      call = rlang::caller_env()
     )
   }
 }
 
 
-# Shifting a number by `digits` decimal places is not exact in floating point:
-# `0.28 * 100` is 28.000000000000004, and `0.29 * 100` is 28.999999999999996.
-# Rounding the shifted value away from the number it is meant to be would then
-# move it a whole step -- `ceiling(0.28 * 100) / 100` would be 0.29 rather than
-# 0.28. Every rounding function in round.R and round-ceil-floor.R therefore
-# nudges the shifted value by this tolerance before rounding it: the `round_*()`
-# functions of round-ceil-floor.R add or subtract it directly, and
-# `round_up_from()` and `round_down_from()` fold it into `tie_offset()`. It is
-# far smaller than any difference a reported value could meaningfully express,
-# so it only ever absorbs representation error.
-#
-# `unround()` reports bounds that assume exactly this tolerance, and the
-# property test in test-unround.R checks that the two agree, so all three files
-# have to stay with the one constant.
-#
-# The tolerance is absolute, so it has a domain of validity: representation
-# error in `x * 10^digits` grows with the magnitude of that product (roughly
-# `|x| * 10^digits * 2.2e-16`), whereas the nudge is fixed. Up to about
-# `|x * 10^digits| = 1e7` the nudge dominates by orders of magnitude; far beyond
-# that, a value sitting exactly on a rounding boundary may go either way. Means,
-# SDs, and percentages with a few decimal places are nowhere near that.
-
-rounding_tolerance <- .Machine$double.eps^0.5 / 10
-
-
-# `round_up_from()` and `round_down_from()` both shift the scaled value so that
-# `floor()` or `ceiling()` cuts it at `threshold` rather than at 5, and both
-# nudge it by `rounding_tolerance` beforehand. This is the amount they add or
-# subtract.
-#
-# Before roundwork 0.1.0 the nudge was written there as `threshold -
-# .Machine$double.eps^0.5`, which the `/ 10` below turns into the very same
-# additive `rounding_tolerance`. Everything depended on that equality, since
-# `unround()` reports bounds that assume one shared tolerance, but it was not
-# stated anywhere.
-
-tie_offset <- function(threshold) {
-  1 - (threshold / 10) + rounding_tolerance
+wrap_in_backticks <- function(x) {
+  paste0("`", x, "`")
 }
 
 
-# The `"ties_*"` rounding strings each name a complete tie-breaking procedure,
-# so one of them says by itself what `rounding` plus `symmetric` says together.
-# `reround()` and `rounding_offsets()` both resolve them through this one table,
-# so the forward functions and the bounds can't come to disagree about what a
-# name means.
-#
-# `symmetric` is deliberately not consulted for them. The procedure is already
-# fully determined by the name, and a `"ties_away"` that a separate argument
-# could turn into something else would defeat the point of naming it.
-
-# fmt: skip
-ties_methods <- list(
-  ties_up   = list(rounding = "up",   symmetric = FALSE),  # toward +Inf
-  ties_down = list(rounding = "down", symmetric = FALSE),  # toward -Inf
-  ties_away = list(rounding = "up",   symmetric = TRUE),   # roundTiesToAway
-  ties_zero = list(rounding = "down", symmetric = TRUE)    # toward zero
-)
-
-
-resolve_ties_rounding <- function(rounding, symmetric) {
-  # `[[` on a list matches exactly, so a `rounding` of "up" is not caught by
-  # "ties_up" here:
-  spec <- ties_methods[[rounding]]
-  if (is.null(spec)) {
-    list(rounding = rounding, symmetric = symmetric)
+wrap_in_quotes_or_backticks <- function(x) {
+  if (is.null(x)) {
+    "`NULL`"
+  } else if (is.character(x)) {
+    # A missing string is no string:
+    ifelse(is.na(x), "`NA`", paste0("\"", x, "\""))
   } else {
-    spec
+    paste0("`", x, "`")
   }
 }
 
 
-# The two procedures that a compound rounding method is made of, or the method
-# itself if it is not a compound one. `reround()` returns one value per input
-# value for a single procedure and two -- interleaved -- for a compound one, so
-# a caller that wants to keep working on each of those branches separately needs
-# to know which procedure produced it.
+tie_offset_up <- function(threshold) {
+  1 - (threshold / 10) + ROUNDING_TOLERANCE
+}
+
+
+tie_offset_down <- function(threshold) {
+  (threshold / 10) + ROUNDING_TOLERANCE
+}
+
 
 rounding_constituents <- function(rounding) {
   # fmt: skip
@@ -354,41 +258,201 @@ rounding_constituents <- function(rounding) {
 }
 
 
-# Give `value` -- typically derived from `abs(x)` -- the sign of `x`, so that
-# rounding a negative number mirrors the rounding of its absolute value. Zero
-# and positive values keep `value` as it is; `NA` and `NaN` pass through.
-#
-# `dplyr::if_else()` would say the same thing, but these are the package's
-# innermost primitives: `round_trunc()`, `anti_trunc()`, and the `symmetric`
-# branches of `round_up_from()` and `round_down_from()` run once per candidate
-# value in a consistency test's innermost loop, which a caller may in turn
-# repeat for every row of a data frame.
+check_rounding_spec_singular <- function(rounding, threshold, symmetric) {
+  if (
+    length(rounding) != 1L ||
+      length(threshold) != 1L ||
+      length(symmetric) != 1L
+  ) {
+    abort_in_export(
+      "`rounding`, `threshold`, and `symmetric` must each have length 1.",
+      "x" = "They have lengths {length(rounding)}, {length(threshold)}, \\
+        and {length(symmetric)}.",
+      "i" = "They describe a single rounding procedure, which is then \\
+        applied to all values.",
+      "i" = "To compare procedures, test once per procedure. `unround()` \\
+        is vectorized over `rounding` if you need the bounds."
+    )
+  }
+
+  # `resolve_ties_rounding()` indexes `TIES_METHODS` by `rounding`, and a number
+  # or `TRUE` would pick an element by position, i.e., a method the caller
+  # never named:
+  if (!is.character(rounding) || is.na(rounding)) {
+    abort_in_export(
+      "`rounding` must be a string.",
+      "x" = "It is {.obj_type_friendly {rounding}}.",
+      "i" = "See `vignette(\"rounding-options\")` for the strings it \\
+        can take."
+    )
+  }
+
+  if (!is.logical(symmetric) || is.na(symmetric)) {
+    abort_symmetric_invalid(symmetric)
+  }
+}
+
+
+resolve_ties_rounding <- function(rounding, symmetric) {
+  # `[[` on a list matches exactly, so a `rounding` of "up" is not caught by
+  # "ties_up" here:
+  spec <- TIES_METHODS[[rounding]]
+
+  if (is.null(spec)) {
+    return(list(rounding = rounding, symmetric = symmetric))
+  }
+
+  # A `"ties_*"` string already fixes the tie direction in both signs. Ignoring
+  # `symmetric` would silently drop half of the request:
+  # `reround(-2.5, 0, "ties_up", symmetric = TRUE)` would be `-2`, but `-3`
+  # when spelled `rounding = "up"`. So it is an error naming the string the
+  # caller meant.
+  #
+  # The test is on the value, not on `missing()`: callers such as scrutiny's
+  # mappers pass `symmetric` down explicitly, so its default is the only thing
+  # that can mean "not given".
+  if (!isFALSE(symmetric)) {
+    # fmt: skip
+    msg_instead <- switch(
+      rounding,
+      "ties_up"   = "For ties away from zero, set `rounding` to \"ties_away\".",
+      "ties_down" = "For ties toward zero, set `rounding` to \"ties_zero\".",
+      "ties_away" = "\"ties_away\" is already what `symmetric = TRUE` makes \\
+        \"up\" do, so drop `symmetric`.",
+      "ties_zero" = "\"ties_zero\" is already what `symmetric = TRUE` makes \\
+        \"down\" do, so drop `symmetric`.",
+      "ties_even" = "Rounding to even is its own mirror image, so there is \\
+        no tie direction left to set. Drop `symmetric`.",
+      "Drop `symmetric`."
+    )
+    abort_in_export(
+      "`symmetric` must not be given with `rounding = \"{rounding}\"`.",
+      "x" = "It is {symmetric}.",
+      "i" = "A \"ties_*\" string names a complete tie-breaking procedure, \\
+        so it already determines which way ties go for negative numbers.",
+      "i" = msg_instead
+    )
+  }
+
+  spec
+}
+
 
 restore_sign <- function(value, x) {
   value * (1 - 2 * (x < 0))
 }
 
 
-# Counts decimal places from the string representation, so that trailing zeros
-# are not lost: `decimal_places("3.70")` is 2, whereas the numeric `3.70` has
-# already dropped its trailing zero and gives 1. This is why `unround()`'s `x`
-# must be a string unless `digits` is given.
-#
-# This is just a helper, not part of roundwork's API.
+decimal_places <- function(x, sep = ".") {
+  sep <- sep_literal(sep)
 
-decimal_places <- function(x, sep = "\\.") {
-  pieces <- stringr::str_split(stringr::str_trim(x), sep, n = 2L)
-  vapply(
-    pieces,
-    function(p) {
-      if (anyNA(p)) {
-        NA_integer_
-      } else if (length(p) == 1L) {
-        0L
-      } else {
-        stringr::str_length(p[[2L]])
-      }
-    },
-    integer(1L)
+  # Strings are matched against the tokens rather than run through
+  # `as.numeric()`, which would also reject strings like `"5.30%"`. Values
+  # decided here are blanked out so that nothing below meets a missing value:
+  if (is.numeric(x)) {
+    non_finite <- !is.finite(x)
+    x <- number_to_string(x)
+    # R writes a number with a point, whatever `sep` the strings use:
+    sep <- "."
+  } else {
+    x <- trim_space(x)
+    non_finite <- x %in% c(NA, "NA") | is_non_finite_token(x)
+  }
+  x[non_finite] <- ""
+
+  # An exponent moves the decimal point (`"1e-05"` has five decimal places,
+  # `"1.5e3"` none), so it is split off and applied to the count below. One
+  # beyond the integer range makes the count `NA`:
+  pos_exponent <- regexpr("[eE][+-]?[0-9]+$", x)
+  has_exponent <- pos_exponent > 0L
+  exponent <- integer(length(x))
+  exponent[has_exponent] <- x[has_exponent] |>
+    substring(pos_exponent[has_exponent] + 1L) |>
+    as.integer() |>
+    suppressWarnings()
+  x[has_exponent] <- substr(
+    x[has_exponent],
+    1L,
+    pos_exponent[has_exponent] - 1L
   )
+
+  # Only the digit run right after the first separator counts: `"1.2.3"` has
+  # one decimal place. `decimal_places_scalar()` takes the same steps, and a
+  # generated corpus in test-decimal-places.R holds the two together:
+  pos_sep <- regexpr(sep, x, fixed = TRUE)
+  mantissa <- substring(x, pos_sep + nchar(sep))
+  mantissa[pos_sep < 0L] <- ""
+  out <- mantissa |>
+    regexpr(pattern = "^[0-9]*") |>
+    attr("match.length")
+
+  out <- pmax(out - exponent, 0L)
+  out[non_finite] <- NA_integer_
+  out
 }
+
+
+# `as.character()` uses scientific notation when it is shorter (`100000` is
+# `"1e+05"`), so such numbers are written out in full here, to be counted and
+# compared to other spellings. Near the ends of the double range it can use all
+# 15 digits where fewer stand for the same number (`1e-300` gives
+# `"9.99999999999999e-301"`), so the fewest digits that round-trip are searched
+# for. The common case costs one fixed-string match:
+number_to_string <- function(x) {
+  out <- as.character(x)
+  for (i in grep("e", out, fixed = TRUE)) {
+    digits <- nchar(gsub("[^0-9]", "", sub("e.*$", "", out[i])))
+    if (digits >= 15L) {
+      for (digits in 1:15) {
+        if (as.numeric(format(x[i], digits = digits)) == x[i]) {
+          break
+        }
+      }
+    }
+    out[i] <- format(
+      x[i],
+      digits = digits,
+      scientific = FALSE,
+      decimal.mark = "."
+    )
+  }
+  out
+}
+
+
+# `sep` and its relatives in `restore_zeros()` are literal strings. An escaped
+# character such as `"\\."`, valid when they were regular expressions, is read
+# as that character.
+sep_literal <- function(sep) {
+  if (!is.character(sep) || length(sep) != 1L || is.na(sep)) {
+    name <- deparse(substitute(sep))
+    abort_in_export(
+      "`{name}` must be a single string.",
+      "x" = "It is {wrong_spec_string(sep)}."
+    )
+  }
+  sub("^\\\\(.)$", "\\1", sep)
+}
+
+
+# `decimal_places()` and `decimal_places_scalar()` read strings through these
+# two, so that they cannot drift apart.
+#
+# `\s` is ASCII whitespace, `"\v"` and `"\f"` included. `\p{Z}` adds Unicode
+# spaces such as the no-break space, common in tables copied from PDFs.
+trim_space <- function(x) {
+  gsub("^[\\s\\p{Z}]+|[\\s\\p{Z}]+$", "", x, perl = TRUE)
+}
+
+
+# The strings `as.numeric()` reads as an infinity or `NaN`, in any letter case.
+# `chartr()` folds the ASCII letters of these tokens and nothing else, so unlike
+# `tolower()` it does not depend on the locale. A number too large for a double,
+# such as `"1e400"`, is read as an infinity as well:
+is_non_finite_token <- function(x) {
+  chartr("AFINTY", "afinty", x) %in%
+    NON_FINITE_TOKENS |
+    is.infinite(suppressWarnings(as.numeric(x)))
+}
+
+

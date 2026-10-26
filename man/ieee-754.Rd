@@ -20,12 +20,10 @@ round_toward_negative(x, digits = 0)
 round_toward_zero(x, digits = 0)
 }
 \arguments{
-\item{x}{Numeric. The decimal number to round.}
+\item{x}{Numeric. The number to round.}
 
-\item{digits}{Integer. Number of digits to round \code{x} to. Default is \code{0}.
-Negative values round to powers of ten: \code{round_up(1250, digits = -2)} is
-\code{1300}, which reconstructs values reported as "rounded to the nearest
-hundred".}
+\item{digits}{Integer. Number of decimal places to round to. Default is
+\code{0}. Negative values round to powers of ten: \code{round_up(1250, digits = -2)} is \code{1300}.}
 
 \item{...}{Only in \code{round_ties_to_even()}. Passed down to \code{\link[base:Round]{base::round()}}.}
 }

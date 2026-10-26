@@ -24,7 +24,7 @@ mirrored that of positive numbers. See \code{\link[=round_up]{round_up()}}.}
 }
 \value{
 A list of five elements, or \code{NULL} if the bounds are undefined, which
-is the case only for a missing \code{x_num}:
+is the case only for a missing or infinite \code{x_num}:
 \itemize{
 \item \code{lower}, \code{upper}: integer numerators of the two bounds.
 \item \code{denom}: the common denominator.

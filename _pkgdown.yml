@@ -44,7 +44,8 @@ reference:
     - rounding_bias
   - title: For package developers
     desc: >
-      The exact-integer form of `unround()`'s bounds, for building consistency
-      tests on.
+      The exact-integer form of `unround()`'s bounds, and the whole-number sums
+      they admit, for building consistency tests on.
   - contents:
     - bound_numerators
+    - sum_range

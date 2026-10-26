@@ -23,15 +23,17 @@ VignetteBuilder: knitr
 Depends:
     R (>= 4.1.0)
 Imports:
-    cli,
+    cli (>= 3.0.0),
     dplyr,
     magrittr,
-    rlang,
+    rlang (>= 1.1.0),
     stringr,
     tibble
 Collate: 
+    'aaa.R'
     'round.R'
     'ieee-754.R'
+    'import-standalone-last-export.R'
     'utils.R'
     'reround-to-fraction.R'
     'round-ceil-floor.R'

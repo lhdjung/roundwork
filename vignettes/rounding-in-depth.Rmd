@@ -79,7 +79,7 @@ round_down(x = 1.25, digits = 1)
 round_down(x = 1.25) # default for `digits` is 0
 ```
 
-`round_down_from()`, then, is just the reverse of `round_up_from()` --- and the reversal applies to the threshold, too. Note how the results below are the opposite way around from those above:
+`round_up_from()` rounds up when the part cut off by rounding is at least $t$ tenths of a step, and `round_down_from()` rounds down when that part is at most $t$ tenths. With the same threshold, the two switch direction at the same point:
 
 ```{r}
 round_down_from(x = 4.28, digits = 1, threshold = 9)
@@ -87,7 +87,13 @@ round_down_from(x = 4.28, digits = 1, threshold = 9)
 round_down_from(x = 4.28, digits = 1, threshold = 1)
 ```
 
-`round_up_from()` rounds up when the part cut off by rounding is at least $t$ tenths of a step. `round_down_from()` rounds *down* when that part is at most $10 - t$ tenths of a step. The two switch direction at the same point only when $t = 5$, which is the value that `round_up()` and `round_down()` use --- so the difference never shows up unless you set `threshold` yourself.
+They only differ for a value exactly on the threshold:
+
+```{r}
+round_up_from(x = 4.25, digits = 1, threshold = 5)
+
+round_down_from(x = 4.25, digits = 1, threshold = 5)
+```
 
 Rounding up implements this formula:
 
@@ -97,26 +103,27 @@ $$
 
 where $x$ is the number to be rounded, $d$ is the number of decimal places to which $x$ should be rounded, and $t$ is the threshold for rounding up (e.g., $t = 5$ for rounding up from 5). Note that $\lfloor n \rfloor$ floors a number $n$, and $\lceil n \rceil$ ceils it.
 
-Rounding down works accordingly. Note that $+$ and $-$ are reversed here:
+Rounding down works accordingly:
 
 $$
-\frac{\lceil x(10^d) - 1 + \frac{t}{10} - \epsilon \rceil}{10^d}
+\frac{\lceil x(10^d) - \frac{t}{10} - \epsilon \rceil}{10^d}
 $$
 
 The $\epsilon$ in both formulas is a fixed tolerance of about $1.5 \times 10^{-9}$. It is there because shifting $x$ by $d$ decimal places is not exact: $0.145 \times 100$ is stored as $14.499999999999998$, a hair below the tie it is meant to be, and rounding that shifted value directly would move $0.145$ a whole step in the wrong direction. The same tolerance is applied by every other `round_*()` function, and `unround()` reports bounds that assume it, so a number and its reconstructed range always agree. See the `Floating-point tolerance` section of `round_up()`.
 
 ### Ties, named directly
 
-`round_up()` and `round_down()` say which way a tie goes *on the number line*, and `symmetric` then decides what that means below zero. Since that translation is easy to get backwards, the same four procedures are also available under names that state them outright:
+`round_up()` and `round_down()` say which way a tie goes *on the number line*, and `symmetric` then decides what that means below zero. Since that translation is easy to get backwards, the same procedures are also available under names that state them outright:
 
 ```{r}
 round_ties_up(-2.5)     # Stata
 round_ties_down(-2.5)
 round_ties_away(-2.5)   # Excel, SPSS, SAS, Matlab
 round_ties_zero(-2.5)
+round_ties_even(-2.5)   # `base::round()`
 ```
 
-`round_ties_up()` is `round_up()` with `symmetric = FALSE`, and `round_ties_away()` is `round_up()` with `symmetric = TRUE`. Nothing is deprecated by them; use whichever spelling reads better. The `rounding` strings `"ties_up"`, `"ties_down"`, `"ties_away"`, and `"ties_zero"` name the same four procedures inside `reround()` and `unround()`.
+`round_ties_up()` is `round_up()` with `symmetric = FALSE`, and `round_ties_away()` is `round_up()` with `symmetric = TRUE`. Nothing is deprecated by them; use whichever spelling reads better. The `rounding` strings `"ties_up"`, `"ties_down"`, `"ties_away"`, `"ties_zero"`, and `"ties_even"` name the same procedures inside `reround()` and `unround()`. Each of them already determines the direction of a tie for negative numbers as well, so these strings cannot be combined with `symmetric`; doing so is an error.
 
 ### To even (base R)
 

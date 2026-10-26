@@ -14,3 +14,9 @@
 trunc_reverse <- function(x) {
   x - trunc(x)
 }
+
+
+# Call `f` on `x`, so that a pipe can end in an anonymous function:
+call_on <- function(x, f) {
+  f(x)
+}

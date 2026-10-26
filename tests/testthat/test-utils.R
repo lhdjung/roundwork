@@ -45,7 +45,7 @@ test_that("`resolve_ties_rounding()` maps each `\"ties_*\"` string", {
     expect_equal(list(rounding = "up", symmetric = FALSE))
   resolve_ties_rounding("ties_away", FALSE) |>
     expect_equal(list(rounding = "up", symmetric = TRUE))
-  resolve_ties_rounding("ties_down", TRUE) |>
+  resolve_ties_rounding("ties_down", FALSE) |>
     expect_equal(list(rounding = "down", symmetric = FALSE))
   resolve_ties_rounding("ties_zero", FALSE) |>
     expect_equal(list(rounding = "down", symmetric = TRUE))

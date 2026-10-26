@@ -1,21 +1,8 @@
-# # Full example inputs:
-# x <- 65.3488492
-# digits <- 2
-# rounding <- "up_or_down"
-# threshold <- 5
-# symmetric <- FALSE
-
-# The three compound rounding methods return two values per input value, and
-# they return them interleaved: `c(up_1, down_1, up_2, down_2, ...)`, so that
-# each input value's own pair of results stays together. A caller that pools
-# them across input values compares matches that did not come from the same
-# original value -- which was the false-pass bug
-# <https://github.com/lhdjung/scrutiny/issues/85> in a GRIMMER implementation.
-#
-# Interleaving is what `Vectorize()` produced anyway, one column of the result
-# matrix per input value. Doing it explicitly lets
-# `reconstruct_rounded_numbers_scalar()` take a whole vector at once (see
-# `reround()` below).
+# The three compound rounding methods return two values per input value,
+# interleaved as `c(up_1, down_1, up_2, down_2, ...)`, so each input's pair
+# stays together. scrutiny's `grimmer_scalar()` relies on that to keep its
+# candidates apart; pooling them across candidates would let a case pass falsely
+# (scrutiny issue #85).
 
 interleave_pair <- function(first, second) {
   out <- rep_len(NA_real_, length(first) + length(second))
@@ -25,10 +12,8 @@ interleave_pair <- function(first, second) {
 }
 
 
-# Despite the name, this is vectorized over `x` and `digits` -- every rounding
-# function it dispatches to is. It is scalar in `rounding`, `threshold`, and
-# `symmetric`, which `reround()` enforces before calling it. The name is a
-# leftover from when `reround()` wrapped it in `Vectorize()`.
+# Despite the name, this is vectorized over `x` and `digits`. It is scalar only
+# in `rounding`, `threshold`, and `symmetric`, which `reround()` enforces.
 
 reconstruct_rounded_numbers_scalar <- function(
   x,
@@ -57,8 +42,7 @@ reconstruct_rounded_numbers_scalar <- function(
     "even" = round(x, digits),
     "up" = round_up(x, digits, symmetric),
     "down" = round_down(x, digits, symmetric),
-    # The `"*_from"` methods are the ones that `threshold` applies to, so they
-    # are the ones that validate it:
+    # Only the `"*_from"` methods use `threshold`, so only they validate it:
     "up_from" = {
       check_threshold_valid(threshold)
       round_up_from(x, digits, threshold, symmetric)
@@ -71,78 +55,53 @@ reconstruct_rounded_numbers_scalar <- function(
     "floor" = round_floor(x, digits),
     "trunc" = round_trunc(x, digits),
     "anti_trunc" = round_anti_trunc(x, digits),
-    cli::cli_abort(c(
+    abort_in_export(
       "`rounding` must be one of the designated string values.",
       "x" = "It was given as {wrong_spec_string(rounding)}.",
       "i" = "See `vignette(\"rounding-options\")`."
-    ))
+    )
   )
 }
 
 
 #' General interface to reconstructing rounded numbers
 #'
-#' @description `reround()` takes one or more intermediate reconstructed values
-#'   and rounds them in some specific way -- namely, the way they are supposed
-#'   to have been rounded originally, in the process that generated the reported
-#'   values.
+#' @description `reround()` rounds a vector of reconstructed values the way
+#'   they are assumed to have been rounded originally. It is the common
+#'   interface to all of roundwork's rounding functions and to
+#'   [`base::round()`].
 #'
-#'   This function provides an interface to all of roundwork's rounding
-#'   functions as well as [`base::round()`]. It is meant as a helper within
-#'   consistency tests, and it might find use in other places for
-#'   reconstruction of statistical analyses.
+#' @details `reround()` calls the rounding function that `rounding` names. See
+#'   `vignette("rounding-options")` for the possible values, and [`round_up()`]
+#'   and [`round_ceiling()`] for the functions themselves.
 #'
-
-#' @details `reround()` internally calls the appropriate rounding function(s)
-#'   determined by the `rounding` argument. See `vignette("rounding-options")`
-#'   for a complete list of values that `rounding` can take.
-#'
-#'   For the specific rounding functions themselves, see documentation at
-#'   [`round_up()`], [`round_ceiling()`], and [`base::round()`].
-#'
-#' @param x Numeric. Vector of possibly original values.
-#' @param digits Integer. Number of decimal places in the reported key values
-#'   (e.g., in a reported mean, percentage, or standard deviation).
-#' @param rounding String. The rounding method that is supposed to have been
-#'   used originally. See `vignette("rounding-options")`. Default is
-#'   `"up_or_down"`, which returns two values: `x` rounded up *and* down.
-#' @param threshold Numeric. If `rounding` is set to `"up_from"`, `"down_from"`,
-#'   or `"up_from_or_down_from"`, `threshold` is the point within a step at
-#'   which rounding switches direction, in tenths of a step; it must be greater
-#'   than `0` and less than `10`. Otherwise irrelevant. Default is `5`, which
-#'   makes those three methods the same as `"up"`, `"down"`, and `"up_or_down"`.
-#'   See [`round_up_from()`], which spells out how `round_down_from()` mirrors
-#'   the threshold.
-#' @param symmetric Logical. Set `symmetric` to `TRUE` if the rounding of
-#'   negative numbers with `"up_or_down"`, `"up"`, `"down"`,
-#'   `"up_from_or_down_from"`, `"up_from"`, or `"down_from"` should mirror that
-#'   of positive numbers so that their absolute values are always equal.
-#'   Otherwise irrelevant. Default is `FALSE`. It only ever affects ties in
-#'   negative numbers, but `TRUE` is what reconstructs Excel, SAS, SPSS, and
-#'   Matlab; see `vignette("rounding-options")`.
+#' @param x Numeric. Values to round.
+#' @param digits Integer. Number of decimal places to round to, i.e., the
+#'   number in the reported values. Length 1 or the length of `x`. Must be
+#'   whole numbers; a missing value propagates to a missing result.
+#' @param rounding String (length 1). The rounding method. Default is
+#'   `"up_or_down"`, which returns two values per element of `x`: rounded up
+#'   and rounded down.
+#' @param threshold Numeric (length 1). For `"up_from"`, `"down_from"`, and
+#'   `"up_from_or_down_from"`, the point within a step at which rounding
+#'   switches direction, in tenths of a step; greater than `0` and less than
+#'   `10`. Default is `5`, which makes these methods the same as `"up"`,
+#'   `"down"`, and `"up_or_down"`. See [`round_up_from()`].
+#' @param symmetric Logical (length 1). If `TRUE`, negative numbers are rounded
+#'   like their absolute values under `"up"`, `"down"`, `"up_or_down"`, and the
+#'   `"*_from"` methods. Default is `FALSE`. Must not be given with a `"ties_*"`
+#'   method, which already fixes the direction: `"ties_up"` with `symmetric =
+#'   TRUE` would be `"ties_away"`, so write that instead.
 #'
 #' @include utils.R round.R round-ceil-floor.R
 #'
 #' @export
 #'
-#' @return Numeric. One value per element of `x` -- except for the three
-#'   compound methods `"up_or_down"`, `"up_from_or_down_from"`, and
-#'   `"ceiling_or_floor"`, which return *two* values per element of `x`: the
-#'   result of each of their two constituent procedures.
-#'
-#'   The two values of a compound method stay next to each other, so the return
-#'   value is `c(up_1, down_1, up_2, down_2, ...)` and has length `2 *
-#'   length(x)`. Take care not to pool the pairs across elements of `x`: matches
-#'   found in different pairs did not come from the same original value. (This
-#'   was the cause of a false-pass bug in a GRIMMER implementation; see
-#'   <https://github.com/lhdjung/scrutiny/issues/85>.)
-#'
-#' @examples
-#' # You can specify the rounding procedure:
-#' reround(4.1679, digits = 2, rounding = "up")
-#'
-#' # Default is rounding both up and down:
-#' reround(4.1679, digits = 2)
+#' @return Numeric. One value per element of `x`, except for the compound
+#'   methods `"up_or_down"`, `"up_from_or_down_from"`, and `"ceiling_or_floor"`,
+#'   which return two: the results of their two constituent procedures, next to
+#'   each other, as `c(up_1, down_1, up_2, down_2, ...)`. Each pair belongs to
+#'   one element of `x`, so the pairs must not be pooled across elements.
 
 reround <- function(
   x,
@@ -151,46 +110,30 @@ reround <- function(
   threshold = 5,
   symmetric = FALSE
 ) {
-  # The last three arguments describe one rounding procedure; `x` is the vector.
-  # Up to roundwork 0.1.0 they could each be vectors of their own, which meant
-  # dispatching once per element of `x` through `Vectorize()`, plus a set of
-  # checks -- `check_rounding_singular()` and a length-congruence check -- for
-  # the ways in which such a call can be malformed. No consistency test ever
-  # made one, and pairing values with procedures by position is confusing enough
-  # that `unround()`, which keeps that behavior for its display use case, warns
-  # about it in its own documentation:
-  if (
-    length(rounding) != 1L ||
-      length(threshold) != 1L ||
-      length(symmetric) != 1L
-  ) {
-    cli::cli_abort(c(
-      "`rounding`, `threshold`, and `symmetric` must each have length 1.",
-      "x" = "They have lengths {length(rounding)}, {length(threshold)}, \\
-      and {length(symmetric)}.",
-      "i" = "They describe a single rounding procedure, which is then applied \\
-      to all of `x`.",
-      "i" = "To compare procedures, call `reround()` once per procedure. \\
-      `unround()` is vectorized over `rounding` if you need the bounds."
-    ))
-  }
+  # The last three arguments describe one rounding procedure for all of `x`.
+  # Pairing values with procedures by position would be too confusing:
+  check_rounding_spec_singular(rounding, threshold, symmetric)
 
-  # A `"ties_*"` string names a complete procedure, so it stands in for a
-  # `rounding` and a `symmetric` together. `rounding_offsets()` resolves it
-  # through the same table:
+  # R's own recycling would silently round extra values at the wrong decimal
+  # level. No pairing warning: a per-value `digits` is the ordinary way to call
+  # this.
+  check_lengths_congruent(list(x, digits), warn = FALSE)
+
+  # A fractional `digits` would scale `x` by a non-power of ten and return a
+  # number on no decimal grid, whereas `base::round()` rounds `digits` itself:
+  check_digits_whole(digits)
+
+  # `rounding_offsets()` resolves `"ties_*"` strings through the same helper:
   spec <- resolve_ties_rounding(rounding, symmetric)
 
-  # Every `round_*()` function is natively vectorized, so only the dispatch is
-  # scalar, and it happens once for the whole of `x`. Attributes are dropped so
-  # that the return value is a bare numeric vector whatever `x` carried:
-  `attributes<-`(
-    reconstruct_rounded_numbers_scalar(
-      x,
-      digits,
-      spec$rounding,
-      threshold,
-      spec$symmetric
-    ),
-    NULL
+  # Adding zero turns a negative zero, as from `ceiling(-0.5)`, into zero, which
+  # `sprintf()` would otherwise print as `"-0.00"`:
+  out <- reconstruct_rounded_numbers_scalar(
+    x,
+    digits,
+    spec$rounding,
+    threshold,
+    spec$symmetric
   )
+  `attributes<-`(out + 0, NULL)
 }

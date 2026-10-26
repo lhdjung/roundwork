@@ -13,66 +13,42 @@ reround(
 )
 }
 \arguments{
-\item{x}{Numeric. Vector of possibly original values.}
+\item{x}{Numeric. Values to round.}
 
-\item{digits}{Integer. Number of decimal places in the reported key values
-(e.g., in a reported mean, percentage, or standard deviation).}
+\item{digits}{Integer. Number of decimal places to round to, i.e., the
+number in the reported values. Length 1 or the length of \code{x}. Must be
+whole numbers; a missing value propagates to a missing result.}
 
-\item{rounding}{String. The rounding method that is supposed to have been
-used originally. See \code{vignette("rounding-options")}. Default is
-\code{"up_or_down"}, which returns two values: \code{x} rounded up \emph{and} down.}
+\item{rounding}{String (length 1). The rounding method. Default is
+\code{"up_or_down"}, which returns two values per element of \code{x}: rounded up
+and rounded down.}
 
-\item{threshold}{Numeric. If \code{rounding} is set to \code{"up_from"}, \code{"down_from"},
-or \code{"up_from_or_down_from"}, \code{threshold} is the point within a step at
-which rounding switches direction, in tenths of a step; it must be greater
-than \code{0} and less than \code{10}. Otherwise irrelevant. Default is \code{5}, which
-makes those three methods the same as \code{"up"}, \code{"down"}, and \code{"up_or_down"}.
-See \code{\link[=round_up_from]{round_up_from()}}, which spells out how \code{round_down_from()} mirrors
-the threshold.}
+\item{threshold}{Numeric (length 1). For \code{"up_from"}, \code{"down_from"}, and
+\code{"up_from_or_down_from"}, the point within a step at which rounding
+switches direction, in tenths of a step; greater than \code{0} and less than
+\code{10}. Default is \code{5}, which makes these methods the same as \code{"up"},
+\code{"down"}, and \code{"up_or_down"}. See \code{\link[=round_up_from]{round_up_from()}}.}
 
-\item{symmetric}{Logical. Set \code{symmetric} to \code{TRUE} if the rounding of
-negative numbers with \code{"up_or_down"}, \code{"up"}, \code{"down"},
-\code{"up_from_or_down_from"}, \code{"up_from"}, or \code{"down_from"} should mirror that
-of positive numbers so that their absolute values are always equal.
-Otherwise irrelevant. Default is \code{FALSE}. It only ever affects ties in
-negative numbers, but \code{TRUE} is what reconstructs Excel, SAS, SPSS, and
-Matlab; see \code{vignette("rounding-options")}.}
+\item{symmetric}{Logical (length 1). If \code{TRUE}, negative numbers are rounded
+like their absolute values under \code{"up"}, \code{"down"}, \code{"up_or_down"}, and the
+\code{"*_from"} methods. Default is \code{FALSE}. Must not be given with a \code{"ties_*"}
+method, which already fixes the direction: \code{"ties_up"} with \code{symmetric = TRUE} would be \code{"ties_away"}, so write that instead.}
 }
 \value{
-Numeric. One value per element of \code{x} -- except for the three
-compound methods \code{"up_or_down"}, \code{"up_from_or_down_from"}, and
-\code{"ceiling_or_floor"}, which return \emph{two} values per element of \code{x}: the
-result of each of their two constituent procedures.
-
-The two values of a compound method stay next to each other, so the return
-value is \code{c(up_1, down_1, up_2, down_2, ...)} and has length \code{2 * length(x)}. Take care not to pool the pairs across elements of \code{x}: matches
-found in different pairs did not come from the same original value. (This
-was the cause of a false-pass bug in a GRIMMER implementation; see
-\url{https://github.com/lhdjung/scrutiny/issues/85}.)
+Numeric. One value per element of \code{x}, except for the compound
+methods \code{"up_or_down"}, \code{"up_from_or_down_from"}, and \code{"ceiling_or_floor"},
+which return two: the results of their two constituent procedures, next to
+each other, as \code{c(up_1, down_1, up_2, down_2, ...)}. Each pair belongs to
+one element of \code{x}, so the pairs must not be pooled across elements.
 }
 \description{
-\code{reround()} takes one or more intermediate reconstructed values
-and rounds them in some specific way -- namely, the way they are supposed
-to have been rounded originally, in the process that generated the reported
-values.
-
-This function provides an interface to all of roundwork's rounding
-functions as well as \code{\link[base:Round]{base::round()}}. It is meant as a helper within
-consistency tests, and it might find use in other places for
-reconstruction of statistical analyses.
+\code{reround()} rounds a vector of reconstructed values the way
+they are assumed to have been rounded originally. It is the common
+interface to all of roundwork's rounding functions and to
+\code{\link[base:Round]{base::round()}}.
 }
 \details{
-\code{reround()} internally calls the appropriate rounding function(s)
-determined by the \code{rounding} argument. See \code{vignette("rounding-options")}
-for a complete list of values that \code{rounding} can take.
-
-For the specific rounding functions themselves, see documentation at
-\code{\link[=round_up]{round_up()}}, \code{\link[=round_ceiling]{round_ceiling()}}, and \code{\link[base:Round]{base::round()}}.
-}
-\examples{
-# You can specify the rounding procedure:
-reround(4.1679, digits = 2, rounding = "up")
-
-# Default is rounding both up and down:
-reround(4.1679, digits = 2)
+\code{reround()} calls the rounding function that \code{rounding} names. See
+\code{vignette("rounding-options")} for the possible values, and \code{\link[=round_up]{round_up()}}
+and \code{\link[=round_ceiling]{round_ceiling()}} for the functions themselves.
 }
