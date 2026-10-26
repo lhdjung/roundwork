@@ -21,13 +21,14 @@ roundwork holds the rounding layer and nothing else:
 -   the individual rounding procedures (`round_up()`, `round_ceiling()`, `round_ties_away()`, ...);
 -   `reround()`, the string-driven interface to all of them;
 -   `unround()` and `bound_numerators()`, which run the same procedures backwards to recover the range of an original number, and `sum_range()`, which finds the whole-number sums behind a rounded mean;
--   `reround_to_fraction()` and `rounding_bias()`.
+-   `reround_to_fraction()` and `rounding_bias()`;
+-   `resolve_ties_rounding()`, for functions that branch on `rounding` themselves.
 
-The error detection techniques that build on this layer --- GRIM, GRIMMER, DEBIT --- live elsewhere.
+The error detection techniques that build on this layer --- GRIM, GRIMMER, DEBIT --- live in scrutiny. From version 1.0.0 on, scrutiny imports its rounding from roundwork and no longer exports any rounding functions of its own.
 
 ## Resolving conflicts
 
-The rounding functions are still part of scrutiny under the same names, so attaching both packages can create ambiguity. Use the [conflicted](https://conflicted.r-lib.org/index.html) package to say which one you mean:
+Up to version 0.6.1, scrutiny has its own copies of the rounding functions under the same names, so attaching both packages can create ambiguity. These copies are older, and some of them behave differently: for example, `round_down_from()` reads `threshold` differently there. If you use scrutiny 0.6.1 or earlier, use the [conflicted](https://conflicted.r-lib.org/index.html) package to say which one you mean:
 
 ```{r eval=FALSE}
 library(conflicted)
@@ -38,4 +39,4 @@ conflict_prefer_matching("round", "roundwork", quiet = TRUE)
 
 You can then run `round_up` without parentheses and check the `namespace` signature at the bottom. If it says `namespace:roundwork`, everything is fine. If not, please [open an issue](https://github.com/lhdjung/roundwork/issues).
 
-Package developers should simply use `package::function()` syntax, as usual.
+Package developers should simply use `package::function()` syntax, as usual. With scrutiny 1.0.0 or later, there is no conflict to resolve.
