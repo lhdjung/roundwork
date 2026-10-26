@@ -282,8 +282,8 @@ check_rounding_spec_singular <- function(rounding, threshold, symmetric) {
     abort_in_export(
       "`rounding` must be a string.",
       "x" = "It is {.obj_type_friendly {rounding}}.",
-      "i" = "See `vignette(\"rounding-options\")` for the strings it \\
-        can take."
+      "i" = "See `vignette(\"rounding-options\", package = \"roundwork\")` \\
+        for the strings it can take."
     )
   }
 
@@ -409,5 +409,3 @@ is_non_finite_token <- function(x) {
     NON_FINITE_TOKENS |
     is.infinite(suppressWarnings(as.numeric(x)))
 }
-
-

@@ -58,7 +58,7 @@ reconstruct_rounded_numbers_scalar <- function(
     abort_in_export(
       "`rounding` must be one of the designated string values.",
       "x" = "It was given as {wrong_spec_string(rounding)}.",
-      "i" = "See `vignette(\"rounding-options\")`."
+      "i" = "See `vignette(\"rounding-options\", package = \"roundwork\")`."
     )
   )
 }
