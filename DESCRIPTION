@@ -38,6 +38,7 @@ Collate:
     'reround-to-fraction.R'
     'round-ceil-floor.R'
     'reround.R'
+    'resolve-ties-rounding.R'
     'round-ties.R'
     'rounding-bias.R'
     'unround.R'

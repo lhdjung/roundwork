@@ -49,3 +49,4 @@ reference:
   - contents:
     - bound_numerators
     - sum_range
+    - resolve_ties_rounding

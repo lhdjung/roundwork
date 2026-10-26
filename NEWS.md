@@ -12,6 +12,8 @@ This release is a revamp of the whole package: nearly every function was rewritt
 
 -   `sum_range()` returns the least and the greatest whole-number sum that, divided by `n_items` and rounded, gives a reported mean. This is the arithmetic behind GRIM, and behind any other share of a whole such as a percentage. It is built on `bound_numerators()` and exact in the same way, so packages that check granularity no longer have to derive candidate sums from floating-point products. Like `bound_numerators()`, it is a low-level primitive that leaves most input checks to the caller.
 
+-   `resolve_ties_rounding()` translates a `"ties_*"` string into the `rounding` and `symmetric` it stands for, so that a function that branches on `rounding` itself agrees with `reround()` and `unround()`.
+
 ## Rounding bounds
 
 -   `unround()` now derives its bounds from the same machinery that a consistency test derives its candidate range from, so a test and the bounds can no longer disagree about what a rounded number means, about which rounding methods exist, or about what `threshold` and `symmetric` mean.
