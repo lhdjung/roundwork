@@ -7,7 +7,7 @@
 ## Citation
 
 Source:
-[`DESCRIPTION`](https://github.com/lhdjung/roundwork/blob/master/DESCRIPTION)
+[`DESCRIPTION`](https://github.com/lhdjung/roundwork/blob/v0.1.0/DESCRIPTION)
 
 Jung L (2026). *roundwork: Rounding Infrastructure*. R package version
 0.1.0, <https://lhdjung.github.io/roundwork/>.
