@@ -532,6 +532,14 @@ test_that("`x` must be a string or a number", {
 })
 
 
+test_that("a zero-length `x` gives a zero-row tibble with zero-length columns", {
+  out <- character(0) |> unround()
+  out |> nrow() |> expect_equal(0L)
+  out |> lengths() |> unname() |> expect_equal(rep(0L, 7))
+  numeric(0) |> unround(digits = 2) |> lengths() |> unname() |> expect_equal(rep(0L, 7))
+})
+
+
 test_that("a string `x` must be a number", {
   "abc"              |> unround() |> expect_error("number written as a string")
   c("1.5", "1.5%")   |> unround() |> expect_error("number written as a string")

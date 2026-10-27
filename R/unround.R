@@ -614,9 +614,12 @@ unround <- function(
 
   tibble::new_tibble(
     list(
-      # fmt: skip
-      range = paste0(
-        lower, " ", sign_lower, " x(", x_out, ") ", sign_upper, " ", upper
+      # `sprintf()`, not `paste0()`: the latter recycles a zero-length `x` to
+      # `""` next to the literal pieces, leaving a length-1 column in a
+      # zero-row tibble:
+      range = sprintf(
+        "%s %s x(%s) %s %s",
+        lower, sign_lower, x_out, sign_upper, upper
       ),
       rounding = rounding,
       lower = lower,

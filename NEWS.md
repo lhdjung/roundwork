@@ -4,6 +4,8 @@
 
 -   `unround()` now throws an error when a string `x` is not a number, such as `"abc"`. It used to pass the coercion warning through and return a row of `NA` bounds. Strings for missing and non-finite numbers (`"NA"`, `"NaN"`, `"Inf"`) still give `NA` bounds.
 
+-   `unround()` returns a well-formed zero-row tibble for a zero-length `x`. The `range` column used to have length 1 there.
+
 -   The documentation of the individual rounding functions now says that, unlike `reround()`, they do not check `digits` or `x`, and why.
 
 # roundwork 0.1.0
