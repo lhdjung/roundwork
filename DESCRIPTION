@@ -1,6 +1,6 @@
 Package: roundwork
 Title: Rounding Infrastructure
-Version: 0.1.0
+Version: 0.2.0
 Authors@R: c(
     person(given = "Lukas",
            family = "Jung",
@@ -26,10 +26,7 @@ Depends:
     R (>= 4.1.0)
 Imports:
     cli (>= 3.0.0),
-    dplyr,
-    magrittr,
     rlang (>= 1.1.0),
-    stringr,
     tibble
 Collate: 
     'aaa.R'
@@ -44,7 +41,6 @@ Collate:
     'round-ties.R'
     'rounding-bias.R'
     'unround.R'
-    'utils-pipe.R'
 URL: https://lhdjung.github.io/roundwork/, https://github.com/lhdjung/roundwork/
 BugReports: https://github.com/lhdjung/roundwork/issues
 Config/testthat/edition: 3

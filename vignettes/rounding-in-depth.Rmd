@@ -421,11 +421,8 @@ df <- tibble::tibble(bias, decimal_digits, rounding)
 # Display simulated data:
 df
 
-df <- df |>
-  dplyr::mutate(
-    rounding = paste0("(", rounding, ")"),
-    decimal_digits = paste(c(1:5, 1:5), rounding)
-  )
+df$rounding <- paste0("(", df$rounding, ")")
+df$decimal_digits <- paste(c(1:5, 1:5), df$rounding)
 
 `%+replace%` <- ggplot2::`%+replace%`
 
@@ -496,11 +493,8 @@ df_new <- tibble::tibble(bias, decimal_digits, rounding)
 # Display simulated data:
 df_new
 
-df_new <- df_new |>
-  dplyr::mutate(
-    rounding = paste0("(", rounding, ")"),
-    decimal_digits = paste(c(1:5, 1:5), rounding)
-  )
+df_new$rounding <- paste0("(", df_new$rounding, ")")
+df_new$decimal_digits <- paste(c(1:5, 1:5), df_new$rounding)
 
 # Visualize:
 ggplot2::ggplot(

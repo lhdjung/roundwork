@@ -35,6 +35,9 @@
 #'   both bounds under `rounding = "even"` as inclusive for that reason; see
 #'   [`unround()`].
 #'
+#'   Like [`round_up()`], these functions do not check `x` or `digits`; see
+#'   *Input checks* there.
+#'
 #' @param x Numeric. The number to round.
 #' @param digits Integer. Number of decimal places to round to. Default is
 #'   `0`.

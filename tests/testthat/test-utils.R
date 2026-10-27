@@ -9,18 +9,6 @@ test_that("`is_whole_number()` returns correct values", {
 })
 
 
-test_that("`an_a()` returns correct values", {
-  an_a("start") |> expect_equal("a")
-  an_a("end") |> expect_equal("an")
-})
-
-
-test_that("`an_a_type()` returns correct values", {
-  an_a_type("bla") |> expect_equal("a string")
-  an_a_type(4) |> expect_equal("a double (numeric value)")
-})
-
-
 test_that("`wrong_spec_string()` returns a string", {
   wrong_spec_string(4) |> expect_type("character")
 })

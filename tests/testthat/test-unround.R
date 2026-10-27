@@ -91,7 +91,7 @@ test_that("`unround()` bounds agree with the rounding they invert", {
     rounds_to_x <- function(value) {
       value |>
         reround(digits = 2, rounding = m, threshold = 6) |>
-        dplyr::near(0.53) |>
+        near(0.53) |>
         any()
     }
     (bounds$lower + eps) |> rounds_to_x() |> expect_true(label = paste(m, "inside lower"))
@@ -165,7 +165,7 @@ test_that("`unround()` bounds agree with the rounding they invert (sweep)", {
                   threshold = threshold,
                   symmetric = symmetric
                 ) |>
-                dplyr::near(x_num) |>
+                near(x_num) |>
                 any()
             }
             label <- paste(
@@ -529,6 +529,17 @@ test_that("`x` must be a string or a number", {
   factor("5.19") |> unround(digits = 2) |> expect_error("string or a number")
   TRUE           |> unround(digits = 0) |> expect_error("string or a number")
   NA             |> unround(digits = 2) |> getElement("lower") |> expect_equal(NA_real_)
+})
+
+
+test_that("a string `x` must be a number", {
+  "abc"              |> unround() |> expect_error("number written as a string")
+  c("1.5", "1.5%")   |> unround() |> expect_error("number written as a string")
+  "1,5"              |> unround(digits = 1) |> expect_error("number written as a string")
+
+  # The tokens for missing and non-finite numbers pass as missing values:
+  c("NA", "NaN", "Inf", " -inf ") |> unround() |> getElement("lower") |> expect_equal(rep(NA_real_, 4))
+  c("1.5", NA) |> unround() |> getElement("lower") |> expect_equal(c(1.45, NA))
 })
 
 

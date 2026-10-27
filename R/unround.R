@@ -26,7 +26,6 @@
 # below that limit it never corrects anything, and above it, where the product
 # rounds, it turns correct results into wrong ones more often than the reverse.
 
-
 # Integer offsets of the lower and upper rounding bounds from `x_num`, in units
 # of `1 / 10^(digits + 1)`, plus each bound's inclusivity. This is the single
 # source of truth for rounding bounds: `unround()`, the consistency tests, and
@@ -503,14 +502,32 @@ unround <- function(
     # Only a string keeps trailing zeros to count:
     if (!is.character(x)) {
       abort_in_export(
-        "`x` is {an_a_type(x)}.",
-        "x" = "If `digits` is not specified, `x` must be a string."
+        "`x` must be a string if `digits` is not specified.",
+        "x" = "It is {.obj_type_friendly {x}}."
       )
     }
     digits <- decimal_places(x)
   }
 
-  x_num <- as.numeric(x)
+  x_num <- suppressWarnings(as.numeric(x))
+
+  # A string that is not a number would silently become a missing value. The
+  # tokens for a missing or non-finite number are let through as such:
+  if (is.character(x)) {
+    x_trim <- trim_space(x)
+    not_number <-
+      is.na(x_num) &
+      !is.na(x) &
+      x_trim != "NA" &
+      !is_non_finite_token(x_trim)
+    if (any(not_number)) {
+      abort_in_export(
+        "`x` must be a number written as a string.",
+        "x" = "It has {sum(not_number)} value{?s} that {?is/are} not: \\
+        {.val {utils::head(x[not_number], 3L)}}."
+      )
+    }
+  }
 
   # Recycle explicitly: `paste0()` could make the columns longer than `x`,
   # i.e. a malformed tibble. An empty argument means no rows at all:
@@ -534,8 +551,8 @@ unround <- function(
   # With `digits` given, `x` must fit into it: the bounds are `x` plus whole
   # units of the next decimal place, so `unround(1.234, digits = 1)` would give
   # the bounds of nothing at all. Trailing zeros are fine (`"4.50"` at one
-  # decimal place is 4.5), so the test is the two-step one of
-  # `check_newly_numeric()`: `round()` decides, and the expensive decimal count
+  # decimal place is 4.5), so the test runs in two steps:
+  # `round()` decides, and the expensive decimal count
   # runs only on what it leaves open. `round()` rejects a zero-length `digits`,
   # hence the guard.
   too_many <- rep(FALSE, n_out)
@@ -590,8 +607,8 @@ unround <- function(
   incl_lower <- extract("incl_lower", NA)
   incl_upper <- extract("incl_upper", NA)
 
-  sign_lower <- dplyr::if_else(incl_lower, "<=", "<")
-  sign_upper <- dplyr::if_else(incl_upper, "<=", "<")
+  sign_lower <- ifelse(incl_lower, "<=", "<")
+  sign_upper <- ifelse(incl_upper, "<=", "<")
 
   tibble::new_tibble(
     list(

@@ -20,3 +20,9 @@ trunc_reverse <- function(x) {
 call_on <- function(x, f) {
   f(x)
 }
+
+
+# `dplyr::near()` without the dependency:
+near <- function(x, y, tol = .Machine$double.eps^0.5) {
+  abs(x - y) < tol
+}

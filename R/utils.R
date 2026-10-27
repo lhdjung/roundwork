@@ -9,33 +9,6 @@ wrong_spec_string <- function(x) {
 }
 
 
-an_a <- function(x) {
-  dplyr::if_else(
-    stringr::str_detect(x, "^[aeiou]"),
-    "an",
-    "a"
-  )
-}
-
-
-an_a_type <- function(x) {
-  type <- typeof(x)
-
-  if (is.factor(x)) {
-    type <- "factor"
-  } else if (type == "double") {
-    type <- "double (numeric value)"
-  } else if (type == "character") {
-    type <- "string"
-  }
-
-  article <- an_a(type)
-  paste(article, type)
-}
-
-
-# `is_decidable_n_items()` and `check_newly_numeric()` write this test out
-# rather than calling it, because they run once per row; keep them in step.
 is_whole_number <- function(x, tolerance = WHOLE_NUMBER_TOLERANCE) {
   abs(x - round(x)) < tolerance
 }
@@ -139,7 +112,7 @@ check_type <- function(x, t) {
 
     abort_in_export(
       "!" = "`{msg_name}` must {msg_object} {t}.",
-      "x" = "It is {an_a_type(x)}."
+      "x" = "It is {.obj_type_friendly {x}}."
     )
   }
 }
@@ -298,17 +271,13 @@ restore_sign <- function(value, x) {
 }
 
 
-decimal_places <- function(x, sep = ".") {
-  sep <- sep_literal(sep)
-
+decimal_places <- function(x) {
   # Strings are matched against the tokens rather than run through
   # `as.numeric()`, which would also reject strings like `"5.30%"`. Values
   # decided here are blanked out so that nothing below meets a missing value:
   if (is.numeric(x)) {
     non_finite <- !is.finite(x)
     x <- number_to_string(x)
-    # R writes a number with a point, whatever `sep` the strings use:
-    sep <- "."
   } else {
     x <- trim_space(x)
     non_finite <- x %in% c(NA, "NA") | is_non_finite_token(x)
@@ -331,11 +300,10 @@ decimal_places <- function(x, sep = ".") {
     pos_exponent[has_exponent] - 1L
   )
 
-  # Only the digit run right after the first separator counts: `"1.2.3"` has
-  # one decimal place. `decimal_places_scalar()` takes the same steps, and a
-  # generated corpus in test-decimal-places.R holds the two together:
-  pos_sep <- regexpr(sep, x, fixed = TRUE)
-  mantissa <- substring(x, pos_sep + nchar(sep))
+  # Only the digit run right after the first point counts: `"1.2.3"` has one
+  # decimal place.
+  pos_sep <- regexpr(".", x, fixed = TRUE)
+  mantissa <- substring(x, pos_sep + 1L)
   mantissa[pos_sep < 0L] <- ""
   out <- mantissa |>
     regexpr(pattern = "^[0-9]*") |>
@@ -375,23 +343,8 @@ number_to_string <- function(x) {
 }
 
 
-# `sep` and its relatives in `restore_zeros()` are literal strings. An escaped
-# character such as `"\\."`, valid when they were regular expressions, is read
-# as that character.
-sep_literal <- function(sep) {
-  if (!is.character(sep) || length(sep) != 1L || is.na(sep)) {
-    name <- deparse(substitute(sep))
-    abort_in_export(
-      "`{name}` must be a single string.",
-      "x" = "It is {wrong_spec_string(sep)}."
-    )
-  }
-  sub("^\\\\(.)$", "\\1", sep)
-}
-
-
-# `decimal_places()` and `decimal_places_scalar()` read strings through these
-# two, so that they cannot drift apart.
+# `decimal_places()` and `unround()` read strings through these two, so that
+# they cannot drift apart.
 #
 # `\s` is ASCII whitespace, `"\v"` and `"\f"` included. `\p{Z}` adds Unicode
 # spaces such as the no-break space, common in tables copied from PDFs.

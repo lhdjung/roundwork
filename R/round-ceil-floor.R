@@ -23,6 +23,9 @@
 #'   [`round_up()`], so that `round_ceiling(0.28, 2)` is `0.28` although
 #'   `0.28 * 100` is stored as `28.000000000000004`.
 #'
+#'   Like [`round_up()`], they do not check `x` or `digits`; see *Input
+#'   checks* there.
+#'
 #' @param x Numeric. The number to round.
 #' @param digits Integer. Number of decimal places to round to. Default is
 #'   `0`. Negative values round to powers of ten.

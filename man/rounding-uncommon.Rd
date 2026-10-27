@@ -55,6 +55,9 @@ negative numbers; \code{round_anti_trunc()} is the reverse.
 All of these apply the floating-point tolerance described in
 \code{\link[=round_up]{round_up()}}, so that \code{round_ceiling(0.28, 2)} is \code{0.28} although
 \code{0.28 * 100} is stored as \code{28.000000000000004}.
+
+Like \code{\link[=round_up]{round_up()}}, they do not check \code{x} or \code{digits}; see \emph{Input
+checks} there.
 }
 \examples{
 round_ceiling(x = 4.52, digits = 1)

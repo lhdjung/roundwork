@@ -66,6 +66,9 @@ printed decimal: \code{base::round()} decides on the binary double, and most
 decimal fractions are not exact ties in binary. Consistency tests treat
 both bounds under \code{rounding = "even"} as inclusive for that reason; see
 \code{\link[=unround]{unround()}}.
+
+Like \code{\link[=round_up]{round_up()}}, these functions do not check \code{x} or \code{digits}; see
+\emph{Input checks} there.
 }
 \examples{
 # All five agree except at ties:

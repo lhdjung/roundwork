@@ -1,3 +1,11 @@
+# roundwork 0.2.0
+
+-   roundwork no longer imports dplyr, stringr, or magrittr (#5). Only cli, rlang, and tibble remain. As a consequence, the magrittr pipe `%>%` is no longer re-exported; use R's native `|>` or attach magrittr yourself.
+
+-   `unround()` now throws an error when a string `x` is not a number, such as `"abc"`. It used to pass the coercion warning through and return a row of `NA` bounds. Strings for missing and non-finite numbers (`"NA"`, `"NaN"`, `"Inf"`) still give `NA` bounds.
+
+-   The documentation of the individual rounding functions now says that, unlike `reround()`, they do not check `digits` or `x`, and why.
+
 # roundwork 0.1.0
 
 This release accompanies [scrutiny](https://lhdjung.github.io/scrutiny/) 1.0.0, which now imports its rounding from roundwork instead of keeping copies of the functions. The rounding layer was rewritten inside scrutiny in the run-up to that release and then moved here, so nearly every function changed, and the rounding bounds and the rounding procedures are now derived from a single shared source. See `vignette("scrutiny")` for how the two packages relate.

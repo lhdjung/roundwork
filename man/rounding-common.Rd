@@ -85,6 +85,16 @@ summary statistic, the nudge dominates. Past it, a value exactly on a
 boundary may be rounded in either direction.
 }
 
+\section{Input checks}{
+ Only \code{threshold} and \code{symmetric} are checked.
+\code{digits} and \code{x} are not, because these functions run once per candidate
+value inside consistency tests, where the checks would cost more than the
+rounding. A \code{digits} value that is not a whole number scales \code{x} by a
+non-power of ten, and the result lies on no decimal grid. \code{\link[=reround]{reround()}}
+checks all of its input, so call it instead when the input is not
+trusted.
+}
+
 \examples{
 # Except at a tie, all of these agree:
    round_up(x = 9.273, digits = 1)

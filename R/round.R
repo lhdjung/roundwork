@@ -44,6 +44,14 @@
 #'   summary statistic, the nudge dominates. Past it, a value exactly on a
 #'   boundary may be rounded in either direction.
 #'
+#' @section Input checks: Only `threshold` and `symmetric` are checked.
+#'   `digits` and `x` are not, because these functions run once per candidate
+#'   value inside consistency tests, where the checks would cost more than the
+#'   rounding. A `digits` value that is not a whole number scales `x` by a
+#'   non-power of ten, and the result lies on no decimal grid. [`reround()`]
+#'   checks all of its input, so call it instead when the input is not
+#'   trusted.
+#'
 #' @param x Numeric. The number to round.
 #' @param digits Integer. Number of decimal places to round to. Default is
 #'   `0`. Negative values round to powers of ten: `round_up(1250, digits =
