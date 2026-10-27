@@ -607,8 +607,10 @@ unround <- function(
   incl_lower <- extract("incl_lower", NA)
   incl_upper <- extract("incl_upper", NA)
 
-  sign_lower <- ifelse(incl_lower, "<=", "<")
-  sign_upper <- ifelse(incl_upper, "<=", "<")
+  # A lookup rather than `ifelse()`, which would copy attributes from its first
+  # argument and return a logical for an all-`NA` input:
+  sign_lower <- c("<", "<=")[incl_lower + 1L]
+  sign_upper <- c("<", "<=")[incl_upper + 1L]
 
   tibble::new_tibble(
     list(
