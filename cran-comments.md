@@ -4,4 +4,4 @@
 
 ## Reverse dependencies
 
-The only reverse dependency, unsum, passes its tests with this version.
+Both reverse dependencies, scrutiny and unsum, pass their tests with this version.
