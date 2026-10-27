@@ -16,17 +16,22 @@ others may have rounded their data.
 
 Given a rounded number, call `unround()` to get the lower and upper
 bounds of the original number. This also takes rounding options into
-account, just like `reround()` does.
+account, just like `reround()` does. `bound_numerators()` and
+`sum_range()` are building blocks using exact integer arithmetic to
+avoid all the bugs that can occur with floating-point operations.
 
-Many roundwork functions used to be part of
-[scrutiny](https://lhdjung.github.io/scrutiny/). They were outsourced
-here for better modularity within the errorverse.
+roundwork contains the rounding layer that used to be part of
+[scrutiny](https://lhdjung.github.io/scrutiny/). Since version 1.0.0,
+scrutiny imports it from here, as can any other package that
+reconstructs rounding.
 
 ## Installation
 
 Install the package from CRAN:
 
-    install.packages("roundwork")
+``` r
+install.packages("roundwork")
+```
 
 Alternatively, install the development version from GitHub:
 
@@ -67,6 +72,20 @@ reround(1.275, digits = 2)
 #> [1] 1.28 1.27
 ```
 
+### Ties
+
+“Up” and “down” mean up and down *on the number line*, so they only part
+company with “away from zero” and “toward zero” below zero. If you would
+rather not have to keep that straight, name the tie-breaking rule
+outright:
+
+``` r
+round_ties_up(-2.5)     # Stata
+#> [1] -2
+round_ties_away(-2.5)   # Excel, SPSS, SAS, Matlab
+#> [1] -3
+```
+
 ### Bounds on the unrounded number
 
 `unround()` computes the range of an unknown original number, given its
@@ -86,9 +105,9 @@ unround("3.60", rounding = "up")
 #>   <chr>                    <chr>    <dbl> <lgl>      <chr> <lgl>      <dbl>
 #> 1 3.595 <= x(3.60) < 3.605 up        3.60 TRUE       3.60  FALSE       3.60
 
-unround("3.60", rounding = "even")
+unround("3.60", rounding = "ceiling")
 #> # A tibble: 1 × 7
-#>   range                     rounding lower incl_lower x     incl_upper upper
-#>   <chr>                     <chr>    <dbl> <lgl>      <chr> <lgl>      <dbl>
-#> 1 3.595 NA x(3.60) NA 3.605 even      3.60 NA         3.60  NA          3.60
+#>   range                 rounding lower incl_lower x     incl_upper upper
+#>   <chr>                 <chr>    <dbl> <lgl>      <chr> <lgl>      <dbl>
+#> 1 3.59 < x(3.60) <= 3.6 ceiling   3.59 FALSE      3.60  TRUE         3.6
 ```

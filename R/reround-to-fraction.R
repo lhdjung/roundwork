@@ -1,215 +1,211 @@
+# Shared by `reround_to_fraction()` and `reround_to_fraction_level()`. The
+# `"auto"` option for `digits` is the same as in `janitor::round_to_fraction()`.
+# It is resolved before the whole-number check, which only takes numbers.
+resolve_digits_fraction <- function(digits, denominator) {
+  if (identical(digits, "auto")) {
+    digits <- ceiling(log10(denominator)) + 1L
+  }
 
-#' Generalized rounding to the nearest fraction of a specified denominator
-#'
-#' @description Two functions that round numbers to specific fractions, not just
-#'   to the next higher decimal level. They are inspired by
-#'   [`janitor::round_to_fraction()`] but feature all the options of
-#'   [`reround()`]:
-#'
-#'   - `reround_to_fraction()` closely follows [`janitor::round_to_fraction()`]
-#'   by first rounding to fractions of a whole number, then optionally rounding
-#'   the result to a specific number of digits in the usual way.
-#'   - `reround_to_fraction_level()` rounds to the nearest fraction of a number
-#'   at the specific decimal level (i.e., number of digits), without subsequent
-#'   rounding. This is closer to conventional rounding functions.
+  if (!is.numeric(digits) && !(is.logical(digits) && all(is.na(digits)))) {
+    abort_in_export(
+      "!" = "`digits` must be whole numbers or \"auto\".",
+      "x" = "It is {wrap_in_quotes_or_backticks(digits)}."
+    )
+  }
 
-#' @param x Numeric. Vector of numbers to be rounded.
-#' @param denominator Numeric (>= 1) . `x` will be rounded to the nearest
+  # A missing `digits` passes, and propagates to a missing result, as it does in
+  # `reround()`. So does an infinite one, which `reround_to_fraction()` treats
+  # as "don't round":
+  digits_finite <- digits[is.finite(digits)]
+  if (!all(is_whole_number(digits_finite))) {
+    abort_in_export(
+      "!" = "Each `digits` value must be a whole number.",
+      "x" = "`digits` was given as \\
+        {digits_finite[!is_whole_number(digits_finite)]}."
+    )
+  }
+
+  digits
+}
+
+
+#' Rounding to the nearest fraction
+#'
+#' @description These functions round to the nearest fraction of a
+#'   denominator rather than to a decimal place. They follow
+#'   [`janitor::round_to_fraction()`] but take all of [`reround()`]'s options:
+#'
+#'   - `reround_to_fraction()` rounds to fractions of a whole number, then
+#'   optionally rounds the result to `digits` decimal places.
+#'   - `reround_to_fraction_level()` rounds to the nearest fraction at the
+#'   decimal level given by `digits`, with no further rounding.
+#'
+#' @param x Numeric. Values to round.
+#' @param denominator Numeric (at least 1). `x` is rounded to the nearest
 #'   fraction of `denominator`. Default is `1`.
-#' @param digits Numeric (whole numbers).
-#'   - In `reround_to_fraction()`: If `digits` is specified, the values
-#'   resulting from fractional rounding will subsequently be rounded to that
-#'   many decimal places. If set to `"auto"`, it internally becomes
-#'   `ceiling(log10(denominator)) + 1`, as in [`janitor::round_to_fraction()`].
-#'   Default is `Inf`, in which case there is no subsequent rounding.
-#'   - In `reround_to_fraction_level()`: This function will round to a fraction
-#'   of the number at the decimal level specified by `digits`. Default is `0`.
-#' @param rounding,threshold,symmetric More arguments passed down to
-#'   [`reround()`].
-
+#' @param digits Integer. In `reround_to_fraction()`, the number of decimal
+#'   places to round the result to. `"auto"` means
+#'   `ceiling(log10(denominator)) + 1`, as in janitor, and the default `Inf`
+#'   means no further rounding. In
+#'   `reround_to_fraction_level()`, the decimal level at which to round to a
+#'   fraction; default is `0`.
+#' @param rounding,threshold,symmetric Passed on to [`reround()`].
+#'
 #' @include utils.R
 #'
-#' @return Numeric vector of the same length as `x` unless `rounding` is either
-#'   of `"up_or_down"`, `"up_from_or_down_from"`, and `"ceiling_or_floor"`. In
-#'   these cases, it will always have length 2.
+#' @return Numeric, as long as `x`, except for the compound rounding methods,
+#'   which return two values per element of `x` as in [`reround()`].
 #'
 #' @export
 #'
 #' @name fractional-rounding
 #'
-#' @seealso [`reround()`], which the functions wrap, and
-#'   [`janitor::round_to_fraction()`], part of which they copy.
+#' @seealso [`reround()`] and [`janitor::round_to_fraction()`].
 #'
 #' @examples
-#' #`reround_to_fraction()` rounds `0.4`
-#' # to `0` if `denominator` is `1`, which
-#' # is the usual integer rounding...
+#' # With `denominator = 1`, this is ordinary rounding...
 #' reround_to_fraction(0.4, denominator = 1, rounding = "even")
 #'
-#' # ...but if `denominator` is `2`, it rounds to the nearest
-#' # fraction of 2, which is `0.5`:
+#' # ...with `denominator = 2`, it rounds to the nearest half:
 #' reround_to_fraction(0.4, denominator = 2, rounding = "even")
-#'
-#' # Likewise with fractions of 3:
 #' reround_to_fraction(0.25, denominator = 3, rounding = "even")
 #'
-#' # The default for `rounding` is to round
-#' # both up and down, as in `reround()`:
-#' reround_to_fraction(0.4, denominator = 2)
-#'
-#' # These two rounding procedures differ
-#' # at the tie points:
+#' # The default `rounding` returns both directions, as in `reround()`:
 #' reround_to_fraction(0.25, denominator = 2)
 #'
-#' # `reround_to_fraction_level()`, in contrast,
-#' # uses `digits` to determine some decimal level,
-#' # and then rounds to the closest fraction at
-#' # that level:
+#' # `reround_to_fraction_level()` rounds to a fraction at a decimal level:
 #' reround_to_fraction_level(0.12345, denominator = 2, digits = 0)
 #' reround_to_fraction_level(0.12345, denominator = 2, digits = 1)
 #' reround_to_fraction_level(0.12345, denominator = 2, digits = 2)
 
-
-#' @rdname fractional-rounding
-#' @export
-
-
-reround_to_fraction <- function(x = NULL, denominator = 1, digits = Inf,
-                                rounding = "up_or_down", threshold = 5,
-                                symmetric = FALSE) {
-
+reround_to_fraction <- function(
+  x = NULL,
+  denominator = 1,
+  digits = Inf,
+  rounding = "up_or_down",
+  threshold = 5,
+  symmetric = FALSE
+) {
   # Checks ---
 
-  # If any two arguments called right below are length > 1, they need to have
-  # the same length. Otherwise, the call will fail. But even so, there will be a
-  # warning that values will get paired:
-  check_lengths_congruent(list(
-    x, denominator, digits, rounding, threshold, symmetric
-  ))
-
-  # Check whether `denominator` values are >= 1:
-  if (any(denominator < 1)) {
-    value_values <- dplyr::if_else(length(denominator) == 1L, "value", "values")
-    cli::cli_abort(c(
-      "!" = "`denominator` must be 1 or greater.",
-      "x" = "It has {value_values} {denominator[denominator < 1]}."
-    ))
+  # A logical `NA`, as in a column with no values, is missing all the same:
+  if (!is.null(x) && !(is.logical(x) && all(is.na(x)))) {
+    check_type(x, c("double", "integer"))
   }
 
-  if (any(!is.infinite(digits))) {
-    digits_numeric <- digits[!is.infinite(digits)]
-    if (!all(is_whole_number(digits_numeric))) {
-      cli::cli_abort(c(
-        "!" = "Each `digit` value must be a whole number.",
-        "x" = "`digits` was given as \\
-        {digits_numeric[!is_whole_number(digits_numeric)]}."
-      ))
-    }
-  }
+  # Not `rounding`, `threshold`, and `symmetric`: `reround()` requires them to
+  # have length 1.
+  check_lengths_congruent(list(x, denominator, digits))
 
-  if (any(rounding == "up_or_down")) {
-    rounding <- c("up", "down")
-  } else if (any(rounding == "up_from_or_down_from")) {
-    rounding <- c("up_from", "down_from")
-  } else if (any(rounding == "ceiling_or_floor")) {
-    rounding <- c("ceiling", "floor")
-  }
+  check_denominator(denominator)
 
+  digits <- resolve_digits_fraction(digits, denominator)
+
+  # Recycle all three explicitly: `x * denominator` would recycle only those
+  # two, and the extra values of a longer `digits` would be dropped.
+  lengths_in <- lengths(list(x, denominator, digits))
+  n_out <- if (any(lengths_in == 0L)) 0L else max(lengths_in)
+  x <- rep_len(x, n_out)
+  denominator <- rep_len(denominator, n_out)
+  digits <- rep_len(digits, n_out)
 
   # Main part ---
 
-  # Calculate the key result, going by the denominator:
   out <- reround(
-    x = x * denominator, digits = 0L, rounding = rounding,
-    threshold = threshold, symmetric = symmetric
+    x = x * denominator,
+    digits = 0L,
+    rounding = rounding,
+    threshold = threshold,
+    symmetric = symmetric
   )
-  out <- out / denominator
+  # A compound method returns two values per input value, interleaved:
+  out <- out / rep(denominator, each = length(rounding_constituents(rounding)))
 
-  # The `auto` option for `digits` is the same as in
-  # `janitor::round_to_fraction()`:
-  if (identical(digits, "auto")) {
-    digits <- ceiling(log10(denominator)) + 1L
-  }
+  # Round to `digits` where it is finite, as in `round_to_fraction()`. Under a
+  # compound method, `out` holds two interleaved values per input, so `digits`
+  # is spread over them, and each branch keeps its own procedure: re-applying
+  # the compound method would double the values a second time.
+  if (!all(is.infinite(digits))) {
+    procedures <- rounding_constituents(rounding)
+    n_branches <- length(procedures)
 
-  # Round all resulting values for which a number of digits has been specified
-  # to that number of digits. This also proceeds as in `round_to_fraction()`,
-  # except for the rounding function and its arguments:
-  mask_inf_digits <- is.infinite(digits)
+    digits <- digits |>
+      rep_len(length(out) %/% n_branches) |>
+      rep(each = n_branches)
+    branch <- rep_len(seq_len(n_branches), length(out))
 
-  if (!all(mask_inf_digits)) {
-    out[!mask_inf_digits] <- reround(
-      out, digits = digits, rounding = rounding, threshold = threshold,
-      symmetric = symmetric
-    )
+    for (b in seq_len(n_branches)) {
+      i <- which(branch == b & !is.infinite(digits))
+      if (length(i) > 0L) {
+        out[i] <- reround(
+          x = out[i],
+          digits = digits[i],
+          rounding = procedures[b],
+          threshold = threshold,
+          symmetric = symmetric
+        )
+      }
+    }
   }
 
   out
 }
 
 
-
 #' @rdname fractional-rounding
 #' @export
 
-reround_to_fraction_level <- function(x = NULL, denominator = 1, digits = 0L,
-                                      rounding = "up_or_down", threshold = 5,
-                                      symmetric = FALSE) {
-
+reround_to_fraction_level <- function(
+  x = NULL,
+  denominator = 1,
+  digits = 0L,
+  rounding = "up_or_down",
+  threshold = 5,
+  symmetric = FALSE
+) {
   # Checks ---
 
-  # If any two arguments called right below are length > 1, they need to have
-  # the same length. Otherwise, the call will fail. But even so, there will be a
-  # warning that values will get paired:
-  check_lengths_congruent(list(
-    x, denominator, digits, rounding, threshold, symmetric
-  ))
-
-  if (any(denominator < 1)) {
-    value_values <- dplyr::if_else(length(denominator) == 1L, "value", "values")
-    cli::cli_abort(c(
-      "!" = "`denominator` must be 1 or greater.",
-      "x" = "It has {value_values} \\
-      {wrap_in_backticks(denominator[denominator < 1])}."
-    ))
+  # A logical `NA`, as in a column with no values, is missing all the same:
+  if (!is.null(x) && !(is.logical(x) && all(is.na(x)))) {
+    check_type(x, c("double", "integer"))
   }
 
-  # The `auto` option for `digits` is the same as in
-  # `janitor::round_to_fraction()`:
-  if (identical(digits, "auto")) {
-    digits <- ceiling(log10(denominator)) + 1L
-  }
+  # Not `rounding`, `threshold`, and `symmetric`: `reround()` requires them to
+  # have length 1.
+  check_lengths_congruent(list(x, denominator, digits))
 
-  # Check whether `digit` values are whole numbers:
-  if (any(!is.infinite(digits))) {
-    digits_numeric <- digits[!is.infinite(digits)]
-    if (!all(is_whole_number(digits_numeric))) {
-      cli::cli_abort(c(
-        "!" = "Each `digits` value must be a whole number.",
-        "x" = "`digits` was given as \\
-        {digits_numeric[!is_whole_number(digits_numeric)]}."
-      ))
-    }
-  }
+  check_denominator(denominator)
 
-  if (any(rounding == "up_or_down")) {
-    rounding <- c("up", "down")
-  } else if (any(rounding == "up_from_or_down_from")) {
-    rounding <- c("up_from", "down_from")
-  } else if (any(rounding == "ceiling_or_floor")) {
-    rounding <- c("ceiling", "floor")
-  }
-
+  digits <- resolve_digits_fraction(digits, denominator)
 
   # Main part ---
 
-  # Calculate the key result, going by the denominator:
   out <- reround(
-    x = x * denominator, digits = digits, rounding = rounding,
-    threshold = threshold, symmetric = symmetric
+    x = x * denominator,
+    digits = digits,
+    rounding = rounding,
+    threshold = threshold,
+    symmetric = symmetric
   )
 
-  # Divide by the denominator, then return the result:
-  out / denominator
+  # A compound method returns two values per input value, interleaved:
+  out / rep(denominator, each = length(rounding_constituents(rounding)))
 }
 
 
+# `denominator` must be finite and at least 1. A missing value propagates to a
+# missing result instead:
+check_denominator <- function(denominator) {
+  # A plain `NA` is logical, but missing all the same:
+  if (!is.numeric(denominator) && !all(is.na(denominator))) {
+    check_type(denominator, c("double", "integer"))
+  }
+  wrong <- (denominator < 1 | is.infinite(denominator)) %in% TRUE
+  if (any(wrong)) {
+    abort_in_export(
+      "!" = "`denominator` must be a finite number of 1 or greater.",
+      "x" = "It has {cli::qty(sum(wrong))}value{?s} \\
+        {wrap_in_backticks(denominator[wrong])}."
+    )
+  }
+}

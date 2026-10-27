@@ -1,40 +1,47 @@
 Package: roundwork
 Title: Rounding Infrastructure
-Version: 0.0.1
+Version: 0.1.0
 Authors@R: c(
     person(given = "Lukas",
            family = "Jung",
            role = c("aut", "cre"),
            email = "jung-lukas@gmx.net")
   )
-Description: Flexible rounding functions for use in error detection. They were
-    outsourced from the 'scrutiny' package.
+Description: Flexible rounding functions for use in error detection, including
+    the exact rounding bounds that consistency tests are built on. They were
+    outsourced from the 'scrutiny' package, which depends on them since its
+    version 1.0.0.
 License: MIT + file LICENSE
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
-RoxygenNote: 7.3.2
-Suggests: 
+RoxygenNote: 7.3.3
+Suggests:
     conflicted,
     ggplot2,
     knitr,
     rmarkdown,
     testthat (>= 3.0.0)
 VignetteBuilder: knitr
-Imports: 
-    cli,
+Depends:
+    R (>= 4.1.0)
+Imports:
+    cli (>= 3.0.0),
     dplyr,
     magrittr,
-    purrr,
-    rlang,
+    rlang (>= 1.1.0),
     stringr,
     tibble
 Collate: 
+    'aaa.R'
     'round.R'
     'ieee-754.R'
+    'import-standalone-last-export.R'
     'utils.R'
     'reround-to-fraction.R'
     'round-ceil-floor.R'
     'reround.R'
+    'resolve-ties-rounding.R'
+    'round-ties.R'
     'rounding-bias.R'
     'unround.R'
     'utils-pipe.R'

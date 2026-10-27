@@ -1,72 +1,55 @@
-
-#' Uncommon rounding procedures
+#' Rounding in one direction
 #'
-#' @description Always round up, down, toward zero, or away from it:
+#' @description These functions ignore which neighbor is nearer:
 #'   - `round_ceiling()` always rounds up.
 #'   - `round_floor()` always rounds down.
 #'   - `round_trunc()` always rounds toward zero.
-#'   - `round_anti_trunc()` always rounds away from zero.
-#'   - `anti_trunc()` returns the integer further away from zero.
+#'   - `round_anti_trunc()` always rounds away from zero. A value that already
+#'   sits on the rounding grid stays where it is, so `0` stays `0`. This is
+#'   what Excel's `ROUNDUP()`, Java's `RoundingMode.UP`, and Python's
+#'   `decimal.ROUND_UP` do.
+#'   - `anti_trunc()` is the counterpart of [`trunc()`]: it rounds a number to
+#'   the nearest whole number away from zero. Whole numbers stay unchanged.
 #'
-#'   Despite not being widely used, they are featured here in case they are
-#'   needed for reconstruction.
-
 #' @details `round_ceiling()`, `round_floor()`, and `round_trunc()` generalize
-#'   the base R functions [`ceiling()`], [`floor()`], and [`trunc()`], and
-#'   include them as special cases: With the default value for `digits`, 0,
-#'   these `round_*` functions are equivalent to their respective base
-#'   counterparts.
+#'   [`ceiling()`], [`floor()`], and [`trunc()`] to any number of decimal
+#'   places, and `round_anti_trunc()` generalizes `anti_trunc()`. With the
+#'   default `digits = 0`, each equals its base counterpart.
 #'
-#'   The last `round_*` function, `round_anti_trunc()`, generalizes another
-#'   function presented here: `anti_trunc()` works like `trunc()` except it
-#'   moves away from 0, rather than towards it. That is, whereas `trunc()`
-#'   minimizes the absolute value of `x` (as compared to the other rounding
-#'   functions), `anti_trunc()` maximizes it. `anti_trunc(x)` is therefore equal
-#'   to `trunc(x)` ` + 1` if `x` is positive, and to `trunc(x) - 1` if `x` is
-#'   negative. It only ever returns 0 if `x` is 0; as 0 does not have a sign.
+#'   `round_trunc()` is `round_floor()` for positive and `round_ceiling()` for
+#'   negative numbers; `round_anti_trunc()` is the reverse.
 #'
-#'   `round_anti_trunc()`, then, generalizes `anti_trunc()` just as
-#'   `round_ceiling()` generalizes [`ceiling()`], etc.
+#'   All of these apply the floating-point tolerance described in
+#'   [`round_up()`], so that `round_ceiling(0.28, 2)` is `0.28` although
+#'   `0.28 * 100` is stored as `28.000000000000004`.
 #'
-#'   Moreover, `round_trunc()` is equivalent to `round_floor()` for positive
-#'   numbers and to `round_ceiling()` for negative numbers. The reverse is again
-#'   true for `round_anti_trunc()`: It is equivalent to `round_ceiling()` for
-#'   positive numbers and to `round_floor()` for negative numbers.
+#' @param x Numeric. The number to round.
+#' @param digits Integer. Number of decimal places to round to. Default is
+#'   `0`. Negative values round to powers of ten.
 #'
-#' @param x Numeric. The decimal number to round.
-#' @param digits Integer. Number of digits to round `x` to. Default is `0`.
-#'
-#' @return Numeric. `x` rounded to `digits` (except for `anti_trunc()`, which
-#'   has no `digits` argument).
+#' @return Numeric. `x` rounded to `digits` (`anti_trunc()` has no `digits`
+#'   argument).
 #'
 #' @export
 #'
 #' @name rounding-uncommon
-
-# @aliases round_ceiling
-# @aliases round_floor
-# @aliases round_trunc
-
-#' @seealso [`round_up()`] and [`round_down()`] round up or down from 5,
-#'   respectively. [`round_up_from()`] and [`round_down_from()`] allow users to
-#'   specify custom thresholds for rounding up or down.
+#'
+#' @seealso [`round_up()`] and [`round_down()`] round to the nearest number
+#'   and decide ties by a fixed direction.
 #'
 #' @examples
-#' # Always round up:
-#' round_ceiling(x = 4.52, digits = 1)        # 2 cut off
+#' round_ceiling(x = 4.52, digits = 1)
+#' round_floor(x = 4.67, digits = 1)
 #'
-#' # Always round down:
-#' round_floor(x = 4.67, digits = 1)          # 7 cut off
+#' round_trunc(8.439, digits = 2)
+#' round_trunc(-8.439, digits = 2)
 #'
-#' # Always round toward 0:
-#' round_trunc(8.439, digits = 2)             # 9 cut off
-#' round_trunc(-8.439, digits = 2)            # 9 cut off
-#'
-#' # Always round away from 0:
-#' round_anti_trunc(x = 8.421, digits = 2)    # 1 cut off
-#' round_anti_trunc(x = -8.421, digits = 2)   # 1 cut off
+#' round_anti_trunc(x = 8.421, digits = 2)
+#' round_anti_trunc(x = -8.421, digits = 2)
 
-
+# The functions below nudge the shifted value by `ROUNDING_TOLERANCE` (see
+# aaa.R) before rounding it, so that floating-point representation error
+# cannot move a number a whole step.
 
 # Always round up ------------------------------------------------------------
 
@@ -74,10 +57,9 @@
 #' @export
 
 round_ceiling <- function(x, digits = 0L) {
-  p10 <- 10 ^ digits
-  ceiling(x * p10) / p10
+  p10 <- 10^digits
+  ceiling(x * p10 - ROUNDING_TOLERANCE) / p10
 }
-
 
 
 # Always round down ----------------------------------------------------------
@@ -86,10 +68,9 @@ round_ceiling <- function(x, digits = 0L) {
 #' @export
 
 round_floor <- function(x, digits = 0L) {
-  p10 <- 10 ^ digits
-  floor(x * p10) / p10
+  p10 <- 10^digits
+  floor(x * p10 + ROUNDING_TOLERANCE) / p10
 }
-
 
 
 # Always round toward zero ---------------------------------------------------
@@ -98,17 +79,13 @@ round_floor <- function(x, digits = 0L) {
 #' @export
 
 round_trunc <- function(x, digits = 0L) {
-  p10 <- 10 ^ digits
+  p10 <- 10^digits
 
-  # For symmetry between positive and negative numbers, use the absolute value:
-  core <- trunc(abs(x) * p10) / p10
-
-  # If `x` is negative, its truncated version should be negative or zero.
-  # Therefore, in this case, the function returns the negative of `core`, the
-  # absolute value; otherwise it simply returns `core` itself:
-  dplyr::if_else(x < 0, -core, core)
+  # On `abs(x)`, truncation is flooring, so the tolerance is added as in
+  # `round_floor()`:
+  core <- trunc(abs(x) * p10 + ROUNDING_TOLERANCE) / p10
+  restore_sign(core, x)
 }
-
 
 
 # Interlude: "anti-truncate" a number ----------------------------------------
@@ -117,17 +94,14 @@ round_trunc <- function(x, digits = 0L) {
 #' @export
 
 anti_trunc <- function(x) {
-
-  # For symmetry between positive and negative numbers, use the absolute value:
-  core <- ceiling(abs(x))
-
-  # If `x` is negative, its "anti-truncated" version should also be negative.
-  # Therefore, in this case, the function returns the negative of the
-  # anti-truncated absolute value of `x`, called `core`; otherwise it simply
-  # returns `core` itself:
-  dplyr::if_else(x < 0, -core, core)
+  # The tolerance is subtracted as in `round_ceiling()`, so a value just above
+  # a whole number by representation error counts as that number. A value on
+  # the grid stays put and zero stays zero, as in Excel's `ROUNDUP()`, Java's
+  # `RoundingMode.UP`, and Python's `decimal.ROUND_UP`; `rounding_offsets()`
+  # encodes the same reading.
+  core <- ceiling(abs(x) - ROUNDING_TOLERANCE)
+  restore_sign(core, x)
 }
-
 
 
 # Always round away from zero ------------------------------------------------
@@ -136,7 +110,6 @@ anti_trunc <- function(x) {
 #' @export
 
 round_anti_trunc <- function(x, digits = 0L) {
-  p10 <- 10 ^ digits
+  p10 <- 10^digits
   anti_trunc(x * p10) / p10
 }
-
