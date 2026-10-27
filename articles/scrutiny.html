@@ -7,9 +7,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <title>Relation to scrutiny • roundwork</title>
 <script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-<link href="../deps/bootstrap-5.3.1/bootstrap.min.css" rel="stylesheet">
-<script src="../deps/bootstrap-5.3.1/bootstrap.bundle.min.js"></script><link href="../deps/font-awesome-6.4.2/css/all.min.css" rel="stylesheet">
-<link href="../deps/font-awesome-6.4.2/css/v4-shims.min.css" rel="stylesheet">
+<link href="../deps/bootstrap-5.3.8/bootstrap.min.css" rel="stylesheet">
+<script src="../deps/bootstrap-5.3.8/bootstrap.bundle.min.js"></script><link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
+<link href="../deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet">
 <script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="../pkgdown.js"></script><meta property="og:title" content="Relation to scrutiny">
 </head>
 <body>
@@ -20,7 +20,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">roundwork</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.0.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -73,27 +73,59 @@
     
 <p>The roundwork package was outsourced from <a href="https://lhdjung.github.io/scrutiny/" class="external-link">scrutiny</a>, a much larger
 and less focused package. (See <a href="https://github.com/ianhussey/ERROR/issues/6" class="external-link">this Github issue</a>
-for the rationale.) However, all functions that were copied to roundwork
-are still part of scrutiny as of version 0.5.0.</p>
-<p>For now, this can create ambiguities when using both packages
-together. Here is how to avoid such problems in an interactive script.
-Package developers should simply use <code>package::function()</code>
-syntax, as usual.</p>
+for the rationale.)</p>
+<p>roundwork only contains the rounding layer:</p>
+<ul>
+<li>The individual rounding procedures (<code><a href="../reference/rounding-common.html">round_up()</a></code>,
+<code><a href="../reference/rounding-uncommon.html">round_ceiling()</a></code>, <code><a href="../reference/rounding-ties.html">round_ties_away()</a></code>, and so
+on);</li>
+<li>
+<code><a href="../reference/reround.html">reround()</a></code>, the interface that names each procedure by a
+string;</li>
+<li>
+<code><a href="../reference/unround.html">unround()</a></code> and <code><a href="../reference/bound_numerators.html">bound_numerators()</a></code>, which
+run the same procedures backwards to recover the range of an unknown
+original number;</li>
+<li>
+<code><a href="../reference/sum_range.html">sum_range()</a></code>, which finds the whole-number sums behind a
+rounded mean;</li>
+<li>
+<code><a href="../reference/fractional-rounding.html">reround_to_fraction()</a></code> and
+<code><a href="../reference/rounding_bias.html">rounding_bias()</a></code>;</li>
+<li>
+<code><a href="../reference/resolve_ties_rounding.html">resolve_ties_rounding()</a></code>, for functions that branch on
+<code>rounding</code> themselves.</li>
+</ul>
+<p>The error detection techniques that build on this layer — GRIM,
+GRIMMER, DEBIT — live in scrutiny. From version 1.0.0 on, scrutiny
+imports its rounding from roundwork and no longer exports any rounding
+functions of its own.</p>
 <div class="section level2">
 <h2 id="resolving-conflicts">Resolving conflicts<a class="anchor" aria-label="anchor" href="#resolving-conflicts"></a>
 </h2>
-<p>Make sure that all roundwork functions are used instead of their
-scrutiny counterparts by the same names. To do so, use the <a href="https://conflicted.r-lib.org/index.html" class="external-link">conflicted</a>
-package:</p>
+<p>Before its 1.0.0 version, scrutiny had its own copies of the rounding
+functions, some of them under the same names. Attaching both packages —
+roundwork and an older version of scrutiny — can create ambiguity. These
+copies are older, and some of them behave differently: for example,
+<code><a href="../reference/rounding-common.html">round_down_from()</a></code> reads <code>threshold</code> differently
+there.</p>
+<p>I strongly recommend using scrutiny 1.0.0 or later. However, just in
+case you use roundwork together with scrutiny 0.6.1 or earlier, use the
+<a href="https://conflicted.r-lib.org/index.html" class="external-link">conflicted</a> package
+to clarify which package you mean when you call certain functions:</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://conflicted.r-lib.org/" class="external-link">conflicted</a></span><span class="op">)</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://lhdjung.github.io/scrutiny/" class="external-link">scrutiny</a></span><span class="op">)</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://lhdjung.github.io/roundwork/">roundwork</a></span><span class="op">)</span></span>
-<span><span class="fu"><a href="https://conflicted.r-lib.org/reference/conflict_prefer.html" class="external-link">conflict_prefer_matching</a></span><span class="op">(</span><span class="st">"round"</span>, <span class="st">"roundwork"</span>, quiet <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
+<span><span class="fu"><a href="https://conflicted.r-lib.org/reference/conflict_prefer.html" class="external-link">conflict_prefer_matching</a></span><span class="op">(</span><span class="st">"round"</span>, <span class="st">"roundwork"</span>, quiet <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://conflicted.r-lib.org/reference/conflict_prefer.html" class="external-link">conflict_prefer</a></span><span class="op">(</span><span class="st">"anti_trunc"</span>, <span class="st">"roundwork"</span>, quiet <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
 <p>You can then run <code>round_up</code> without parentheses and check
 the <code>namespace</code> signature at the bottom. If it says
 <code>namespace:roundwork</code>, everything is fine. If not, please <a href="https://github.com/lhdjung/roundwork/issues" class="external-link">open an
 issue</a>.</p>
+<p>Package developers can simply use <code>package::function()</code>
+syntax, as usual, or call <code>usethis::use_import_from()</code>. With
+scrutiny 1.0.0 or later, there is no conflict to resolve.</p>
 </div>
   </main>
 </div>
@@ -105,7 +137,7 @@ issue</a>.</p>
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.1.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.1.</p>
 </div>
 
     </footer>

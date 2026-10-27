@@ -7,9 +7,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <title>Rounding for error detection • roundwork</title>
 <script src="deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-<link href="deps/bootstrap-5.3.1/bootstrap.min.css" rel="stylesheet">
-<script src="deps/bootstrap-5.3.1/bootstrap.bundle.min.js"></script><link href="deps/font-awesome-6.4.2/css/all.min.css" rel="stylesheet">
-<link href="deps/font-awesome-6.4.2/css/v4-shims.min.css" rel="stylesheet">
+<link href="deps/bootstrap-5.3.8/bootstrap.min.css" rel="stylesheet">
+<script src="deps/bootstrap-5.3.8/bootstrap.bundle.min.js"></script><link href="deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
+<link href="deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet">
 <script src="deps/headroom-0.11.0/headroom.min.js"></script><script src="deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="deps/search-1.0.0/fuse.min.js"></script><script src="deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="pkgdown.js"></script><meta property="og:title" content="Rounding for error detection">
 <meta name="description" content="Flexible rounding procedures for error detection.
 ">
@@ -24,7 +24,7 @@
 
     <a class="navbar-brand me-2" href="index.html">roundwork</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.0.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -67,13 +67,14 @@
 
 <!-- badges: end -->
 <p>The goal of roundwork is to enable flexible rounding beyond <code><a href="https://rdrr.io/r/base/Round.html" class="external-link">base::round()</a></code>. Its main API is <code><a href="reference/reround.html">reround()</a></code>, from which all implemented rounding procedures can be accessed. This is useful to reconstruct how others may have rounded their data.</p>
-<p>Given a rounded number, call <code><a href="reference/unround.html">unround()</a></code> to get the lower and upper bounds of the original number. This also takes rounding options into account, just like <code><a href="reference/reround.html">reround()</a></code> does.</p>
-<p>Many roundwork functions used to be part of <a href="https://lhdjung.github.io/scrutiny/" class="external-link">scrutiny</a>. They were outsourced here for better modularity within the errorverse.</p>
+<p>Given a rounded number, call <code><a href="reference/unround.html">unround()</a></code> to get the lower and upper bounds of the original number. This also takes rounding options into account, just like <code><a href="reference/reround.html">reround()</a></code> does. <code><a href="reference/bound_numerators.html">bound_numerators()</a></code> and <code><a href="reference/sum_range.html">sum_range()</a></code> are building blocks using exact integer arithmetic to avoid all the bugs that can occur with floating-point operations.</p>
+<p>roundwork contains the rounding layer that used to be part of <a href="https://lhdjung.github.io/scrutiny/" class="external-link">scrutiny</a>. Since version 1.0.0, scrutiny imports it from here, as can any other package that reconstructs rounding.</p>
 <div class="section level2">
 <h2 id="installation">Installation<a class="anchor" aria-label="anchor" href="#installation"></a>
 </h2>
 <p>Install the package from CRAN:</p>
-<div class="sourceCode" id="cb1"><pre class="sourceCode R"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" tabindex="-1"></a><span class="fu">install.packages</span>(<span class="st">"roundwork"</span>)</span></code></pre></div>
+<div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html" class="external-link">install.packages</a></span><span class="op">(</span><span class="st">"roundwork"</span><span class="op">)</span></span></code></pre></div>
 <p>Alternatively, install the development version from GitHub:</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">remotes</span><span class="fu">::</span><span class="fu">install_github</span><span class="op">(</span><span class="st">"lhdjung/roundwork"</span><span class="op">)</span></span></code></pre></div>
@@ -98,10 +99,20 @@
 <code class="sourceCode R"><span><span class="fu"><a href="reference/reround.html">reround</a></span><span class="op">(</span><span class="fl">1.275</span>, digits <span class="op">=</span> <span class="fl">2</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1] 1.28 1.27</span></span></code></pre></div>
 <div class="section level3">
+<h3 id="ties">Ties<a class="anchor" aria-label="anchor" href="#ties"></a>
+</h3>
+<p>“Up” and “down” mean up and down <em>on the number line</em>, so they only part company with “away from zero” and “toward zero” below zero. If you would rather not have to keep that straight, name the tie-breaking rule outright:</p>
+<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="reference/rounding-ties.html">round_ties_up</a></span><span class="op">(</span><span class="op">-</span><span class="fl">2.5</span><span class="op">)</span>     <span class="co"># Stata</span></span>
+<span><span class="co">#&gt; [1] -2</span></span>
+<span><span class="fu"><a href="reference/rounding-ties.html">round_ties_away</a></span><span class="op">(</span><span class="op">-</span><span class="fl">2.5</span><span class="op">)</span>   <span class="co"># Excel, SPSS, SAS, Matlab</span></span>
+<span><span class="co">#&gt; [1] -3</span></span></code></pre></div>
+</div>
+<div class="section level3">
 <h3 id="bounds-on-the-unrounded-number">Bounds on the unrounded number<a class="anchor" aria-label="anchor" href="#bounds-on-the-unrounded-number"></a>
 </h3>
 <p><code><a href="reference/unround.html">unround()</a></code> computes the range of an unknown original number, given its rounded version. The rounding procedure determines whether the bounds are inclusive or not:</p>
-<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="reference/unround.html">unround</a></span><span class="op">(</span><span class="st">"3.60"</span><span class="op">)</span></span>
 <span><span class="co">#&gt; # A tibble: 1 × 7</span></span>
 <span><span class="co">#&gt;   range                     rounding   lower incl_lower x     incl_upper upper</span></span>
@@ -114,11 +125,11 @@
 <span><span class="co">#&gt;   &lt;chr&gt;                    &lt;chr&gt;    &lt;dbl&gt; &lt;lgl&gt;      &lt;chr&gt; &lt;lgl&gt;      &lt;dbl&gt;</span></span>
 <span><span class="co">#&gt; 1 3.595 &lt;= x(3.60) &lt; 3.605 up        3.60 TRUE       3.60  FALSE       3.60</span></span>
 <span></span>
-<span><span class="fu"><a href="reference/unround.html">unround</a></span><span class="op">(</span><span class="st">"3.60"</span>, rounding <span class="op">=</span> <span class="st">"even"</span><span class="op">)</span></span>
+<span><span class="fu"><a href="reference/unround.html">unround</a></span><span class="op">(</span><span class="st">"3.60"</span>, rounding <span class="op">=</span> <span class="st">"ceiling"</span><span class="op">)</span></span>
 <span><span class="co">#&gt; # A tibble: 1 × 7</span></span>
-<span><span class="co">#&gt;   range                     rounding lower incl_lower x     incl_upper upper</span></span>
-<span><span class="co">#&gt;   &lt;chr&gt;                     &lt;chr&gt;    &lt;dbl&gt; &lt;lgl&gt;      &lt;chr&gt; &lt;lgl&gt;      &lt;dbl&gt;</span></span>
-<span><span class="co">#&gt; 1 3.595 NA x(3.60) NA 3.605 even      3.60 NA         3.60  NA          3.60</span></span></code></pre></div>
+<span><span class="co">#&gt;   range                 rounding lower incl_lower x     incl_upper upper</span></span>
+<span><span class="co">#&gt;   &lt;chr&gt;                 &lt;chr&gt;    &lt;dbl&gt; &lt;lgl&gt;      &lt;chr&gt; &lt;lgl&gt;      &lt;dbl&gt;</span></span>
+<span><span class="co">#&gt; 1 3.59 &lt; x(3.60) &lt;= 3.6 ceiling   3.59 FALSE      3.60  TRUE         3.6</span></span></code></pre></div>
 </div>
 </div>
 </div>
@@ -150,7 +161,7 @@
 <div class="developers">
 <h2 data-toc-skip>Developers</h2>
 <ul class="list-unstyled">
-<li>Lukas Jung <br><small class="roles"> Author, maintainer </small>  </li>
+<li>Lukas Jung <br><small class="roles"> Author, maintainer </small>   </li>
 </ul>
 </div>
 
@@ -170,7 +181,7 @@
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.1.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.1.</p>
 </div>
 
     </footer>
