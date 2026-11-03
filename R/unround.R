@@ -553,10 +553,9 @@ unround <- function(
   # With `digits` given, `x` must fit into it: the bounds are `x` plus whole
   # units of the next decimal place, so `unround(1.234, digits = 1)` would give
   # the bounds of nothing at all. Trailing zeros are fine (`"4.50"` at one
-  # decimal place is 4.5), so the test is the two-step one of
-  # `check_newly_numeric()`: `round()` decides, and the expensive decimal count
-  # runs only on what it leaves open. `round()` rejects a zero-length `digits`,
-  # hence the guard.
+  # decimal place is 4.5), so the test takes two steps: `round()` decides, and
+  # the expensive decimal count runs only on what it leaves open. `round()`
+  # rejects a zero-length `digits`, hence the guard.
   too_many <- rep(FALSE, n_out)
   if (digits_given && n_out > 0L) {
     unsettled <-

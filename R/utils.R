@@ -30,8 +30,6 @@ an_a_type <- function(x) {
 }
 
 
-# `is_decidable_n_items()` and `check_newly_numeric()` write this test out
-# rather than calling it, because they run once per row; keep them in step.
 is_whole_number <- function(x, tolerance = WHOLE_NUMBER_TOLERANCE) {
   abs(x - round(x)) < tolerance
 }
@@ -330,8 +328,8 @@ decimal_places <- function(x, sep = ".") {
   )
 
   # Only the digit run right after the first separator counts: `"1.2.3"` has
-  # one decimal place. `decimal_places_scalar()` takes the same steps, and a
-  # generated corpus in test-decimal-places.R holds the two together:
+  # one decimal place. scrutiny keeps an identical copy of this function, tested
+  # there against a generated corpus; keep the two in step:
   pos_sep <- regexpr(sep, x, fixed = TRUE)
   mantissa <- substring(x, pos_sep + nchar(sep))
   mantissa[pos_sep < 0L] <- ""
@@ -388,9 +386,6 @@ sep_literal <- function(sep) {
 }
 
 
-# `decimal_places()` and `decimal_places_scalar()` read strings through these
-# two, so that they cannot drift apart.
-#
 # `\s` is ASCII whitespace, `"\v"` and `"\f"` included. `\p{Z}` adds Unicode
 # spaces such as the no-break space, common in tables copied from PDFs.
 trim_space <- function(x) {

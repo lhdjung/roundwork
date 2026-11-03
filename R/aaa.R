@@ -46,7 +46,7 @@ ROUNDING_TOLERANCE <- WHOLE_NUMBER_TOLERANCE / 10
 # functions and the bounds cannot disagree about what a name means.
 #
 # Giving `symmetric` alongside one of them is an error; see
-# `resolve_ties_rounding()` in `R/utils.R`.
+# `resolve_ties_rounding()`.
 #
 # `"ties_even"` resolves to `base::round()`. Its `symmetric = FALSE` is a
 # placeholder: rounding to even is its own mirror image. These five names plus
@@ -64,8 +64,8 @@ TIES_METHODS <- list(
 
 
 # The strings that `as.numeric()` reads as an infinity or `NaN`, once their
-# letters are lowercased. `decimal_places()` and `decimal_places_scalar()` give
-# them `NA` decimal places, via `is_non_finite_token()`.
+# letters are lowercased. `decimal_places()` gives them `NA` decimal places, via
+# `is_non_finite_token()`.
 NON_FINITE_TOKENS <- c(outer(
   c("", "+", "-"),
   c("inf", "infinity", "nan"),
