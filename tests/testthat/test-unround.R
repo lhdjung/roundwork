@@ -91,7 +91,7 @@ test_that("`unround()` bounds agree with the rounding they invert", {
     rounds_to_x <- function(value) {
       value |>
         reround(digits = 2, rounding = m, threshold = 6) |>
-        dplyr::near(0.53) |>
+        near(0.53) |>
         any()
     }
     (bounds$lower + eps) |> rounds_to_x() |> expect_true(label = paste(m, "inside lower"))
@@ -122,6 +122,8 @@ test_that("`unround()` bounds agree with the rounding they invert", {
 # pins the tolerance to the bounds.
 
 test_that("`unround()` bounds agree with the rounding they invert (sweep)", {
+  # Slow; runs locally and on CI:
+  skip_on_cran()
   methods <- c(
     "up_or_down", "up", "down", "even", "ceiling", "floor", "ceiling_or_floor",
     "trunc", "anti_trunc", "up_from", "down_from", "up_from_or_down_from",
@@ -165,7 +167,7 @@ test_that("`unround()` bounds agree with the rounding they invert (sweep)", {
                   threshold = threshold,
                   symmetric = symmetric
                 ) |>
-                dplyr::near(x_num) |>
+                near(x_num) |>
                 any()
             }
             label <- paste(
@@ -390,6 +392,8 @@ test_that("zero-length input returns zero rows", {
 # pins the exceptions to their exact widths.
 
 test_that("no rounding method reconstructs a range wider than one step", {
+  # Slow; runs locally and on CI:
+  skip_on_cran()
   methods_one_step <- c(
     "up_or_down", "up", "down", "even", "ceiling", "floor", "trunc",
     "anti_trunc", "up_from", "down_from", "up_from_or_down_from",
@@ -544,6 +548,8 @@ test_that("`digits` is checked, and an infinite `x` has no bounds", {
 
 
 test_that("`sum_range()` finds exactly the sums that round to `x`", {
+  # Slow; runs locally and on CI:
+  skip_on_cran()
   # Brute force: every whole-number sum near `x * n` whose mean, rounded the
   # same way, gives back `x`. `"even"` is left out for the reason given in the
   # `unround()` sweep: its bounds are inclusive by design, so they can only

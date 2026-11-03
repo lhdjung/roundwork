@@ -142,7 +142,8 @@ round_down_from <- function(x, digits = 0L, threshold, symmetric = FALSE) {
   if (symmetric) {
     restore_sign(ceiling(abs(x) * p10 - offset) / p10, x)
   } else {
-    ceiling(x * p10 - offset) / p10
+    # Adding zero turns a negative zero, as from `ceiling(-0.4)`, into zero:
+    ceiling(x * p10 - offset) / p10 + 0
   }
 }
 

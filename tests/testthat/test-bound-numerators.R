@@ -87,6 +87,30 @@ test_that("`bound_numerators()` scales a fractional threshold to whole numbers",
   # `threshold` is ignored by the fixed-5 methods, even when it is out of range:
   bn(0.53, 2L, "up", threshold = 12) |> expect_identical(bn(0.53, 2L, "up"))
   bn(0.53, 2L, "up", threshold = 0.5) |> expect_identical(bn(0.53, 2L, "up"))
+  # A decimal threshold that no double holds exactly is scaled to the whole
+  # numbers it stands for, not left a hair off them:
+  b <- bn(1, 2L, "down_from", threshold = 9.99)
+  b$denom |> expect_identical(1e5)
+  c(b$lower, b$upper) |> expect_identical(c(99999, 100999))
+  # Six decimal places next to a whole number are scaled, not snapped to that
+  # number, which would move `"up_from"`'s exclusive upper bound onto `x`:
+  b <- bn(0, -1L, "up_from", threshold = 0.000001)
+  c(b$lower, b$upper, b$denom) |> expect_identical(c(-9999999, 1, 1e6))
+  b <- bn(0, -1L, "up_from", threshold = 9.999999)
+  c(b$lower, b$upper, b$denom) |> expect_identical(c(-1, 9999999, 1e6))
+  b <- bn(0, -1L, "up_from", threshold = 5e-7)
+  c(b$lower, b$upper, b$denom) |> expect_identical(c(-9999999.5, 0.5, 1e6))
+  sum_range(0, 1, 0, "up_from", 5e-7) |> expect_identical(c(0, 0))
+  sum_range(0, 1, 0, "up_from", 0.000001) |> expect_identical(c(0, 0))
+})
+
+
+test_that("`bound_numerators()` and `sum_range()` are undefined without `digits`", {
+  bound_numerators(1.2, NA, "down", 5, FALSE) |> expect_null()
+  sum_range(1.2, 10, NA, "down", 5) |> expect_identical(c(NA_real_, NA_real_))
+  u <- unround(1.2, digits = NA)
+  is.na(c(u$lower, u$upper, u$incl_lower, u$incl_upper)) |> all() |> expect_true()
+  u$range |> expect_identical(NA_character_)
 })
 
 

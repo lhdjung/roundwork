@@ -190,7 +190,11 @@ rounding_offsets <- function(rounding, threshold, x_num, symmetric = FALSE) {
 #'   disagree with `unround()` about what the bounds of a rounded number are.
 #'
 #'   If `threshold` is fractional, the numerators and the denominator are both
-#'   scaled up by a power of ten until they are whole numbers again.
+#'   scaled up by the power of ten that makes them whole numbers again: `100`
+#'   for a `threshold` of `9.99`. This works for up to six decimal places, a
+#'   scale of `1e6`. With more, the numerators are not whole numbers, and the
+#'   arithmetic is no longer exact. The scale also multiplies the integers
+#'   that must stay below `2^53`.
 #'
 #'   `bound_numerators()` is a low-level primitive, meant to be called once per
 #'   value set inside a consistency test, so it checks only `rounding`,
@@ -212,7 +216,7 @@ rounding_offsets <- function(rounding, threshold, x_num, symmetric = FALSE) {
 #'   mirrored that of positive numbers. See [`round_up()`].
 #'
 #' @return A list of five elements, or `NULL` if the bounds are undefined, which
-#'   is the case only for a missing or infinite `x_num`:
+#'   is the case only for a missing or infinite `x_num` or a missing `digits`:
 #'   - `lower`, `upper`: integer numerators of the two bounds.
 #'   - `denom`: the common denominator.
 #'   - `incl_lower`, `incl_upper`: whether each bound is inclusive.
@@ -251,19 +255,32 @@ bound_numerators <- function(x_num, digits, rounding, threshold, symmetric) {
     )
   }
 
-  if (anyNA(offsets)) {
+  # Without `digits`, there is no denominator, so the bounds are as undefined as
+  # for a missing `x_num`:
+  if (anyNA(offsets) || is.na(digits)) {
     return(NULL)
   }
 
   # A fractional `threshold` is scaled up by a power of ten, along with the
   # denominator, until the offsets are whole again; failing that, the
-  # arithmetic degrades to floating point:
+  # arithmetic degrades to floating point. A decimal like `9.99` is no exact
+  # double, so the scaled offsets are only close to whole numbers, and are
+  # rounded to them: `9.99 - 10` stands for -1/100, not for the double nearest
+  # to it. The offsets are at most 10 times the scale, so their floating-point
+  # error stays below about 2e-9, well under the tolerance of
+  # `is_whole_number()`. A decimal of up to six places, scaled too little, is
+  # at least 1e-6 off a whole number, far above it. A threshold within the
+  # tolerance of a whole number counts as that number, a difference below the
+  # nudge that the rounding functions apply anyway:
   bounds <- c(offsets[[1L]], offsets[[2L]])
   scale <- 1
-  while (scale < 1e6 && any(bounds * scale != round(bounds * scale))) {
+  while (scale < 1e6 && !all(is_whole_number(bounds * scale))) {
     scale <- scale * 10
   }
   bounds <- bounds * scale
+  if (all(is_whole_number(bounds))) {
+    bounds <- round(bounds)
+  }
 
   denom <- 10^(digits + 1L) * scale
   x_shifted <- round(x_num * denom)
@@ -296,8 +313,10 @@ bound_numerators <- function(x_num, digits, rounding, threshold, symmetric) {
 #'
 #' @details Like [`bound_numerators()`], on which it builds, `sum_range()`
 #'   works in exact integer arithmetic. This is exact as long as
-#'   `n_items * 10^(digits + 1)` times the integer part of `x_num` stays below
-#'   `2^53`, which is far beyond any realistic input.
+#'   `(|x_num| * 10^(digits + 1) + 10) * n_items` stays below `2^53`, which is
+#'   far beyond any realistic input. The bounds reach up to 10 units past
+#'   `x_num`, hence the `+ 10`. A `threshold` with decimal places multiplies
+#'   this by the scale described in [`bound_numerators()`].
 #'
 #'   `sum_range()` is a low-level primitive, meant to be called once per value
 #'   set inside a consistency test, so it does not check its input. The caller
@@ -312,8 +331,8 @@ bound_numerators <- function(x_num, digits, rounding, threshold, symmetric) {
 #'
 #' @return A numeric vector of length 2, `c(lower, upper)`. If `lower` is
 #'   greater than `upper`, no whole-number sum is consistent with `x_num`. Both
-#'   are `NA` if `x_num` is missing or infinite, or if `n_items` is missing,
-#'   infinite, or not positive.
+#'   are `NA` if `x_num` is missing or infinite, if `digits` is missing, or if
+#'   `n_items` is missing, infinite, or not positive.
 #'
 #' @references Brown, N. J. L., & Heathers, J. A. J. (2017). The GRIM Test: A
 #'   Simple Technique Detects Numerous Anomalies in the Reporting of Results in
@@ -534,10 +553,9 @@ unround <- function(
   # With `digits` given, `x` must fit into it: the bounds are `x` plus whole
   # units of the next decimal place, so `unround(1.234, digits = 1)` would give
   # the bounds of nothing at all. Trailing zeros are fine (`"4.50"` at one
-  # decimal place is 4.5), so the test is the two-step one of
-  # `check_newly_numeric()`: `round()` decides, and the expensive decimal count
-  # runs only on what it leaves open. `round()` rejects a zero-length `digits`,
-  # hence the guard.
+  # decimal place is 4.5), so the test takes two steps: `round()` decides, and
+  # the expensive decimal count runs only on what it leaves open. `round()`
+  # rejects a zero-length `digits`, hence the guard.
   too_many <- rep(FALSE, n_out)
   if (digits_given && n_out > 0L) {
     unsettled <-
@@ -574,7 +592,7 @@ unround <- function(
     )
   })
 
-  # `NULL` where the bounds are undefined, i.e. for a missing `x`:
+  # `NULL` where the bounds are undefined, i.e. for a missing `x` or `digits`:
   extract <- function(name, na_value) {
     vapply(
       bounds,
@@ -590,15 +608,21 @@ unround <- function(
   incl_lower <- extract("incl_lower", NA)
   incl_upper <- extract("incl_upper", NA)
 
-  sign_lower <- dplyr::if_else(incl_lower, "<=", "<")
-  sign_upper <- dplyr::if_else(incl_upper, "<=", "<")
+  # Indexing rather than `ifelse()`, which returns a logical vector when all
+  # bounds are missing or there are none:
+  sign_lower <- c("<", "<=")[incl_lower + 1L]
+  sign_upper <- c("<", "<=")[incl_upper + 1L]
+
+  # fmt: skip
+  range <- paste0(
+    lower, " ", sign_lower, " x(", x_out, ") ", sign_upper, " ", upper
+  )
+  # Undefined bounds are no range, not the string "NA NA x(...) NA NA":
+  range[is.na(denom)] <- NA_character_
 
   tibble::new_tibble(
     list(
-      # fmt: skip
-      range = paste0(
-        lower, " ", sign_lower, " x(", x_out, ") ", sign_upper, " ", upper
-      ),
+      range = range,
       rounding = rounding,
       lower = lower,
       incl_lower = incl_lower,

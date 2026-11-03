@@ -20,7 +20,7 @@ test_that("`rounding_bias(mean = FALSE)` returns one bias per input value", {
   vec |>
     reround(1L, "up") |>
     call_on(\(x) x - out) |>
-    dplyr::near(vec) |>
+    near(vec) |>
     all() |>
     expect_true()
 })
@@ -65,4 +65,10 @@ test_that("a factor is read by its labels", {
   x <- c("1.25", "2.35")
   expected <- x |> rounding_bias(1, mean = FALSE)
   x |> factor() |> rounding_bias(1, mean = FALSE) |> expect_equal(expected)
+})
+
+test_that("a number is not moved before rounding", {
+  # `as.character()` would make this 2.5, and the bias exactly 0.5:
+  x <- 2.4999999999999996
+  x |> rounding_bias(0, mean = FALSE) |> expect_identical(round_up(x) - x)
 })

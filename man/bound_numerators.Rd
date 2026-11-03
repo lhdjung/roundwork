@@ -25,7 +25,7 @@ mirrored that of positive numbers. See \code{\link[=round_up]{round_up()}}.}
 }
 \value{
 A list of five elements, or \code{NULL} if the bounds are undefined, which
-is the case only for a missing or infinite \code{x_num}:
+is the case only for a missing or infinite \code{x_num} or a missing \code{digits}:
 \itemize{
 \item \code{lower}, \code{upper}: integer numerators of the two bounds.
 \item \code{denom}: the common denominator.
@@ -61,7 +61,11 @@ A consistency test that derives its candidate range from here can never
 disagree with \code{unround()} about what the bounds of a rounded number are.
 
 If \code{threshold} is fractional, the numerators and the denominator are both
-scaled up by a power of ten until they are whole numbers again.
+scaled up by the power of ten that makes them whole numbers again: \code{100}
+for a \code{threshold} of \code{9.99}. This works for up to six decimal places, a
+scale of \code{1e6}. With more, the numerators are not whole numbers, and the
+arithmetic is no longer exact. The scale also multiplies the integers
+that must stay below \code{2^53}.
 
 \code{bound_numerators()} is a low-level primitive, meant to be called once per
 value set inside a consistency test, so it checks only \code{rounding},

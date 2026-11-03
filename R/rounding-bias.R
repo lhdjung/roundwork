@@ -67,8 +67,11 @@ rounding_bias <- function(
   # Main part ---
 
   # Strings are fine because `digits` says where to round. A factor is read by
-  # its labels, not its level codes.
-  x <- as.numeric(as.character(x))
+  # its labels, not its level codes. A number is left alone: `as.character()`
+  # keeps only 15 significant digits, so it would move `x` before rounding it.
+  if (!is.numeric(x)) {
+    x <- as.numeric(as.character(x))
+  }
 
   bias <- reround(x, digits, rounding, threshold, symmetric) - x
 

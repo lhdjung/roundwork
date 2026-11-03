@@ -20,3 +20,10 @@ trunc_reverse <- function(x) {
 call_on <- function(x, f) {
   f(x)
 }
+
+
+# Like `dplyr::near()`, which the tests can't rely on because dplyr is only
+# suggested:
+near <- function(x, y, tol = .Machine$double.eps^0.5) {
+  abs(x - y) < tol
+}

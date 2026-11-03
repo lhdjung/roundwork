@@ -29,8 +29,8 @@ mirrored that of positive numbers. See \code{\link[=round_up]{round_up()}}.}
 \value{
 A numeric vector of length 2, \code{c(lower, upper)}. If \code{lower} is
 greater than \code{upper}, no whole-number sum is consistent with \code{x_num}. Both
-are \code{NA} if \code{x_num} is missing or infinite, or if \code{n_items} is missing,
-infinite, or not positive.
+are \code{NA} if \code{x_num} is missing or infinite, if \code{digits} is missing, or if
+\code{n_items} is missing, infinite, or not positive.
 }
 \description{
 \code{sum_range()} returns the least and the greatest whole number
@@ -45,8 +45,10 @@ of a sample.
 \details{
 Like \code{\link[=bound_numerators]{bound_numerators()}}, on which it builds, \code{sum_range()}
 works in exact integer arithmetic. This is exact as long as
-\code{n_items * 10^(digits + 1)} times the integer part of \code{x_num} stays below
-\code{2^53}, which is far beyond any realistic input.
+\verb{(|x_num| * 10^(digits + 1) + 10) * n_items} stays below \code{2^53}, which is
+far beyond any realistic input. The bounds reach up to 10 units past
+\code{x_num}, hence the \code{+ 10}. A \code{threshold} with decimal places multiplies
+this by the scale described in \code{\link[=bound_numerators]{bound_numerators()}}.
 
 \code{sum_range()} is a low-level primitive, meant to be called once per value
 set inside a consistency test, so it does not check its input. The caller
