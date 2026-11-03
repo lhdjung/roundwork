@@ -216,7 +216,7 @@ rounding_offsets <- function(rounding, threshold, x_num, symmetric = FALSE) {
 #'   mirrored that of positive numbers. See [`round_up()`].
 #'
 #' @return A list of five elements, or `NULL` if the bounds are undefined, which
-#'   is the case only for a missing or infinite `x_num`:
+#'   is the case only for a missing or infinite `x_num` or a missing `digits`:
 #'   - `lower`, `upper`: integer numerators of the two bounds.
 #'   - `denom`: the common denominator.
 #'   - `incl_lower`, `incl_upper`: whether each bound is inclusive.
@@ -255,7 +255,9 @@ bound_numerators <- function(x_num, digits, rounding, threshold, symmetric) {
     )
   }
 
-  if (anyNA(offsets)) {
+  # Without `digits`, there is no denominator, so the bounds are as undefined as
+  # for a missing `x_num`:
+  if (anyNA(offsets) || is.na(digits)) {
     return(NULL)
   }
 
@@ -329,8 +331,8 @@ bound_numerators <- function(x_num, digits, rounding, threshold, symmetric) {
 #'
 #' @return A numeric vector of length 2, `c(lower, upper)`. If `lower` is
 #'   greater than `upper`, no whole-number sum is consistent with `x_num`. Both
-#'   are `NA` if `x_num` is missing or infinite, or if `n_items` is missing,
-#'   infinite, or not positive.
+#'   are `NA` if `x_num` is missing or infinite, if `digits` is missing, or if
+#'   `n_items` is missing, infinite, or not positive.
 #'
 #' @references Brown, N. J. L., & Heathers, J. A. J. (2017). The GRIM Test: A
 #'   Simple Technique Detects Numerous Anomalies in the Reporting of Results in
@@ -591,7 +593,7 @@ unround <- function(
     )
   })
 
-  # `NULL` where the bounds are undefined, i.e. for a missing `x`:
+  # `NULL` where the bounds are undefined, i.e. for a missing `x` or `digits`:
   extract <- function(name, na_value) {
     vapply(
       bounds,
@@ -610,12 +612,16 @@ unround <- function(
   sign_lower <- dplyr::if_else(incl_lower, "<=", "<")
   sign_upper <- dplyr::if_else(incl_upper, "<=", "<")
 
+  # fmt: skip
+  range <- paste0(
+    lower, " ", sign_lower, " x(", x_out, ") ", sign_upper, " ", upper
+  )
+  # Undefined bounds are no range, not the string "NA NA x(...) NA NA":
+  range[is.na(denom)] <- NA_character_
+
   tibble::new_tibble(
     list(
-      # fmt: skip
-      range = paste0(
-        lower, " ", sign_lower, " x(", x_out, ") ", sign_upper, " ", upper
-      ),
+      range = range,
       rounding = rounding,
       lower = lower,
       incl_lower = incl_lower,

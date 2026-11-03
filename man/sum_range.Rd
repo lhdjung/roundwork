@@ -29,8 +29,8 @@ mirrored that of positive numbers. See \code{\link[=round_up]{round_up()}}.}
 \value{
 A numeric vector of length 2, \code{c(lower, upper)}. If \code{lower} is
 greater than \code{upper}, no whole-number sum is consistent with \code{x_num}. Both
-are \code{NA} if \code{x_num} is missing or infinite, or if \code{n_items} is missing,
-infinite, or not positive.
+are \code{NA} if \code{x_num} is missing or infinite, if \code{digits} is missing, or if
+\code{n_items} is missing, infinite, or not positive.
 }
 \description{
 \code{sum_range()} returns the least and the greatest whole number

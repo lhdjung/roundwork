@@ -105,6 +105,15 @@ test_that("`bound_numerators()` scales a fractional threshold to whole numbers",
 })
 
 
+test_that("`bound_numerators()` and `sum_range()` are undefined without `digits`", {
+  bound_numerators(1.2, NA, "down", 5, FALSE) |> expect_null()
+  sum_range(1.2, 10, NA, "down", 5) |> expect_identical(c(NA_real_, NA_real_))
+  u <- unround(1.2, digits = NA)
+  is.na(c(u$lower, u$upper, u$incl_lower, u$incl_upper)) |> all() |> expect_true()
+  u$range |> expect_identical(NA_character_)
+})
+
+
 test_that("`bound_numerators()` resolves `\"ties_*\"` strings like `reround()`", {
   for (x_num in c(2.5, -2.5, 0)) {
     bn(x_num, 0L, "ties_up")   |> expect_identical(bn(x_num, 0L, "up"))
