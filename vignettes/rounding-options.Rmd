@@ -41,7 +41,7 @@ By contrast, these options only return one rounded number per input:
 -   `"even"` rounds to the nearest number, breaking a tie toward the even one, using base R's own `round()`. See the note below.
 -   `"up"` or `"down"` rounds in the specified direction, starting at 5.
 -   `"up_from"` or `"down_from"` rounds in the specified direction, starting at some number other than 5. Specify this number via the `threshold` argument.
--   `"ceiling"` or `"floor"` always rounds to the next higher or lower decimal place, respectively.
+-   `"ceiling"` or `"floor"` always rounds to the next higher or lower number at the given decimal place, respectively.
 -   `"trunc"` and `"anti_trunc"` always round towards zero or away from it.
 
 Two arguments modify these procedures:
@@ -75,20 +75,20 @@ Between them, these five names and `"ceiling"`, `"floor"`, and `"trunc"` cover e
 | *roundTowardNegative* | `"floor"` |
 | *roundTowardZero* | `"trunc"` |
 
-The standard has no name for `"ties_up"`, `"ties_zero"`, or `"anti_trunc"`, which are Stata's, Python's `ROUND_HALF_DOWN`, and Excel's `ROUNDUP()` respectively.
+The standard has no name for `"ties_up"`, `"ties_down"`, `"ties_zero"`, or `"anti_trunc"`. Of these, `"ties_up"` is Stata's `round()`, `"ties_zero"` is Python's `decimal.ROUND_HALF_DOWN`, and `"anti_trunc"` is Excel's `ROUNDUP()`.
 
 ## Negative numbers: `symmetric`
 
 `symmetric` matters whenever your data contain negative values: difference scores, z-scores, effect sizes, temperature scales.
 
-By default (`symmetric = FALSE`), roundwork reads "up" and "down" on the number line, so a negative tie goes up toward zero:
+By default (`symmetric = FALSE`), roundwork reads "up" and "down" on the number line, so `round_up()` sends a negative tie up, toward zero, and `round_down()` sends it down, away from zero:
 
 ```{r}
 round_up(-2.5)
 round_down(-2.5)
 ```
 
-With `symmetric = TRUE`, a negative number is rounded like its absolute value, so a tie moves *away* from zero:
+With `symmetric = TRUE`, a negative number is rounded like its absolute value, so the directions flip: `round_up()` sends a negative tie *away* from zero, and `round_down()` toward it:
 
 ```{r}
 round_up(-2.5, symmetric = TRUE)
