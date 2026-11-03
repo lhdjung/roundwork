@@ -1,5 +1,90 @@
 # Changelog
 
+## roundwork 0.2.0
+
+This release fixes a hang and several smaller bugs found shortly after
+0.1.0.
+
+### Breaking change
+
+- roundwork no longer re-exports magrittr’s pipe, `%>%`. Load magrittr
+  or use R’s native `|>` instead. roundwork now imports neither dplyr,
+  magrittr, nor stringr.
+
+### Bug fixes
+
+- An error raised by a roundwork function no longer makes R hang when
+  the function is called from a user’s function that is evaluated in a
+  data mask, as by
+  [`rlang::eval_tidy()`](https://rlang.r-lib.org/reference/eval_tidy.html).
+  While looking for the function that the user called, roundwork
+  followed a frame that names itself as its parent and so looped
+  forever. In
+  [`dplyr::mutate()`](https://dplyr.tidyverse.org/reference/mutate.html),
+  the search could also fail with an error of its own.
+- [`bound_numerators()`](https://lhdjung.github.io/roundwork/reference/bound_numerators.md),
+  and so
+  [`sum_range()`](https://lhdjung.github.io/roundwork/reference/sum_range.md)
+  and
+  [`unround()`](https://lhdjung.github.io/roundwork/reference/unround.md),
+  scale a decimal `threshold` that no double holds exactly, such as
+  `9.99`, to the whole numbers it stands for. Before, the scaled offsets
+  stayed a hair off them, the scale grew to its limit of a million, and
+  the arithmetic was no longer exact. This works for up to six decimal
+  places, `0.000001` and `9.999999` included.
+- [`bound_numerators()`](https://lhdjung.github.io/roundwork/reference/bound_numerators.md)
+  returns `NULL` for a missing `digits`, as it does for a missing
+  `x_num`. So
+  [`sum_range()`](https://lhdjung.github.io/roundwork/reference/sum_range.md)
+  returns `NA` instead of failing with an uninformative error, and
+  [`unround()`](https://lhdjung.github.io/roundwork/reference/unround.md)
+  returns `NA` throughout, including `incl_lower` and `incl_upper`. The
+  `range` column of
+  [`unround()`](https://lhdjung.github.io/roundwork/reference/unround.md)
+  is now `NA` wherever the bounds are, rather than
+  `"NA NA x(...) NA NA"`.
+- [`rounding_bias()`](https://lhdjung.github.io/roundwork/reference/rounding_bias.md)
+  no longer passes a numeric `x` through
+  [`as.character()`](https://rdrr.io/r/base/character.html), which kept
+  only 15 significant digits and so moved `x` before rounding it.
+- [`round_ceiling()`](https://lhdjung.github.io/roundwork/reference/rounding-uncommon.md),
+  [`round_down()`](https://lhdjung.github.io/roundwork/reference/rounding-common.md),
+  [`round_down_from()`](https://lhdjung.github.io/roundwork/reference/rounding-common.md),
+  [`round_trunc()`](https://lhdjung.github.io/roundwork/reference/rounding-uncommon.md),
+  [`round_anti_trunc()`](https://lhdjung.github.io/roundwork/reference/rounding-uncommon.md),
+  [`anti_trunc()`](https://lhdjung.github.io/roundwork/reference/rounding-uncommon.md),
+  [`round_ties_even()`](https://lhdjung.github.io/roundwork/reference/rounding-ties.md),
+  [`round_ties_to_even()`](https://lhdjung.github.io/roundwork/reference/ieee-754.md),
+  and the functions built on them no longer return a negative zero,
+  which [`sprintf()`](https://rdrr.io/r/base/sprintf.html) prints as
+  `"-0"`.
+  [`reround()`](https://lhdjung.github.io/roundwork/reference/reround.md)
+  already avoided it.
+- [`round_ties_to_even()`](https://lhdjung.github.io/roundwork/reference/ieee-754.md)
+  no longer takes `...`, which it passed to
+  [`base::round()`](https://rdrr.io/r/base/Round.html), where any extra
+  argument was an error.
+
+### Documentation
+
+- [`vignette("rounding-in-depth")`](https://lhdjung.github.io/roundwork/articles/rounding-in-depth.md)
+  no longer says that
+  [`base::round()`](https://rdrr.io/r/base/Round.html) rounds a number
+  that only looks like a tie to its nearer neighbor. The candidates are
+  inexact doubles too, so `round(1.05, 1)` is `1.0`, although `1.05` is
+  stored a hair above 1.05; Python’s
+  [`round()`](https://rdrr.io/r/base/Round.html) gives `1.1`. The
+  vignette also no longer counts Python and NumPy among the programs
+  that [`round()`](https://rdrr.io/r/base/Round.html) reconstructs
+  exactly.
+- [`vignette("rounding-options")`](https://lhdjung.github.io/roundwork/articles/rounding-options.md)
+  no longer says that every negative tie goes toward zero under
+  `symmetric = FALSE` and away from it under `symmetric = TRUE`. That is
+  true of
+  [`round_up()`](https://lhdjung.github.io/roundwork/reference/rounding-common.md);
+  [`round_down()`](https://lhdjung.github.io/roundwork/reference/rounding-common.md)
+  does the opposite.
+
 ## roundwork 0.1.0
 
 CRAN release: 2026-10-26

@@ -49,7 +49,7 @@ bound_numerators(x_num, digits, rounding, threshold, symmetric)
 ## Value
 
 A list of five elements, or `NULL` if the bounds are undefined, which is
-the case only for a missing or infinite `x_num`:
+the case only for a missing or infinite `x_num` or a missing `digits`:
 
 - `lower`, `upper`: integer numerators of the two bounds.
 
@@ -83,7 +83,11 @@ disagree with
 about what the bounds of a rounded number are.
 
 If `threshold` is fractional, the numerators and the denominator are
-both scaled up by a power of ten until they are whole numbers again.
+both scaled up by the power of ten that makes them whole numbers again:
+`100` for a `threshold` of `9.99`. This works for up to six decimal
+places, a scale of `1e6`. With more, the numerators are not whole
+numbers, and the arithmetic is no longer exact. The scale also
+multiplies the integers that must stay below `2^53`.
 
 `bound_numerators()` is a low-level primitive, meant to be called once
 per value set inside a consistency test, so it checks only `rounding`,

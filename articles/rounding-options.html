@@ -20,7 +20,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">roundwork</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -142,7 +142,8 @@ specified direction, starting at some number other than 5. Specify this
 number via the <code>threshold</code> argument.</li>
 <li>
 <code>"ceiling"</code> or <code>"floor"</code> always rounds to the
-next higher or lower decimal place, respectively.</li>
+next higher or lower number at the given decimal place,
+respectively.</li>
 <li>
 <code>"trunc"</code> and <code>"anti_trunc"</code> always round
 towards zero or away from it.</li>
@@ -240,9 +241,11 @@ direction IEEE 754 defines:</p>
 </tbody>
 </table>
 <p>The standard has no name for <code>"ties_up"</code>,
-<code>"ties_zero"</code>, or <code>"anti_trunc"</code>, which are
-Stata’s, Python’s <code>ROUND_HALF_DOWN</code>, and Excel’s
-<code>ROUNDUP()</code> respectively.</p>
+<code>"ties_down"</code>, <code>"ties_zero"</code>, or
+<code>"anti_trunc"</code>. Of these, <code>"ties_up"</code> is Stata’s
+<code><a href="https://rdrr.io/r/base/Round.html" class="external-link">round()</a></code>, <code>"ties_zero"</code> is Python’s
+<code>decimal.ROUND_HALF_DOWN</code>, and <code>"anti_trunc"</code> is
+Excel’s <code>ROUNDUP()</code>.</p>
 </div>
 <div class="section level2">
 <h2 id="negative-numbers-symmetric">Negative numbers: <code>symmetric</code><a class="anchor" aria-label="anchor" href="#negative-numbers-symmetric"></a>
@@ -251,14 +254,18 @@ Stata’s, Python’s <code>ROUND_HALF_DOWN</code>, and Excel’s
 values: difference scores, z-scores, effect sizes, temperature
 scales.</p>
 <p>By default (<code>symmetric = FALSE</code>), roundwork reads “up” and
-“down” on the number line, so a negative tie goes up toward zero:</p>
+“down” on the number line, so <code><a href="../reference/rounding-common.html">round_up()</a></code> sends a negative
+tie up, toward zero, and <code><a href="../reference/rounding-common.html">round_down()</a></code> sends it down, away
+from zero:</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/rounding-common.html">round_up</a></span><span class="op">(</span><span class="op">-</span><span class="fl">2.5</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1] -2</span></span>
 <span><span class="fu"><a href="../reference/rounding-common.html">round_down</a></span><span class="op">(</span><span class="op">-</span><span class="fl">2.5</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1] -3</span></span></code></pre></div>
 <p>With <code>symmetric = TRUE</code>, a negative number is rounded like
-its absolute value, so a tie moves <em>away</em> from zero:</p>
+its absolute value, so the directions flip: <code><a href="../reference/rounding-common.html">round_up()</a></code>
+sends a negative tie <em>away</em> from zero, and
+<code><a href="../reference/rounding-common.html">round_down()</a></code> toward it:</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/rounding-common.html">round_up</a></span><span class="op">(</span><span class="op">-</span><span class="fl">2.5</span>, symmetric <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1] -3</span></span>

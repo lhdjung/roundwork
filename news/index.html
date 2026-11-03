@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">roundwork</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -42,6 +42,35 @@
       <small>Source: <a href="https://github.com/lhdjung/roundwork/blob/master/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.2.0" id="roundwork-020">roundwork 0.2.0<a class="anchor" aria-label="anchor" href="#roundwork-020"></a></h2>
+<p>This release fixes a hang and several smaller bugs found shortly after 0.1.0.</p>
+<div class="section level3">
+<h3 id="breaking-change-0-2-0">Breaking change<a class="anchor" aria-label="anchor" href="#breaking-change-0-2-0"></a></h3>
+<ul><li>roundwork no longer re-exports magrittr’s pipe, <code>%&gt;%</code>. Load magrittr or use R’s native <code>|&gt;</code> instead. roundwork now imports neither dplyr, magrittr, nor stringr.</li>
+</ul></div>
+<div class="section level3">
+<h3 id="bug-fixes-0-2-0">Bug fixes<a class="anchor" aria-label="anchor" href="#bug-fixes-0-2-0"></a></h3>
+<ul><li>An error raised by a roundwork function no longer makes R hang when the function is called from a user’s function that is evaluated in a data mask, as by <code><a href="https://rlang.r-lib.org/reference/eval_tidy.html" class="external-link">rlang::eval_tidy()</a></code>. While looking for the function that the user called, roundwork followed a frame that names itself as its parent and so looped forever. In <code><a href="https://dplyr.tidyverse.org/reference/mutate.html" class="external-link">dplyr::mutate()</a></code>, the search could also fail with an error of its own.</li>
+<li>
+<code><a href="../reference/bound_numerators.html">bound_numerators()</a></code>, and so <code><a href="../reference/sum_range.html">sum_range()</a></code> and <code><a href="../reference/unround.html">unround()</a></code>, scale a decimal <code>threshold</code> that no double holds exactly, such as <code>9.99</code>, to the whole numbers it stands for. Before, the scaled offsets stayed a hair off them, the scale grew to its limit of a million, and the arithmetic was no longer exact. This works for up to six decimal places, <code>0.000001</code> and <code>9.999999</code> included.</li>
+<li>
+<code><a href="../reference/bound_numerators.html">bound_numerators()</a></code> returns <code>NULL</code> for a missing <code>digits</code>, as it does for a missing <code>x_num</code>. So <code><a href="../reference/sum_range.html">sum_range()</a></code> returns <code>NA</code> instead of failing with an uninformative error, and <code><a href="../reference/unround.html">unround()</a></code> returns <code>NA</code> throughout, including <code>incl_lower</code> and <code>incl_upper</code>. The <code>range</code> column of <code><a href="../reference/unround.html">unround()</a></code> is now <code>NA</code> wherever the bounds are, rather than <code>"NA NA x(...) NA NA"</code>.</li>
+<li>
+<code><a href="../reference/rounding_bias.html">rounding_bias()</a></code> no longer passes a numeric <code>x</code> through <code><a href="https://rdrr.io/r/base/character.html" class="external-link">as.character()</a></code>, which kept only 15 significant digits and so moved <code>x</code> before rounding it.</li>
+<li>
+<code><a href="../reference/rounding-uncommon.html">round_ceiling()</a></code>, <code><a href="../reference/rounding-common.html">round_down()</a></code>, <code><a href="../reference/rounding-common.html">round_down_from()</a></code>, <code><a href="../reference/rounding-uncommon.html">round_trunc()</a></code>, <code><a href="../reference/rounding-uncommon.html">round_anti_trunc()</a></code>, <code><a href="../reference/rounding-uncommon.html">anti_trunc()</a></code>, <code><a href="../reference/rounding-ties.html">round_ties_even()</a></code>, <code><a href="../reference/ieee-754.html">round_ties_to_even()</a></code>, and the functions built on them no longer return a negative zero, which <code><a href="https://rdrr.io/r/base/sprintf.html" class="external-link">sprintf()</a></code> prints as <code>"-0"</code>. <code><a href="../reference/reround.html">reround()</a></code> already avoided it.</li>
+<li>
+<code><a href="../reference/ieee-754.html">round_ties_to_even()</a></code> no longer takes <code>...</code>, which it passed to <code><a href="https://rdrr.io/r/base/Round.html" class="external-link">base::round()</a></code>, where any extra argument was an error.</li>
+</ul></div>
+<div class="section level3">
+<h3 id="documentation-0-2-0">Documentation<a class="anchor" aria-label="anchor" href="#documentation-0-2-0"></a></h3>
+<ul><li>
+<code><a href="../articles/rounding-in-depth.html">vignette("rounding-in-depth")</a></code> no longer says that <code><a href="https://rdrr.io/r/base/Round.html" class="external-link">base::round()</a></code> rounds a number that only looks like a tie to its nearer neighbor. The candidates are inexact doubles too, so <code>round(1.05, 1)</code> is <code>1.0</code>, although <code>1.05</code> is stored a hair above 1.05; Python’s <code><a href="https://rdrr.io/r/base/Round.html" class="external-link">round()</a></code> gives <code>1.1</code>. The vignette also no longer counts Python and NumPy among the programs that <code><a href="https://rdrr.io/r/base/Round.html" class="external-link">round()</a></code> reconstructs exactly.</li>
+<li>
+<code><a href="../articles/rounding-options.html">vignette("rounding-options")</a></code> no longer says that every negative tie goes toward zero under <code>symmetric = FALSE</code> and away from it under <code>symmetric = TRUE</code>. That is true of <code><a href="../reference/rounding-common.html">round_up()</a></code>; <code><a href="../reference/rounding-common.html">round_down()</a></code> does the opposite.</li>
+</ul></div>
+</div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.1.0" id="roundwork-010">roundwork 0.1.0<a class="anchor" aria-label="anchor" href="#roundwork-010"></a></h2><p class="text-muted">CRAN release: 2026-10-26</p>
 <p>This release accompanies <a href="https://lhdjung.github.io/scrutiny/" class="external-link">scrutiny</a> 1.0.0, which now imports its rounding from roundwork instead of keeping copies of the functions. The rounding layer was rewritten inside scrutiny in the run-up to that release and then moved here, so nearly every function changed, and the rounding bounds and the rounding procedures are now derived from a single shared source. See <code><a href="../articles/scrutiny.html">vignette("scrutiny")</a></code> for how the two packages relate.</p>

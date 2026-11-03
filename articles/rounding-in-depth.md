@@ -31,7 +31,7 @@ for a list of possible values of the `rounding` argument.
 Base R’s [`round()`](https://rdrr.io/r/base/Round.html) function is
 surprisingly sophisticated. This distinguishes it from simpler rounding
 procedures, such as rounding up from 5. For this very reason, however,
-it can’t be used to reconstruct the rounding procedures of other
+it can’t be used to reconstruct the rounding procedures of most other
 software programs. This is the job of roundwork’s rounding functions.
 
 First, I will present
@@ -191,7 +191,9 @@ decimal places is not exact: $`0.145 \times 100`$ is stored as
 $`14.499999999999998`$, a hair below the tie it is meant to be, and
 rounding that shifted value directly would move $`0.145`$ a whole step
 in the wrong direction. The same tolerance is applied by every other
-`round_*()` function, and
+`round_*()` function except
+[`round_ties_even()`](https://lhdjung.github.io/roundwork/reference/rounding-ties.md),
+which is [`base::round()`](https://rdrr.io/r/base/Round.html), and
 [`unround()`](https://lhdjung.github.io/roundwork/reference/unround.md)
 reports bounds that assume it, so a number and its reconstructed range
 always agree. See the `Floating-point tolerance` section of
@@ -245,10 +247,13 @@ Like Python’s
 function, R’s [`base::round()`](https://rdrr.io/r/base/Round.html)
 doesn’t round up or down, or use any other procedure based solely on the
 truncated part of the number. Instead,
-[`round()`](https://rdrr.io/r/base/Round.html) strives to round to the
-next even number. This is also called “banker’s rounding”, and it
-follows a technical standard, [IEEE
-754](https://en.wikipedia.org/wiki/IEEE_754#Roundings_to_nearest).
+[`round()`](https://rdrr.io/r/base/Round.html) rounds to the nearer of
+the two candidates, and breaks an exact tie toward the even one:
+`round(2.5)` is `2`, but `round(3.5)` is `4`. This is also called
+“banker’s rounding”, and it is the default rounding of a technical
+standard, [IEEE
+754](https://en.wikipedia.org/wiki/IEEE_754#Roundings_to_nearest), which
+calls it *roundTiesToEven*.
 
 Realizing that [`round()`](https://rdrr.io/r/base/Round.html) works in a
 highly unintuitive way sometimes leads to consternation. Why can’t we
@@ -336,10 +341,16 @@ mean(even2) # ... but the mean is biased downward!
 
 Floating-point arithmetic adds a second complication. Most decimal
 fractions cannot be represented exactly in binary, so numbers that look
-like ties usually are not.
-[`round()`](https://rdrr.io/r/base/Round.html) then rounds them to the
-nearer neighbor, even or not. Below, `1.15` goes to `1.1` and `1.85` to
-`1.9`:
+like ties usually are not: `1.15` is stored a hair below 1.15, and
+`1.85` a hair above 1.85. [`round()`](https://rdrr.io/r/base/Round.html)
+measures which of the two candidates is closer, so it rounds these two
+to `1.1` and `1.9`. But the candidates are stored inexactly as well. As
+far as double-precision arithmetic can tell, `1.05` is exactly as far
+from `1.0` as from `1.1`, and `1.95` from `1.9` as from `2.0`. These two
+count as ties and go to even, although `1.05` is stored above 1.05 and
+`1.95` below 1.95. Python’s
+[`round()`](https://rdrr.io/r/base/Round.html) compares them with the
+exact halfway point instead, and gives `1.1` and `1.9`:
 
 ``` r
 
@@ -379,9 +390,9 @@ invisible mantissa, and are therefore closer to one side or the other.
 Exposed](https://float.exposed).)
 
 We usually think that rounding rules are all about breaking a tie that
-occurs at 5. Most floating-point numbers, however, are just somewhat
-less than or greater than 5. There is no tie! Consequently, Mächler
-says, rounding functions need to “*measure, not guess* which of the two
+occurs at 5. Most numbers that look like a tie at 5, however, are stored
+a little below or above it. There is no tie! Consequently, Mächler says,
+rounding functions need to “*measure, not guess* which of the two
 possible decimals is closer to `x`” — and therefore, which way to round.
 
 This seems better than following mathematical intuitions that may not
@@ -395,14 +406,15 @@ black box, but it seems unbiased in the long run. I recommend using
 For reconstruction, two claims about
 [`round()`](https://rdrr.io/r/base/Round.html) are easy to run together.
 [`base::round()`](https://rdrr.io/r/base/Round.html) is the right way to
-reconstruct software that rounds binary doubles to even, such as R
-itself, Python, and NumPy. This is what `rounding = "even"` does. What
-is unsuitable is the reverse: Predicting
-[`round()`](https://rdrr.io/r/base/Round.html)’s output from the decimal
-you see written down, since most decimals are not exactly representable
-and so are not really ties at all. Reconstructing the many programs that
-do round from the decimal 5 is the job of roundwork’s other `round_*()`
-functions. See
+reconstruct R itself. It is also the closest roundwork has to other
+software that rounds binary doubles to even, such as Python and NumPy,
+but these settle near-ties with algorithms of their own, as `1.05` shows
+above. This is what `rounding = "even"` does. What is unsuitable is the
+reverse: Predicting [`round()`](https://rdrr.io/r/base/Round.html)’s
+output from the decimal you see written down, since most decimals are
+not exactly representable and so are not really ties at all.
+Reconstructing the many programs that do round from the decimal 5 is the
+job of roundwork’s other `round_*()` functions. See
 [`vignette("rounding-options")`](https://lhdjung.github.io/roundwork/articles/rounding-options.md),
 which lists which program falls on which side.
 
@@ -432,8 +444,12 @@ The duplication is deliberate. roundwork’s own names were chosen without
 the standard in mind, and renaming them would break every downstream
 caller; but a function that says *roundTowardPositive* on the tin is
 easier to reach for when a paper or a manual states its rounding in the
-standard’s vocabulary. Note that the standard has no name for the other
-three tie-breaking procedures, for rounding away from zero
+standard’s vocabulary. Note that the standard has no name for
+[`round_ties_up()`](https://lhdjung.github.io/roundwork/reference/rounding-ties.md),
+[`round_ties_down()`](https://lhdjung.github.io/roundwork/reference/rounding-ties.md),
+or
+[`round_ties_zero()`](https://lhdjung.github.io/roundwork/reference/rounding-ties.md),
+for rounding away from zero
 ([`round_anti_trunc()`](https://lhdjung.github.io/roundwork/reference/rounding-uncommon.md)),
 or for the custom thresholds of
 [`round_up_from()`](https://lhdjung.github.io/roundwork/reference/rounding-common.md).
@@ -543,10 +559,12 @@ vec4 |>
 #### Bounds as exact integers
 
 Deriving a set of candidate values from the decimal bounds above is
-unsafe. If a product such as `floor(upper * n)` is mathematically an
-exact integer, its `double` representation can fall on either side of
-it, so a legitimate candidate may be silently dropped or a phantom one
-admitted — and a consistency verdict can flip either way.
+unsafe. If a product such as `upper * n` is mathematically an exact
+integer, its `double` representation can fall on either side of it, so
+[`floor()`](https://rdrr.io/r/base/Round.html) or
+[`ceiling()`](https://rdrr.io/r/base/Round.html) of it can silently drop
+a legitimate candidate or admit a phantom one — and a consistency
+verdict can flip either way.
 
 [`bound_numerators()`](https://lhdjung.github.io/roundwork/reference/bound_numerators.md)
 therefore returns the same bounds as exact integer numerators over a
@@ -615,8 +633,8 @@ reround_to_fraction(x = 0.4, denominator = 2, rounding = "up")
 #> [1] 0.5
 ```
 
-This function rounds `0.4` to `0.5` because that’s the closest fraction
-of `2`. It is inspired by `janitor::round_to_fraction()`, and credit for
+This function rounds `0.4` to `0.5` because that’s the nearest multiple
+of 1/2. It is inspired by `janitor::round_to_fraction()`, and credit for
 the core implementation goes there.
 [`reround_to_fraction()`](https://lhdjung.github.io/roundwork/reference/fractional-rounding.md)
 blends janitor’s fractional rounding with the flexibility and precision

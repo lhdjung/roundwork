@@ -19,7 +19,7 @@ of a sample."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">roundwork</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -109,15 +109,17 @@ mirrored that of positive numbers. See <code><a href="rounding-common.html">roun
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>A numeric vector of length 2, <code>c(lower, upper)</code>. If <code>lower</code> is
 greater than <code>upper</code>, no whole-number sum is consistent with <code>x_num</code>. Both
-are <code>NA</code> if <code>x_num</code> is missing or infinite, or if <code>n_items</code> is missing,
-infinite, or not positive.</p>
+are <code>NA</code> if <code>x_num</code> is missing or infinite, if <code>digits</code> is missing, or if
+<code>n_items</code> is missing, infinite, or not positive.</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
     <p>Like <code><a href="bound_numerators.html">bound_numerators()</a></code>, on which it builds, <code>sum_range()</code>
 works in exact integer arithmetic. This is exact as long as
-<code>n_items * 10^(digits + 1)</code> times the integer part of <code>x_num</code> stays below
-<code>2^53</code>, which is far beyond any realistic input.</p>
+<code>(|x_num| * 10^(digits + 1) + 10) * n_items</code> stays below <code>2^53</code>, which is
+far beyond any realistic input. The bounds reach up to 10 units past
+<code>x_num</code>, hence the <code>+ 10</code>. A <code>threshold</code> with decimal places multiplies
+this by the scale described in <code><a href="bound_numerators.html">bound_numerators()</a></code>.</p>
 <p><code>sum_range()</code> is a low-level primitive, meant to be called once per value
 set inside a consistency test, so it does not check its input. The caller
 is responsible for passing single numbers, a whole-number <code>digits</code> that

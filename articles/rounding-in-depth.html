@@ -20,7 +20,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">roundwork</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -97,8 +97,8 @@ possible values of the <code>rounding</code> argument.</p>
 <p>Base R’s <code><a href="https://rdrr.io/r/base/Round.html" class="external-link">round()</a></code> function is surprisingly sophisticated.
 This distinguishes it from simpler rounding procedures, such as rounding
 up from 5. For this very reason, however, it can’t be used to
-reconstruct the rounding procedures of other software programs. This is
-the job of roundwork’s rounding functions.</p>
+reconstruct the rounding procedures of most other software programs.
+This is the job of roundwork’s rounding functions.</p>
 <p>First, I will present <code><a href="../reference/reround.html">reround()</a></code>, a general interface to
 reconstructing rounded numbers, before going through the individual
 rounding functions. I will also discuss <code><a href="../reference/unround.html">unround()</a></code>, which
@@ -240,9 +240,11 @@ a hair below the tie it is meant to be, and rounding that shifted value
 directly would move
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mn>0.145</mn><annotation encoding="application/x-tex">0.145</annotation></semantics></math>
 a whole step in the wrong direction. The same tolerance is applied by
-every other <code>round_*()</code> function, and <code><a href="../reference/unround.html">unround()</a></code>
-reports bounds that assume it, so a number and its reconstructed range
-always agree. See the <code>Floating-point tolerance</code> section of
+every other <code>round_*()</code> function except
+<code><a href="../reference/rounding-ties.html">round_ties_even()</a></code>, which is <code><a href="https://rdrr.io/r/base/Round.html" class="external-link">base::round()</a></code>, and
+<code><a href="../reference/unround.html">unround()</a></code> reports bounds that assume it, so a number and
+its reconstructed range always agree. See the
+<code>Floating-point tolerance</code> section of
 <code><a href="../reference/rounding-common.html">round_up()</a></code>.</p>
 </div>
 <div class="section level4">
@@ -282,10 +284,12 @@ an error.</p>
 <p>Like Python’s <a href="https://docs.python.org/3/builtins/functions.html#round" class="external-link"><code>round()</code></a>
 function, R’s <code><a href="https://rdrr.io/r/base/Round.html" class="external-link">base::round()</a></code> doesn’t round up or down, or
 use any other procedure based solely on the truncated part of the
-number. Instead, <code><a href="https://rdrr.io/r/base/Round.html" class="external-link">round()</a></code> strives to round to the next even
-number. This is also called “banker’s rounding”, and it follows a
-technical standard, <a href="https://en.wikipedia.org/wiki/IEEE_754#Roundings_to_nearest" class="external-link">IEEE
-754</a>.</p>
+number. Instead, <code><a href="https://rdrr.io/r/base/Round.html" class="external-link">round()</a></code> rounds to the nearer of the two
+candidates, and breaks an exact tie toward the even one:
+<code>round(2.5)</code> is <code>2</code>, but <code>round(3.5)</code>
+is <code>4</code>. This is also called “banker’s rounding”, and it is
+the default rounding of a technical standard, <a href="https://en.wikipedia.org/wiki/IEEE_754#Roundings_to_nearest" class="external-link">IEEE
+754</a>, which calls it <em>roundTiesToEven</em>.</p>
 <p>Realizing that <code><a href="https://rdrr.io/r/base/Round.html" class="external-link">round()</a></code> works in a highly unintuitive way
 sometimes leads to consternation. Why can’t we just round like we
 learned in school, that is, up from 5? The reason seems to be bias.
@@ -362,9 +366,17 @@ but four of the seven have their even neighbor below:</p>
 <span><span class="co">#&gt; [1] 7.428571</span></span></code></pre></div>
 <p>Floating-point arithmetic adds a second complication. Most decimal
 fractions cannot be represented exactly in binary, so numbers that look
-like ties usually are not. <code><a href="https://rdrr.io/r/base/Round.html" class="external-link">round()</a></code> then rounds them to the
-nearer neighbor, even or not. Below, <code>1.15</code> goes to
-<code>1.1</code> and <code>1.85</code> to <code>1.9</code>:</p>
+like ties usually are not: <code>1.15</code> is stored a hair below
+1.15, and <code>1.85</code> a hair above 1.85. <code><a href="https://rdrr.io/r/base/Round.html" class="external-link">round()</a></code>
+measures which of the two candidates is closer, so it rounds these two
+to <code>1.1</code> and <code>1.9</code>. But the candidates are stored
+inexactly as well. As far as double-precision arithmetic can tell,
+<code>1.05</code> is exactly as far from <code>1.0</code> as from
+<code>1.1</code>, and <code>1.95</code> from <code>1.9</code> as from
+<code>2.0</code>. These two count as ties and go to even, although
+<code>1.05</code> is stored above 1.05 and <code>1.95</code> below 1.95.
+Python’s <code><a href="https://rdrr.io/r/base/Round.html" class="external-link">round()</a></code> compares them with the exact halfway point
+instead, and gives <code>1.1</code> and <code>1.9</code>:</p>
 <div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">vec3</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span></span>
 <span>  <span class="fl">1.05</span>,</span>
@@ -396,8 +408,8 @@ seemingly “clean” numbers with only a few decimal places come with a
 long invisible mantissa, and are therefore closer to one side or the
 other. (To see this clearly, try entering a few decimal numbers on <a href="https://float.exposed" class="external-link">Float Exposed</a>.)</p>
 <p>We usually think that rounding rules are all about breaking a tie
-that occurs at 5. Most floating-point numbers, however, are just
-somewhat less than or greater than 5. There is no tie! Consequently,
+that occurs at 5. Most numbers that look like a tie at 5, however, are
+stored a little below or above it. There is no tie! Consequently,
 Mächler says, rounding functions need to “<em>measure, not guess</em>
 which of the two possible decimals is closer to <code>x</code>” — and
 therefore, which way to round.</p>
@@ -409,8 +421,10 @@ unbiased in the long run. I recommend using <code><a href="https://rdrr.io/r/bas
 original work.</p>
 <p>For reconstruction, two claims about <code><a href="https://rdrr.io/r/base/Round.html" class="external-link">round()</a></code> are easy to
 run together. <code><a href="https://rdrr.io/r/base/Round.html" class="external-link">base::round()</a></code> is the right way to reconstruct
-software that rounds binary doubles to even, such as R itself, Python,
-and NumPy. This is what <code>rounding = "even"</code> does. What is
+R itself. It is also the closest roundwork has to other software that
+rounds binary doubles to even, such as Python and NumPy, but these
+settle near-ties with algorithms of their own, as <code>1.05</code>
+shows above. This is what <code>rounding = "even"</code> does. What is
 unsuitable is the reverse: Predicting <code><a href="https://rdrr.io/r/base/Round.html" class="external-link">round()</a></code>’s output from
 the decimal you see written down, since most decimals are not exactly
 representable and so are not really ties at all. Reconstructing the many
@@ -470,8 +484,9 @@ without the standard in mind, and renaming them would break every
 downstream caller; but a function that says <em>roundTowardPositive</em>
 on the tin is easier to reach for when a paper or a manual states its
 rounding in the standard’s vocabulary. Note that the standard has no
-name for the other three tie-breaking procedures, for rounding away from
-zero (<code><a href="../reference/rounding-uncommon.html">round_anti_trunc()</a></code>), or for the custom thresholds of
+name for <code><a href="../reference/rounding-ties.html">round_ties_up()</a></code>, <code><a href="../reference/rounding-ties.html">round_ties_down()</a></code>,
+or <code><a href="../reference/rounding-ties.html">round_ties_zero()</a></code>, for rounding away from zero
+(<code><a href="../reference/rounding-uncommon.html">round_anti_trunc()</a></code>), or for the custom thresholds of
 <code><a href="../reference/rounding-common.html">round_up_from()</a></code>.</p>
 </div>
 </div>
@@ -562,11 +577,11 @@ numbers at once:</p>
 <h4 id="bounds-as-exact-integers">Bounds as exact integers<a class="anchor" aria-label="anchor" href="#bounds-as-exact-integers"></a>
 </h4>
 <p>Deriving a set of candidate values from the decimal bounds above is
-unsafe. If a product such as <code>floor(upper * n)</code> is
-mathematically an exact integer, its <code>double</code> representation
-can fall on either side of it, so a legitimate candidate may be silently
-dropped or a phantom one admitted — and a consistency verdict can flip
-either way.</p>
+unsafe. If a product such as <code>upper * n</code> is mathematically an
+exact integer, its <code>double</code> representation can fall on either
+side of it, so <code><a href="https://rdrr.io/r/base/Round.html" class="external-link">floor()</a></code> or <code><a href="https://rdrr.io/r/base/Round.html" class="external-link">ceiling()</a></code> of it can
+silently drop a legitimate candidate or admit a phantom one — and a
+consistency verdict can flip either way.</p>
 <p><code><a href="../reference/bound_numerators.html">bound_numerators()</a></code> therefore returns the same bounds as
 exact integer numerators over a common denominator, which turns every
 such comparison into one between integers:</p>
@@ -620,7 +635,7 @@ integer? Check out <code><a href="../reference/fractional-rounding.html">reround
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/fractional-rounding.html">reround_to_fraction</a></span><span class="op">(</span>x <span class="op">=</span> <span class="fl">0.4</span>, denominator <span class="op">=</span> <span class="fl">2</span>, rounding <span class="op">=</span> <span class="st">"up"</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1] 0.5</span></span></code></pre></div>
 <p>This function rounds <code>0.4</code> to <code>0.5</code> because
-that’s the closest fraction of <code>2</code>. It is inspired by
+that’s the nearest multiple of 1/2. It is inspired by
 <code>janitor::round_to_fraction()</code>, and credit for the core
 implementation goes there. <code><a href="../reference/fractional-rounding.html">reround_to_fraction()</a></code> blends
 janitor’s fractional rounding with the flexibility and precision that

@@ -64,7 +64,7 @@ By contrast, these options only return one rounded number per input:
   starting at some number other than 5. Specify this number via the
   `threshold` argument.
 - `"ceiling"` or `"floor"` always rounds to the next higher or lower
-  decimal place, respectively.
+  number at the given decimal place, respectively.
 - `"trunc"` and `"anti_trunc"` always round towards zero or away from
   it.
 
@@ -133,9 +133,11 @@ cover every rounding direction IEEE 754 defines:
 | *roundTowardNegative* | `"floor"` |
 | *roundTowardZero* | `"trunc"` |
 
-The standard has no name for `"ties_up"`, `"ties_zero"`, or
-`"anti_trunc"`, which are Stata’s, Python’s `ROUND_HALF_DOWN`, and
-Excel’s `ROUNDUP()` respectively.
+The standard has no name for `"ties_up"`, `"ties_down"`, `"ties_zero"`,
+or `"anti_trunc"`. Of these, `"ties_up"` is Stata’s
+[`round()`](https://rdrr.io/r/base/Round.html), `"ties_zero"` is
+Python’s `decimal.ROUND_HALF_DOWN`, and `"anti_trunc"` is Excel’s
+`ROUNDUP()`.
 
 ## Negative numbers: `symmetric`
 
@@ -143,7 +145,11 @@ Excel’s `ROUNDUP()` respectively.
 difference scores, z-scores, effect sizes, temperature scales.
 
 By default (`symmetric = FALSE`), roundwork reads “up” and “down” on the
-number line, so a negative tie goes up toward zero:
+number line, so
+[`round_up()`](https://lhdjung.github.io/roundwork/reference/rounding-common.md)
+sends a negative tie up, toward zero, and
+[`round_down()`](https://lhdjung.github.io/roundwork/reference/rounding-common.md)
+sends it down, away from zero:
 
 ``` r
 
@@ -154,7 +160,11 @@ round_down(-2.5)
 ```
 
 With `symmetric = TRUE`, a negative number is rounded like its absolute
-value, so a tie moves *away* from zero:
+value, so the directions flip:
+[`round_up()`](https://lhdjung.github.io/roundwork/reference/rounding-common.md)
+sends a negative tie *away* from zero, and
+[`round_down()`](https://lhdjung.github.io/roundwork/reference/rounding-common.md)
+toward it:
 
 ``` r
 

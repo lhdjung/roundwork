@@ -53,17 +53,19 @@ sum_range(x_num, n_items, digits, rounding, threshold, symmetric = FALSE)
 
 A numeric vector of length 2, `c(lower, upper)`. If `lower` is greater
 than `upper`, no whole-number sum is consistent with `x_num`. Both are
-`NA` if `x_num` is missing or infinite, or if `n_items` is missing,
-infinite, or not positive.
+`NA` if `x_num` is missing or infinite, if `digits` is missing, or if
+`n_items` is missing, infinite, or not positive.
 
 ## Details
 
 Like
 [`bound_numerators()`](https://lhdjung.github.io/roundwork/reference/bound_numerators.md),
 on which it builds, `sum_range()` works in exact integer arithmetic.
-This is exact as long as `n_items * 10^(digits + 1)` times the integer
-part of `x_num` stays below `2^53`, which is far beyond any realistic
-input.
+This is exact as long as `(|x_num| * 10^(digits + 1) + 10) * n_items`
+stays below `2^53`, which is far beyond any realistic input. The bounds
+reach up to 10 units past `x_num`, hence the `+ 10`. A `threshold` with
+decimal places multiplies this by the scale described in
+[`bound_numerators()`](https://lhdjung.github.io/roundwork/reference/bound_numerators.md).
 
 `sum_range()` is a low-level primitive, meant to be called once per
 value set inside a consistency test, so it does not check its input. The
