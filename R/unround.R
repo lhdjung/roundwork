@@ -609,8 +609,10 @@ unround <- function(
   incl_lower <- extract("incl_lower", NA)
   incl_upper <- extract("incl_upper", NA)
 
-  sign_lower <- dplyr::if_else(incl_lower, "<=", "<")
-  sign_upper <- dplyr::if_else(incl_upper, "<=", "<")
+  # Indexing rather than `ifelse()`, which returns a logical vector when all
+  # bounds are missing or there are none:
+  sign_lower <- c("<", "<=")[incl_lower + 1L]
+  sign_upper <- c("<", "<=")[incl_upper + 1L]
 
   # fmt: skip
   range <- paste0(

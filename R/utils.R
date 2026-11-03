@@ -10,11 +10,7 @@ wrong_spec_string <- function(x) {
 
 
 an_a <- function(x) {
-  dplyr::if_else(
-    stringr::str_detect(x, "^[aeiou]"),
-    "an",
-    "a"
-  )
+  c("a", "an")[grepl("^[aeiou]", x) + 1L]
 }
 
 
