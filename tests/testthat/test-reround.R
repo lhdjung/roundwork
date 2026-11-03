@@ -3,13 +3,13 @@ x <- rnorm(25000, 500, 30)
 # fmt: skip
 test_reround <- function(x, digits) {
   all(
-    x |> reround(digits, "up")         |> dplyr::near(round_up(x, digits)),
-    x |> reround(digits, "down")       |> dplyr::near(round_down(x, digits)),
-    x |> reround(digits, "even")       |> dplyr::near(round(x, digits)),
-    x |> reround(digits, "ceiling")    |> dplyr::near(round_ceiling(x, digits)),
-    x |> reround(digits, "floor")      |> dplyr::near(round_floor(x, digits)),
-    x |> reround(digits, "trunc")      |> dplyr::near(round_trunc(x, digits)),
-    x |> reround(digits, "anti_trunc") |> dplyr::near(round_anti_trunc(x, digits))
+    x |> reround(digits, "up")         |> near(round_up(x, digits)),
+    x |> reround(digits, "down")       |> near(round_down(x, digits)),
+    x |> reround(digits, "even")       |> near(round(x, digits)),
+    x |> reround(digits, "ceiling")    |> near(round_ceiling(x, digits)),
+    x |> reround(digits, "floor")      |> near(round_floor(x, digits)),
+    x |> reround(digits, "trunc")      |> near(round_trunc(x, digits)),
+    x |> reround(digits, "anti_trunc") |> near(round_anti_trunc(x, digits))
   )
 }
 

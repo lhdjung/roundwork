@@ -91,7 +91,7 @@ test_that("`unround()` bounds agree with the rounding they invert", {
     rounds_to_x <- function(value) {
       value |>
         reround(digits = 2, rounding = m, threshold = 6) |>
-        dplyr::near(0.53) |>
+        near(0.53) |>
         any()
     }
     (bounds$lower + eps) |> rounds_to_x() |> expect_true(label = paste(m, "inside lower"))
@@ -165,7 +165,7 @@ test_that("`unround()` bounds agree with the rounding they invert (sweep)", {
                   threshold = threshold,
                   symmetric = symmetric
                 ) |>
-                dplyr::near(x_num) |>
+                near(x_num) |>
                 any()
             }
             label <- paste(

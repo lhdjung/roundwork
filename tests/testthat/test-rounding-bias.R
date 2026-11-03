@@ -20,7 +20,7 @@ test_that("`rounding_bias(mean = FALSE)` returns one bias per input value", {
   vec |>
     reround(1L, "up") |>
     call_on(\(x) x - out) |>
-    dplyr::near(vec) |>
+    near(vec) |>
     all() |>
     expect_true()
 })

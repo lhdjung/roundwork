@@ -114,7 +114,7 @@ test_that("`round_up_from()` rounds up from `threshold`, not from 5", {
       (base + cut_digit / 1000) |>
         round_up_from(2, threshold = threshold) |>
         expect_equal(
-          base + dplyr::if_else(cut_digit >= threshold, 0.01, 0),
+          base + ifelse(cut_digit >= threshold, 0.01, 0),
           label = paste("`round_up_from()`, threshold", threshold, "at", base)
         )
     }
@@ -127,7 +127,7 @@ test_that("`round_down_from()` rounds down from `threshold`, not from 5", {
       (base + cut_digit / 1000) |>
         round_down_from(2, threshold = threshold) |>
         expect_equal(
-          base + dplyr::if_else(cut_digit > threshold, 0.01, 0),
+          base + ifelse(cut_digit > threshold, 0.01, 0),
           label = paste("`round_down_from()`, threshold", threshold, "at", base)
         )
     }
@@ -413,10 +413,21 @@ test_that("no exported rounding function returns a negative zero", {
 
 
 test_that("an error raised inside a data mask names the export and ends", {
-  # This used to loop forever while looking for the user-called export:
-  tibble::tibble(x = 1) |>
-    dplyr::mutate(y = round_up_from(x, 0, threshold = 12)) |>
+  # A user function called in a data mask names itself as its parent, so the
+  # search for the user-called export used to loop forever here. The time limit
+  # makes a relapse fail instead of hang:
+  setTimeLimit(elapsed = 10, transient = TRUE)
+  on.exit(setTimeLimit(), add = TRUE)
+  g <- function(v) round_up_from(v, 0, threshold = 12)
+  rlang::eval_tidy(quote(g(x)), list(x = 1)) |>
     expect_error(class = "rlang_error") |>
-    (\(e) e$parent$call)() |>
-    expect_identical(quote(round_up_from(x, 0, threshold = 12)))
+    call_on(\(e) e$call) |>
+    expect_identical(quote(round_up_from(v, 0, threshold = 12)))
+  # In `dplyr::mutate()`, the search used to fail with an error of its own:
+  skip_if_not_installed("dplyr")
+  tibble::tibble(x = 1) |>
+    dplyr::mutate(y = (\(v) round_up_from(v, 0, threshold = 12))(x)) |>
+    expect_error(class = "rlang_error") |>
+    call_on(\(e) e$parent$call) |>
+    expect_identical(quote(round_up_from(v, 0, threshold = 12)))
 })
