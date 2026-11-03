@@ -126,8 +126,8 @@ reround <- function(
   # `rounding_offsets()` resolves `"ties_*"` strings through the same helper:
   spec <- resolve_ties_rounding(rounding, symmetric)
 
-  # Adding zero turns a negative zero, as from `ceiling(-0.5)`, into zero, which
-  # `sprintf()` would otherwise print as `"-0.00"`:
+  # Adding zero turns a negative zero, as from `round(-0.4)` under `"even"`, into
+  # zero, which `sprintf()` would otherwise print as `"-0.00"`:
   out <- reconstruct_rounded_numbers_scalar(
     x,
     digits,

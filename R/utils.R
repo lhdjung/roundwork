@@ -289,8 +289,10 @@ check_rounding_spec_singular <- function(rounding, threshold, symmetric) {
 }
 
 
+# Adding zero turns the negative zero of `0 * -1` into zero, which `sprintf()`
+# would otherwise print as `"-0.00"`:
 restore_sign <- function(value, x) {
-  value * (1 - 2 * (x < 0))
+  value * (1 - 2 * (x < 0)) + 0
 }
 
 

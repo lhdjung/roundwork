@@ -393,6 +393,23 @@ test_that("the exported functions reject an invalid `symmetric`", {
 })
 
 
+test_that("no exported rounding function returns a negative zero", {
+  x <- -0.4
+  zeros <- c(
+    round_ceiling(x),
+    round_down(x),
+    round_down_from(x, 0, 3),
+    round_trunc(x),
+    round_ties_away(x),
+    anti_trunc(-0),
+    round_anti_trunc(-0)
+  )
+  zeros |> expect_identical(rep(0, 7L))
+  # `1 / -0` is `-Inf`:
+  (1 / zeros) |> expect_identical(rep(Inf, 7L))
+})
+
+
 test_that("an error raised inside a data mask names the export and ends", {
   # This used to loop forever while looking for the user-called export:
   tibble::tibble(x = 1) |>

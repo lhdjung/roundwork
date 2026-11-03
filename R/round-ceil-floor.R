@@ -58,7 +58,8 @@
 
 round_ceiling <- function(x, digits = 0L) {
   p10 <- 10^digits
-  ceiling(x * p10 - ROUNDING_TOLERANCE) / p10
+  # Adding zero turns a negative zero, as from `ceiling(-0.4)`, into zero:
+  ceiling(x * p10 - ROUNDING_TOLERANCE) / p10 + 0
 }
 
 
