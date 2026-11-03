@@ -1,4 +1,6 @@
-# roundwork (development version)
+# roundwork 0.2.0
+
+This release fixes a hang and several smaller bugs found shortly after 0.1.0.
 
 ## Breaking change
 
@@ -6,6 +8,7 @@
 
 ## Bug fixes
 
+-   An error raised by a roundwork function no longer makes R hang when the function is called from a user's function that is evaluated in a data mask, as by `rlang::eval_tidy()`. While looking for the function that the user called, roundwork followed a frame that names itself as its parent and so looped forever. In `dplyr::mutate()`, the search could also fail with an error of its own.
 -   `bound_numerators()`, and so `sum_range()` and `unround()`, scale a decimal `threshold` that no double holds exactly, such as `9.99`, to the whole numbers it stands for. Before, the scaled offsets stayed a hair off them, the scale grew to its limit of a million, and the arithmetic was no longer exact. This works for up to six decimal places, `0.000001` and `9.999999` included.
 -   `bound_numerators()` returns `NULL` for a missing `digits`, as it does for a missing `x_num`. So `sum_range()` returns `NA` instead of failing with an uninformative error, and `unround()` returns `NA` throughout, including `incl_lower` and `incl_upper`. The `range` column of `unround()` is now `NA` wherever the bounds are, rather than `"NA NA x(...) NA NA"`.
 -   `rounding_bias()` no longer passes a numeric `x` through `as.character()`, which kept only 15 significant digits and so moved `x` before rounding it.
