@@ -15,6 +15,11 @@ This release fixes a hang and several smaller bugs found shortly after 0.1.0.
 -   `round_ceiling()`, `round_down()`, `round_down_from()`, `round_trunc()`, `round_anti_trunc()`, `anti_trunc()`, `round_ties_even()`, `round_ties_to_even()`, and the functions built on them no longer return a negative zero, which `sprintf()` prints as `"-0"`. `reround()` already avoided it.
 -   `round_ties_to_even()` no longer takes `...`, which it passed to `base::round()`, where any extra argument was an error.
 
+## Documentation
+
+-   `vignette("rounding-in-depth")` no longer says that `base::round()` rounds a number that only looks like a tie to its nearer neighbor. The candidates are inexact doubles too, so `round(1.05, 1)` is `1.0`, although `1.05` is stored a hair above 1.05; Python's `round()` gives `1.1`. The vignette also no longer counts Python and NumPy among the programs that `round()` reconstructs exactly.
+-   `vignette("rounding-options")` no longer says that every negative tie goes toward zero under `symmetric = FALSE` and away from it under `symmetric = TRUE`. That is true of `round_up()`; `round_down()` does the opposite.
+
 # roundwork 0.1.0
 
 This release accompanies [scrutiny](https://lhdjung.github.io/scrutiny/) 1.0.0, which now imports its rounding from roundwork instead of keeping copies of the functions. The rounding layer was rewritten inside scrutiny in the run-up to that release and then moved here, so nearly every function changed, and the rounding bounds and the rounding procedures are now derived from a single shared source. See `vignette("scrutiny")` for how the two packages relate.

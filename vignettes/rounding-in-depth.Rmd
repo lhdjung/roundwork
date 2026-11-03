@@ -29,7 +29,7 @@ Feel free to skip the more theoretical parts if your focus is on the code. See `
 
 ## Overview
 
-Base R's `round()` function is surprisingly sophisticated. This distinguishes it from simpler rounding procedures, such as rounding up from 5. For this very reason, however, it can't be used to reconstruct the rounding procedures of other software programs. This is the job of roundwork's rounding functions.
+Base R's `round()` function is surprisingly sophisticated. This distinguishes it from simpler rounding procedures, such as rounding up from 5. For this very reason, however, it can't be used to reconstruct the rounding procedures of most other software programs. This is the job of roundwork's rounding functions.
 
 First, I will present `reround()`, a general interface to reconstructing rounded numbers, before going through the individual rounding functions. I will also discuss `unround()`, which works the reverse way: It takes a rounded number and reconstructs the bounds of the original number, taking details about the assumed rounding procedure into account. Finally, I will take a closer look at bias from rounding raw numbers.
 
@@ -109,7 +109,7 @@ $$
 \frac{\lceil x(10^d) - \frac{t}{10} - \epsilon \rceil}{10^d}
 $$
 
-The $\epsilon$ in both formulas is a fixed tolerance of about $1.5 \times 10^{-9}$. It is there because shifting $x$ by $d$ decimal places is not exact: $0.145 \times 100$ is stored as $14.499999999999998$, a hair below the tie it is meant to be, and rounding that shifted value directly would move $0.145$ a whole step in the wrong direction. The same tolerance is applied by every other `round_*()` function, and `unround()` reports bounds that assume it, so a number and its reconstructed range always agree. See the `Floating-point tolerance` section of `round_up()`.
+The $\epsilon$ in both formulas is a fixed tolerance of about $1.5 \times 10^{-9}$. It is there because shifting $x$ by $d$ decimal places is not exact: $0.145 \times 100$ is stored as $14.499999999999998$, a hair below the tie it is meant to be, and rounding that shifted value directly would move $0.145$ a whole step in the wrong direction. The same tolerance is applied by every other `round_*()` function except `round_ties_even()`, which is `base::round()`, and `unround()` reports bounds that assume it, so a number and its reconstructed range always agree. See the `Floating-point tolerance` section of `round_up()`.
 
 ### Ties, named directly
 
@@ -127,7 +127,7 @@ round_ties_even(-2.5)   # `base::round()`
 
 ### To even (base R)
 
-Like Python's [`round()`](https://docs.python.org/3/builtins/functions.html#round) function, R's `base::round()` doesn't round up or down, or use any other procedure based solely on the truncated part of the number. Instead, `round()` strives to round to the next even number. This is also called "banker's rounding", and it follows a technical standard, [IEEE 754](https://en.wikipedia.org/wiki/IEEE_754#Roundings_to_nearest).
+Like Python's [`round()`](https://docs.python.org/3/builtins/functions.html#round) function, R's `base::round()` doesn't round up or down, or use any other procedure based solely on the truncated part of the number. Instead, `round()` rounds to the nearer of the two candidates, and breaks an exact tie toward the even one: `round(2.5)` is `2`, but `round(3.5)` is `4`. This is also called "banker's rounding", and it is the default rounding of a technical standard, [IEEE 754](https://en.wikipedia.org/wiki/IEEE_754#Roundings_to_nearest), which calls it *roundTiesToEven*.
 
 Realizing that `round()` works in a highly unintuitive way sometimes leads to consternation. Why can't we just round like we learned in school, that is, up from 5? The reason seems to be bias. Because 5 is right in between two whole numbers, any procedure that rounds 5 in some predetermined direction introduces a bias toward that direction. Rounding up from 5 is therefore biased upward, and rounding down from 5 is biased downward.
 
@@ -178,7 +178,7 @@ mean(down2)
 mean(even2) # ... but the mean is biased downward!
 ```
 
-Floating-point arithmetic adds a second complication. Most decimal fractions cannot be represented exactly in binary, so numbers that look like ties usually are not. `round()` then rounds them to the nearer neighbor, even or not. Below, `1.15` goes to `1.1` and `1.85` to `1.9`:
+Floating-point arithmetic adds a second complication. Most decimal fractions cannot be represented exactly in binary, so numbers that look like ties usually are not: `1.15` is stored a hair below 1.15, and `1.85` a hair above 1.85. `round()` measures which of the two candidates is closer, so it rounds these two to `1.1` and `1.9`. But the candidates are stored inexactly as well. As far as double-precision arithmetic can tell, `1.05` is exactly as far from `1.0` as from `1.1`, and `1.95` from `1.9` as from `2.0`. These two count as ties and go to even, although `1.05` is stored above 1.05 and `1.95` below 1.95. Python's `round()` compares them with the exact halfway point instead, and gives `1.1` and `1.9`:
 
 ```{r}
 vec3 <- c(
@@ -204,13 +204,13 @@ Sometimes `round()` behaves just as it should, but at other times, results can b
 
 The reason for the above behavior is that most decimal fractions can't, in fact, be represented as double precision numbers. Even seemingly "clean" numbers with only a few decimal places come with a long invisible mantissa, and are therefore closer to one side or the other. (To see this clearly, try entering a few decimal numbers on [Float Exposed](https://float.exposed).)
 
-We usually think that rounding rules are all about breaking a tie that occurs at 5. Most floating-point numbers, however, are just somewhat less than or greater than 5. There is no tie! Consequently, Mächler says, rounding functions need to "*measure, not guess* which of the two possible decimals is closer to `x`" --- and therefore, which way to round.
+We usually think that rounding rules are all about breaking a tie that occurs at 5. Most numbers that look like a tie at 5, however, are stored a little below or above it. There is no tie! Consequently, Mächler says, rounding functions need to "*measure, not guess* which of the two possible decimals is closer to `x`" --- and therefore, which way to round.
 
 This seems better than following mathematical intuitions that may not always correspond to the way computers actually deal with numbers. R has used the present solution since version 4.0.0.
 
 `base::round()` can seem like a black box, but it seems unbiased in the long run. I recommend using `round()` for original work.
 
-For reconstruction, two claims about `round()` are easy to run together. `base::round()` is the right way to reconstruct software that rounds binary doubles to even, such as R itself, Python, and NumPy. This is what `rounding = "even"` does. What is unsuitable is the reverse: Predicting `round()`'s output from the decimal you see written down, since most decimals are not exactly representable and so are not really ties at all. Reconstructing the many programs that do round from the decimal 5 is the job of roundwork's other `round_*()` functions. See `vignette("rounding-options")`, which lists which program falls on which side.
+For reconstruction, two claims about `round()` are easy to run together. `base::round()` is the right way to reconstruct R itself. It is also the closest roundwork has to other software that rounds binary doubles to even, such as Python and NumPy, but these settle near-ties with algorithms of their own, as `1.05` shows above. This is what `rounding = "even"` does. What is unsuitable is the reverse: Predicting `round()`'s output from the decimal you see written down, since most decimals are not exactly representable and so are not really ties at all. Reconstructing the many programs that do round from the decimal 5 is the job of roundwork's other `round_*()` functions. See `vignette("rounding-options")`, which lists which program falls on which side.
 
 ### IEEE 754 rounding standard
 
@@ -226,7 +226,7 @@ Each of them is a wrapper around a function that roundwork already had under a n
 | `round_toward_negative()`| `round_floor()`                       |
 | `round_toward_zero()`    | `round_trunc()`                       |
 
-The duplication is deliberate. roundwork's own names were chosen without the standard in mind, and renaming them would break every downstream caller; but a function that says *roundTowardPositive* on the tin is easier to reach for when a paper or a manual states its rounding in the standard's vocabulary. Note that the standard has no name for the other three tie-breaking procedures, for rounding away from zero (`round_anti_trunc()`), or for the custom thresholds of `round_up_from()`.
+The duplication is deliberate. roundwork's own names were chosen without the standard in mind, and renaming them would break every downstream caller; but a function that says *roundTowardPositive* on the tin is easier to reach for when a paper or a manual states its rounding in the standard's vocabulary. Note that the standard has no name for `round_ties_up()`, `round_ties_down()`, or `round_ties_zero()`, for rounding away from zero (`round_anti_trunc()`), or for the custom thresholds of `round_up_from()`.
 
 ## Reconstruct rounding bounds with `unround()`
 
@@ -277,7 +277,7 @@ vec4 |>
 
 ### Bounds as exact integers
 
-Deriving a set of candidate values from the decimal bounds above is unsafe. If a product such as `floor(upper * n)` is mathematically an exact integer, its `double` representation can fall on either side of it, so a legitimate candidate may be silently dropped or a phantom one admitted --- and a consistency verdict can flip either way.
+Deriving a set of candidate values from the decimal bounds above is unsafe. If a product such as `upper * n` is mathematically an exact integer, its `double` representation can fall on either side of it, so `floor()` or `ceiling()` of it can silently drop a legitimate candidate or admit a phantom one --- and a consistency verdict can flip either way.
 
 `bound_numerators()` therefore returns the same bounds as exact integer numerators over a common denominator, which turns every such comparison into one between integers:
 
@@ -313,7 +313,7 @@ What if you want to round numbers to a fraction instead of an integer? Check out
 reround_to_fraction(x = 0.4, denominator = 2, rounding = "up")
 ```
 
-This function rounds `0.4` to `0.5` because that's the closest fraction of `2`. It is inspired by `janitor::round_to_fraction()`, and credit for the core implementation goes there. `reround_to_fraction()` blends janitor's fractional rounding with the flexibility and precision that `reround()` provides.
+This function rounds `0.4` to `0.5` because that's the nearest multiple of 1/2. It is inspired by `janitor::round_to_fraction()`, and credit for the core implementation goes there. `reround_to_fraction()` blends janitor's fractional rounding with the flexibility and precision that `reround()` provides.
 
 What's more, `reround_to_fraction_level()` rounds to the nearest fraction at the decimal level specified via its `digits` argument:
 
@@ -421,11 +421,8 @@ df <- tibble::tibble(bias, decimal_digits, rounding)
 # Display simulated data:
 df
 
-df <- df |>
-  dplyr::mutate(
-    rounding = paste0("(", rounding, ")"),
-    decimal_digits = paste(c(1:5, 1:5), rounding)
-  )
+df$rounding <- paste0("(", df$rounding, ")")
+df$decimal_digits <- paste(c(1:5, 1:5), df$rounding)
 
 `%+replace%` <- ggplot2::`%+replace%`
 
@@ -496,11 +493,8 @@ df_new <- tibble::tibble(bias, decimal_digits, rounding)
 # Display simulated data:
 df_new
 
-df_new <- df_new |>
-  dplyr::mutate(
-    rounding = paste0("(", rounding, ")"),
-    decimal_digits = paste(c(1:5, 1:5), rounding)
-  )
+df_new$rounding <- paste0("(", df_new$rounding, ")")
+df_new$decimal_digits <- paste(c(1:5, 1:5), df_new$rounding)
 
 # Visualize:
 ggplot2::ggplot(
