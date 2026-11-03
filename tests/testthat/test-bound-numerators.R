@@ -92,6 +92,16 @@ test_that("`bound_numerators()` scales a fractional threshold to whole numbers",
   b <- bn(1, 2L, "down_from", threshold = 9.99)
   b$denom |> expect_identical(1e5)
   c(b$lower, b$upper) |> expect_identical(c(99999, 100999))
+  # Six decimal places next to a whole number are scaled, not snapped to that
+  # number, which would move `"up_from"`'s exclusive upper bound onto `x`:
+  b <- bn(0, -1L, "up_from", threshold = 0.000001)
+  c(b$lower, b$upper, b$denom) |> expect_identical(c(-9999999, 1, 1e6))
+  b <- bn(0, -1L, "up_from", threshold = 9.999999)
+  c(b$lower, b$upper, b$denom) |> expect_identical(c(-1, 9999999, 1e6))
+  b <- bn(0, -1L, "up_from", threshold = 5e-7)
+  c(b$lower, b$upper, b$denom) |> expect_identical(c(-9999999.5, 0.5, 1e6))
+  sum_range(0, 1, 0, "up_from", 5e-7) |> expect_identical(c(0, 0))
+  sum_range(0, 1, 0, "up_from", 0.000001) |> expect_identical(c(0, 0))
 })
 
 

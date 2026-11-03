@@ -190,7 +190,11 @@ rounding_offsets <- function(rounding, threshold, x_num, symmetric = FALSE) {
 #'   disagree with `unround()` about what the bounds of a rounded number are.
 #'
 #'   If `threshold` is fractional, the numerators and the denominator are both
-#'   scaled up by a power of ten until they are whole numbers again.
+#'   scaled up by the power of ten that makes them whole numbers again: `100`
+#'   for a `threshold` of `9.99`. This works for up to six decimal places, a
+#'   scale of `1e6`. With more, the numerators are not whole numbers, and the
+#'   arithmetic is no longer exact. The scale also multiplies the integers
+#'   that must stay below `2^53`.
 #'
 #'   `bound_numerators()` is a low-level primitive, meant to be called once per
 #'   value set inside a consistency test, so it checks only `rounding`,
@@ -260,16 +264,19 @@ bound_numerators <- function(x_num, digits, rounding, threshold, symmetric) {
   # arithmetic degrades to floating point. A decimal like `9.99` is no exact
   # double, so the scaled offsets are only close to whole numbers, and are
   # rounded to them: `9.99 - 10` stands for -1/100, not for the double nearest
-  # to it. The offsets are at most 10 times the scale, so floating-point error
-  # stays far below the tolerance, and any other decimal far above it:
+  # to it. The offsets are at most 10 times the scale, so their floating-point
+  # error stays below about 2e-9, well under the tolerance of
+  # `is_whole_number()`. A decimal of up to six places, scaled too little, is
+  # at least 1e-6 off a whole number, far above it. A threshold within the
+  # tolerance of a whole number counts as that number, a difference below the
+  # nudge that the rounding functions apply anyway:
   bounds <- c(offsets[[1L]], offsets[[2L]])
   scale <- 1
-  off_whole <- function(v) any(abs(v - round(v)) > 1e-6)
-  while (scale < 1e6 && off_whole(bounds * scale)) {
+  while (scale < 1e6 && !all(is_whole_number(bounds * scale))) {
     scale <- scale * 10
   }
   bounds <- bounds * scale
-  if (!off_whole(bounds)) {
+  if (all(is_whole_number(bounds))) {
     bounds <- round(bounds)
   }
 
@@ -304,8 +311,10 @@ bound_numerators <- function(x_num, digits, rounding, threshold, symmetric) {
 #'
 #' @details Like [`bound_numerators()`], on which it builds, `sum_range()`
 #'   works in exact integer arithmetic. This is exact as long as
-#'   `n_items * 10^(digits + 1)` times the integer part of `x_num` stays below
-#'   `2^53`, which is far beyond any realistic input.
+#'   `(|x_num| * 10^(digits + 1) + 10) * n_items` stays below `2^53`, which is
+#'   far beyond any realistic input. The bounds reach up to 10 units past
+#'   `x_num`, hence the `+ 10`. A `threshold` with decimal places multiplies
+#'   this by the scale described in [`bound_numerators()`].
 #'
 #'   `sum_range()` is a low-level primitive, meant to be called once per value
 #'   set inside a consistency test, so it does not check its input. The caller

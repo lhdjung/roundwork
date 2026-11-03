@@ -1,6 +1,8 @@
 # roundwork (development version)
 
--   `bound_numerators()`, and so `sum_range()` and `unround()`, scale a decimal `threshold` that no double holds exactly, such as `9.99`, to the whole numbers it stands for. Before, the scaled offsets stayed a hair off them, the scale grew to its limit of a million, and the arithmetic was no longer exact.
+## Bug fixes
+
+-   `bound_numerators()`, and so `sum_range()` and `unround()`, scale a decimal `threshold` that no double holds exactly, such as `9.99`, to the whole numbers it stands for. Before, the scaled offsets stayed a hair off them, the scale grew to its limit of a million, and the arithmetic was no longer exact. This works for up to six decimal places, `0.000001` and `9.999999` included.
 
 # roundwork 0.1.0
 
