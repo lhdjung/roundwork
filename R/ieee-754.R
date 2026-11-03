@@ -16,7 +16,6 @@
 #'   value, i.e., the number that is closer to zero. This is like truncation at
 #'   a given number of decimal places.
 #'
-#' @param ... Only in `round_ties_to_even()`. Passed down to [`base::round()`].
 #' @inheritParams rounding-common
 #'
 #' @details The function names follow the official standard except for case
@@ -79,30 +78,30 @@
 #' round_toward_zero(6.38, digits = 1)
 #' round_toward_zero(-6.38, digits = 1)
 
-round_ties_to_even <- function(x, digits = 0, ...) {
-  round(x = x, digits = digits, ...)
+round_ties_to_even <- function(x, digits = 0L) {
+  round(x = x, digits = digits)
 }
 
 #' @rdname ieee-754
 #' @export
-round_ties_to_away <- function(x, digits = 0) {
+round_ties_to_away <- function(x, digits = 0L) {
   round_up_from(x = x, digits = digits, threshold = 5, symmetric = TRUE)
 }
 
 #' @rdname ieee-754
 #' @export
-round_toward_positive <- function(x, digits = 0) {
+round_toward_positive <- function(x, digits = 0L) {
   round_ceiling(x = x, digits = digits)
 }
 
 #' @rdname ieee-754
 #' @export
-round_toward_negative <- function(x, digits = 0) {
+round_toward_negative <- function(x, digits = 0L) {
   round_floor(x = x, digits = digits)
 }
 
 #' @rdname ieee-754
 #' @export
-round_toward_zero <- function(x, digits = 0) {
+round_toward_zero <- function(x, digits = 0L) {
   round_trunc(x = x, digits = digits)
 }

@@ -41,6 +41,6 @@ test_that("the IEEE 754 functions round as the standard says", {
   expect_equal(round_ties_to_even(c(0.5, 1.5, 2.5)), c(0, 2, 2))
 })
 
-test_that("`round_ties_to_even()` passes `...` down to `base::round()`", {
+test_that("`round_ties_to_even()` rounds like `base::round()` at any `digits`", {
   expect_equal(round_ties_to_even(1.2345, digits = 2), round(1.2345, 2))
 })

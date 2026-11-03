@@ -10,6 +10,7 @@
 -   `bound_numerators()` returns `NULL` for a missing `digits`, as it does for a missing `x_num`. So `sum_range()` returns `NA` instead of failing with an uninformative error, and `unround()` returns `NA` throughout, including `incl_lower` and `incl_upper`. The `range` column of `unround()` is now `NA` wherever the bounds are, rather than `"NA NA x(...) NA NA"`.
 -   `rounding_bias()` no longer passes a numeric `x` through `as.character()`, which kept only 15 significant digits and so moved `x` before rounding it.
 -   `round_ceiling()`, `round_down()`, `round_down_from()`, `round_trunc()`, `round_anti_trunc()`, `anti_trunc()`, and the functions built on them no longer return a negative zero, which `sprintf()` prints as `"-0"`. `reround()` already avoided it.
+-   `round_ties_to_even()` no longer takes `...`, which it passed to `base::round()`, where any extra argument was an error.
 
 # roundwork 0.1.0
 
