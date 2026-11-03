@@ -391,3 +391,13 @@ test_that("the exported functions reject an invalid `symmetric`", {
   1.25 |> round_down(1, symmetric = c(TRUE, FALSE)) |> expect_error("`TRUE` or `FALSE`")
   1.25 |> round_up_from(1, 5, symmetric = "yes")    |> expect_error("`TRUE` or `FALSE`")
 })
+
+
+test_that("an error raised inside a data mask names the export and ends", {
+  # This used to loop forever while looking for the user-called export:
+  tibble::tibble(x = 1) |>
+    dplyr::mutate(y = round_up_from(x, 0, threshold = 12)) |>
+    expect_error(class = "rlang_error") |>
+    (\(e) e$parent$call)() |>
+    expect_identical(quote(round_up_from(x, 0, threshold = 12)))
+})
