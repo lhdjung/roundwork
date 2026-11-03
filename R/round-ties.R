@@ -117,5 +117,6 @@ round_ties_zero <- function(x, digits = 0L) {
 #' @export
 
 round_ties_even <- function(x, digits = 0L) {
-  round(x = x, digits = digits)
+  # Adding zero turns a negative zero, as from `round(-0.4)`, into zero:
+  round(x = x, digits = digits) + 0
 }

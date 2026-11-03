@@ -401,12 +401,14 @@ test_that("no exported rounding function returns a negative zero", {
     round_down_from(x, 0, 3),
     round_trunc(x),
     round_ties_away(x),
+    round_ties_even(x),
+    round_ties_to_even(x),
     anti_trunc(-0),
     round_anti_trunc(-0)
   )
-  zeros |> expect_identical(rep(0, 7L))
+  zeros |> expect_identical(rep(0, 9L))
   # `1 / -0` is `-Inf`:
-  (1 / zeros) |> expect_identical(rep(Inf, 7L))
+  (1 / zeros) |> expect_identical(rep(Inf, 9L))
 })
 
 

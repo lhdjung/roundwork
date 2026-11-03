@@ -79,7 +79,8 @@
 #' round_toward_zero(-6.38, digits = 1)
 
 round_ties_to_even <- function(x, digits = 0L) {
-  round(x = x, digits = digits)
+  # Adding zero turns a negative zero, as from `round(-0.4)`, into zero:
+  round(x = x, digits = digits) + 0
 }
 
 #' @rdname ieee-754
