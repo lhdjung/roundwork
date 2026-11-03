@@ -66,3 +66,9 @@ test_that("a factor is read by its labels", {
   expected <- x |> rounding_bias(1, mean = FALSE)
   x |> factor() |> rounding_bias(1, mean = FALSE) |> expect_equal(expected)
 })
+
+test_that("a number is not moved before rounding", {
+  # `as.character()` would make this 2.5, and the bias exactly 0.5:
+  x <- 2.4999999999999996
+  x |> rounding_bias(0, mean = FALSE) |> expect_identical(round_up(x) - x)
+})
