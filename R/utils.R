@@ -30,6 +30,8 @@ an_a_type <- function(x) {
 }
 
 
+# scrutiny keeps a copy of this and of `WHOLE_NUMBER_TOLERANCE`, and writes the
+# test out in two functions that run once per row; keep them all in step.
 is_whole_number <- function(x, tolerance = WHOLE_NUMBER_TOLERANCE) {
   abs(x - round(x)) < tolerance
 }
