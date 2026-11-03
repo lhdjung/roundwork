@@ -1,3 +1,7 @@
+# roundwork (development version)
+
+-   `bound_numerators()`, and so `sum_range()` and `unround()`, scale a decimal `threshold` that no double holds exactly, such as `9.99`, to the whole numbers it stands for. Before, the scaled offsets stayed a hair off them, the scale grew to its limit of a million, and the arithmetic was no longer exact.
+
 # roundwork 0.1.0
 
 This release accompanies [scrutiny](https://lhdjung.github.io/scrutiny/) 1.0.0, which now imports its rounding from roundwork instead of keeping copies of the functions. The rounding layer was rewritten inside scrutiny in the run-up to that release and then moved here, so nearly every function changed, and the rounding bounds and the rounding procedures are now derived from a single shared source. See `vignette("scrutiny")` for how the two packages relate.

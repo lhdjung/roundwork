@@ -87,6 +87,11 @@ test_that("`bound_numerators()` scales a fractional threshold to whole numbers",
   # `threshold` is ignored by the fixed-5 methods, even when it is out of range:
   bn(0.53, 2L, "up", threshold = 12) |> expect_identical(bn(0.53, 2L, "up"))
   bn(0.53, 2L, "up", threshold = 0.5) |> expect_identical(bn(0.53, 2L, "up"))
+  # A decimal threshold that no double holds exactly is scaled to the whole
+  # numbers it stands for, not left a hair off them:
+  b <- bn(1, 2L, "down_from", threshold = 9.99)
+  b$denom |> expect_identical(1e5)
+  c(b$lower, b$upper) |> expect_identical(c(99999, 100999))
 })
 
 

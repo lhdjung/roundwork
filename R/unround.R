@@ -257,13 +257,21 @@ bound_numerators <- function(x_num, digits, rounding, threshold, symmetric) {
 
   # A fractional `threshold` is scaled up by a power of ten, along with the
   # denominator, until the offsets are whole again; failing that, the
-  # arithmetic degrades to floating point:
+  # arithmetic degrades to floating point. A decimal like `9.99` is no exact
+  # double, so the scaled offsets are only close to whole numbers, and are
+  # rounded to them: `9.99 - 10` stands for -1/100, not for the double nearest
+  # to it. The offsets are at most 10 times the scale, so floating-point error
+  # stays far below the tolerance, and any other decimal far above it:
   bounds <- c(offsets[[1L]], offsets[[2L]])
   scale <- 1
-  while (scale < 1e6 && any(bounds * scale != round(bounds * scale))) {
+  off_whole <- function(v) any(abs(v - round(v)) > 1e-6)
+  while (scale < 1e6 && off_whole(bounds * scale)) {
     scale <- scale * 10
   }
   bounds <- bounds * scale
+  if (!off_whole(bounds)) {
+    bounds <- round(bounds)
+  }
 
   denom <- 10^(digits + 1L) * scale
   x_shifted <- round(x_num * denom)
