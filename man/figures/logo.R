@@ -2,10 +2,10 @@
 # set in Linux Libertine, an open font. Before drawing, install Linux Libertine
 # or its fork Libertinus Serif.
 #
-# Unrounding as a magnifying glass. A number line runs across the hex in steps
-# of 0.1. Under the lens, it is magnified to show what "2.5" may have been
-# before rounding: anything from 2.45 to 2.55. That is unround("2.5"), which by
-# default allows rounding up or down from 5, so both bounds are included.
+# Unrounding as a magnifying glass. A number line runs across the hex. Under the
+# lens, it is magnified to show what the number at the center may have been
+# before rounding: anything up to half a step to either side. By default,
+# unround() allows rounding up or down from 5, so both bounds are included.
 
 paper <- "#f3ead8"
 ink <- "#1f3a5f"
@@ -14,18 +14,18 @@ border <- "#1f3a5f"
 
 font <- 'font-family="Linux Libertine Display O, Linux Libertine O, Libertinus Serif, serif"'
 
-cx <- 260 # the lens, centered on 2.5
+cx <- 260 # the lens
 cy <- 360
 lr <- 122
 zoom <- 2
 
-# The number line around 2.5 at a given scale (pixels per 0.1), with ticks
-# every `minor` and labels every `major`, both in tenths.
-number_line <- function(scale, minor, major, label_digits, size) {
-  at <- seq(-5, 5, by = minor) # in tenths away from 2.5, i.e. units of 0.1
+# The number line at a given scale (pixels per step), with ticks every `minor`
+# and long ticks every `major`, both in steps.
+number_line <- function(scale, minor, major, size) {
+  at <- seq(-5, 5, by = minor) # in steps away from the center
   at <- at[abs(at) * scale <= 300]
   x <- cx + at * scale
-  # labels only where they fit inside the hex
+  # long ticks only well inside the hex
   is_major <- abs(at / major - round(at / major)) < 1e-9 & abs(at * scale) < 200
   c(
     sprintf(
@@ -43,35 +43,26 @@ number_line <- function(scale, minor, major, label_digits, size) {
       cy + ifelse(is_major, size * 0.5, size * 0.25),
       ink,
       size / 10
-    ),
-    sprintf(
-      '<text x="%.1f" y="%g" text-anchor="middle" %s font-size="%g" fill="%s">%s</text>',
-      x[is_major],
-      cy + size * 1.5,
-      font,
-      size,
-      ink,
-      formatC(2.5 + at[is_major] / 10, format = "f", digits = label_digits)
     )
   )
 }
 
 # Outside the lens, the line is faint, so the eye goes to what the lens shows.
-outer <- c('<g opacity="0.4">', number_line(80, 1, 1, 1, 22), "</g>")
+outer <- c('<g opacity="0.4">', number_line(80, 1, 1, 26), "</g>")
 
-# Under the lens: the interval [2.45, 2.55], closed on both ends.
+# Under the lens: one step of the outer line, closed on both ends.
 s_in <- 80 * zoom
 lo <- cx - 0.5 * s_in
 hi <- cx + 0.5 * s_in
 inner <- c(
   sprintf(
-    '<rect x="%.1f" y="%g" width="%.1f" height="16" fill="%s"/>',
+    '<rect x="%.1f" y="%g" width="%.1f" height="20" fill="%s"/>',
     lo,
-    cy - 8,
+    cy - 10,
     hi - lo,
     band
   ),
-  number_line(s_in, 0.1, 0.5, 2, 26),
+  number_line(s_in, 0.1, 0.5, 32),
   sprintf('<circle cx="%.1f" cy="%g" r="9" fill="%s"/>', c(lo, hi), cy, ink)
 )
 
